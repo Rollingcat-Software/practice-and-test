@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(C:UsersahabgPycharmProjectsDeepFacePractice.venvScriptspython.exe -m pip install tf-keras)",
+      "Bash(\".venv/Scripts/python.exe\" -m pip install tf-keras)",
+      "Bash(\".venv/Scripts/python.exe\":*)",
+      "Bash(\".venv/Scripts/python.exe\" -m pip install matplotlib)",
+      "Bash(dir:*)",
+      "Bash(\".venv/Scripts/python.exe\" -m pip list)",
+      "Bash(findstr:*)",
+      "Bash(mkdir:*)",
+      "Bash(if exist \"main.py\" copy main.py main_original.py.backup)",
+      "Bash(\".venv/Scripts/python.exe\" -c \"import sys; sys.path.insert(0, ''.''); from src.services.face_verification_service import FaceVerificationService; print(''Import successful!'')\")",
+      "Bash(\".venv/Scripts/python.exe\" test_installation.py)",
+      "Bash(chcp 65001)",
+      "Bash(PYTHONIOENCODING=utf-8 \".venv/Scripts/python.exe\":*)",
+      "Bash(\".venv/Scripts/python.exe\" simple_test.py)",
+      "Bash(tree:*)",
+      "Bash(\".venv/Scripts/python.exe\" src/demos/demo_1_verification.py)",
+      "Bash(\".venv/Scripts/python.exe\" fix_emojis.py)",
+      "Bash(where python)",
+      "Bash(\".venv/Scripts/python.exe\" --version)",
+      "Bash(\".venv1/Scripts/python.exe\" -m pip install -r requirements.txt)",
+      "Bash(\".venv1/Scripts/python.exe\" -m pip install --upgrade pip)",
+      "Bash(\".venv1/Scripts/python.exe\" quick_start.py)",
+      "Bash(\".venv1/Scripts/python.exe\" -m pip install tf-keras)",
+      "Bash(\".venv1/Scripts/python.exe\" test_deepface_api.py)",
+      "Bash(del test_deepface_api.py)",
+      "Bash(\".venv1/Scripts/python.exe\" migrate_images.py)",
+      "Bash(\".venv1/Scripts/python.exe\" src/demos/demo_4_dynamic_recognition.py)",
+      "Bash(\".venv1/Scripts/python.exe\" src/demos/demo_1_verification.py)",
+      "Bash(\".venv1/Scripts/python.exe\" fix_image_names.py)",
+      "Bash(\".venv1/Scripts/python.exe\" generate_full_report.py)",
+      "Bash(\".venv1/Scripts/python.exe\" create_shareable_package.py)",
+      "Bash(unzip -q face_verification_report_20251020_232717.zip)",
+      "Bash(unzip -q face_verification_report_20251020_233001.zip)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "migration_date": "1760987573.973192",
+  "person_mapping": {
+    "kisi_A": {
+      "person_id": 1,
+      "folder_name": "person_0001"
+    },
+    "kisi_B": {
+      "person_id": 2,
+      "folder_name": "person_0002"
+    }
+  }
+}

@@ -1,0 +1,50 @@
+# Core Dependencies
+deepface==0.0.95
+# DeepFace - Facial recognition and analysis framework
+
+# Deep Learning Frameworks
+tensorflow==2.20.0
+# TensorFlow - Backend for DeepFace models
+# Note: Use CPU version for simplicity, or tensorflow-gpu for better performance
+
+# Image Processing
+opencv-python==4.10.0.84
+# OpenCV - Image processing and face detection
+Pillow==11.0.0
+# PIL - Image loading and manipulation
+
+# Data Processing
+numpy>=1.26.4
+# NumPy - Numerical computations (using >= to get compatible wheel for Python 3.13)
+pandas>=2.2.3
+# Pandas - Data manipulation (used by DeepFace for results)
+
+# Visualization
+matplotlib>=3.9.2
+# Matplotlib - Plotting and visualization
+
+# Utilities
+tqdm==4.67.1
+# Progress bars
+requests==2.32.3
+# HTTP requests (for downloading models)
+
+# Optional but Recommended
+tf-keras>=2.20.0
+# Keras - High-level neural networks API (Required for TensorFlow 2.20+ compatibility)
+
+# Face Detection Backends (Optional - installed on demand by DeepFace)
+# mtcnn==1.0.0              # MTCNN face detector
+# retina-face==0.0.17       # RetinaFace detector (most accurate)
+# mediapipe==0.10.20        # MediaPipe face detection
+
+# Development Tools (Optional)
+# ipython==8.31.0           # Better Python REPL
+# jupyter==1.1.1            # Jupyter notebooks
+# pytest==8.3.4             # Testing framework
+
+# Notes:
+# 1. DeepFace will download model weights automatically on first use
+# 2. Models are cached in your home directory (~/.deepface/)
+# 3. First run may take time to download models
+# 4. GPU acceleration requires tensorflow-gpu and CUDA setup

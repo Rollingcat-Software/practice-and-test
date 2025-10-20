@@ -1,0 +1,36 @@
+"""Configuration module."""
+from .naming_config import (
+    format_person_id,
+    format_image_id,
+    parse_person_id,
+    parse_image_id,
+    is_valid_person_folder,
+    is_valid_image_file,
+    PERSON_PREFIX,
+    PERSON_ID_DIGITS,
+    IMAGE_PREFIX,
+    IMAGE_ID_DIGITS,
+    IMAGE_EXTENSIONS,
+    IMAGES_ROOT_DIR,
+    DATABASE_DIR,
+    OUTPUT_DIR,
+    PERSON_REGISTRY_FILE,
+)
+
+__all__ = [
+    "format_person_id",
+    "format_image_id",
+    "parse_person_id",
+    "parse_image_id",
+    "is_valid_person_folder",
+    "is_valid_image_file",
+    "PERSON_PREFIX",
+    "PERSON_ID_DIGITS",
+    "IMAGE_PREFIX",
+    "IMAGE_ID_DIGITS",
+    "IMAGE_EXTENSIONS",
+    "IMAGES_ROOT_DIR",
+    "DATABASE_DIR",
+    "OUTPUT_DIR",
+    "PERSON_REGISTRY_FILE",
+]

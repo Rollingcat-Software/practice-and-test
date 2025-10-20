@@ -1,0 +1,259 @@
+"""
+Demo 1: Face Verification
+Learn how to compare two faces to see if they're the same person.
+
+Educational Focus:
+- Understanding verification vs recognition
+- Different models and their trade-offs
+- Distance metrics and thresholds
+"""
+
+import sys
+import os
+from pathlib import Path
+
+# Fix Windows encoding issues
+if sys.platform == 'win32':
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
+# Add parent directory to path for imports
+sys.path.append(str(Path(__file__).parent.parent.parent))
+
+from src.services.face_verification_service import FaceVerificationService
+from src.utils.visualizer import FaceVisualizer
+from src.utils.logger import setup_logger
+
+# Setup
+logger = setup_logger("Demo1_Verification")
+visualizer = FaceVisualizer()
+
+
+def demo_basic_verification():
+    """
+    Basic face verification example.
+
+    Learn: How to compare two faces with default settings.
+    """
+    print("\n" + "="*60)
+    print("DEMO 1A: Basic Face Verification")
+    print("="*60 + "\n")
+
+    # Initialize service with default model (Facenet512)
+    service = FaceVerificationService()
+
+    # Compare same person
+    logger.info("Comparing images of the same person...")
+    try:
+        result = service.verify(
+            img1_path="images/kisi_A_1.jpg",
+            img2_path="images/kisi_A_2.jpg"
+        )
+
+        print(result)
+        print(f"\nInterpretation:")
+        print(f"  Distance: {result.distance:.4f} < Threshold: {result.threshold:.4f}")
+        print(f"  Therefore: Images {'MATCH' if result.verified else 'DO NOT MATCH'}")
+
+        # Visualize
+        visualizer.visualize_verification(
+            result,
+            save_path="output/verification_same_person.png",
+            show=False
+        )
+
+    except Exception as e:
+        logger.error(f"Verification failed: {e}")
+
+    # Compare different people
+    logger.info("\nComparing images of different people...")
+    try:
+        result = service.verify(
+            img1_path="images/kisi_A_1.jpg",
+            img2_path="images/kisi_B_1.jpg"
+        )
+
+        print(f"\n{result}")
+
+        visualizer.visualize_verification(
+            result,
+            save_path="output/verification_different_people.png",
+            show=False
+        )
+
+    except Exception as e:
+        logger.error(f"Verification failed: {e}")
+
+
+def demo_model_comparison():
+    """
+    Compare different face recognition models.
+
+    Learn: How model choice affects accuracy and speed.
+    """
+    print("\n" + "="*60)
+    print("DEMO 1B: Comparing Different Models")
+    print("="*60 + "\n")
+
+    # Models to test (from fast to accurate)
+    models_to_test = [
+        "OpenFace",      # Fastest
+        "Facenet",       # Good balance
+        "Facenet512",    # More accurate
+        "ArcFace",       # Most accurate
+    ]
+
+    img1 = "images/kisi_A_1.jpg"
+    img2 = "images/kisi_A_2.jpg"
+
+    print(f"Comparing: {img1} vs {img2}\n")
+    print(f"{'Model':<15} {'Verified':<10} {'Distance':<12} {'Threshold':<12} {'Time':<8}")
+    print("-" * 60)
+
+    import time
+
+    for model in models_to_test:
+        try:
+            service = FaceVerificationService(model_name=model)
+
+            start_time = time.time()
+            result = service.verify(img1, img2)
+            elapsed = time.time() - start_time
+
+            print(f"{model:<15} {str(result.verified):<10} {result.distance:<12.4f} "
+                  f"{result.threshold:<12.4f} {elapsed:<8.3f}s")
+
+        except Exception as e:
+            print(f"{model:<15} ERROR: {e}")
+
+    print("\nKey Takeaways:")
+    print("  - Faster models may have lower accuracy")
+    print("  - More accurate models take longer to process")
+    print("  - Choose based on your speed/accuracy requirements")
+
+
+def demo_detector_comparison():
+    """
+    Compare different face detectors.
+
+    Learn: How detector choice affects face detection.
+    """
+    print("\n" + "="*60)
+    print("DEMO 1C: Comparing Different Detectors")
+    print("="*60 + "\n")
+
+    detectors_to_test = [
+        "opencv",        # Fastest
+        "ssd",           # Good balance
+        "mtcnn",         # Accurate
+    ]
+
+    img1 = "images/kisi_A_1.jpg"
+    img2 = "images/kisi_A_2.jpg"
+
+    print(f"Comparing: {img1} vs {img2}\n")
+    print(f"{'Detector':<15} {'Verified':<10} {'Distance':<12} {'Time':<8}")
+    print("-" * 50)
+
+    import time
+
+    for detector in detectors_to_test:
+        try:
+            service = FaceVerificationService(
+                model_name="Facenet512",
+                detector_backend=detector
+            )
+
+            start_time = time.time()
+            result = service.verify(img1, img2)
+            elapsed = time.time() - start_time
+
+            print(f"{detector:<15} {str(result.verified):<10} {result.distance:<12.4f} {elapsed:<8.3f}s")
+
+        except Exception as e:
+            print(f"{detector:<15} ERROR: {e}")
+
+    print("\nKey Takeaways:")
+    print("  - OpenCV is fastest but may miss faces in challenging conditions")
+    print("  - MTCNN/RetinaFace are more accurate but slower")
+    print("  - For production, balance speed and accuracy needs")
+
+
+def demo_batch_verification():
+    """
+    Compare one reference image against multiple candidates.
+
+    Learn: How to find the best match from multiple images.
+    """
+    print("\n" + "="*60)
+    print("DEMO 1D: Batch Verification - Finding Best Match")
+    print("="*60 + "\n")
+
+    service = FaceVerificationService()
+
+    reference_img = "images/kisi_A_1.jpg"
+    candidate_imgs = [
+        "images/kisi_A_2.jpg",  # Same person
+        "images/kisi_B_1.jpg",  # Different person
+        # Add more images here
+    ]
+
+    logger.info(f"Finding best match for: {reference_img}")
+
+    # Find best match
+    best_match = service.find_best_match(reference_img, candidate_imgs)
+
+    if best_match:
+        print(f"\nBest Match Found:")
+        print(f"  Image: {best_match.img2_path}")
+        print(f"  Distance: {best_match.distance:.4f}")
+        print(f"  Verified: {best_match.verified}")
+        print(f"  Confidence: {best_match.confidence_percentage:.2f}%")
+    else:
+        print("No matches found!")
+
+    # Show all comparisons
+    print(f"\n\nAll Comparisons:")
+    print(f"{'Image':<30} {'Distance':<12} {'Verified':<10} {'Confidence':<12}")
+    print("-" * 70)
+
+    results = service.compare_multiple(reference_img, candidate_imgs)
+    for result in sorted(results, key=lambda r: r.distance):
+        img_name = Path(result.img2_path).name
+        print(f"{img_name:<30} {result.distance:<12.4f} {str(result.verified):<10} "
+              f"{result.confidence_percentage:<12.2f}%")
+
+
+if __name__ == "__main__":
+    print("\n" + "="*70)
+    print(" "*20 + "FACE VERIFICATION TUTORIAL")
+    print(" "*10 + "Learn the fundamentals of face comparison with DeepFace")
+    print("="*70 + "\n")
+
+    # Create output directory
+    Path("output").mkdir(exist_ok=True)
+    Path("images").mkdir(exist_ok=True)
+
+    # Check if images exist
+    if not Path("images/kisi_A_1.jpg").exists():
+        print("\n[WARNING] Sample images not found!")
+        print("Please add sample images to the 'images' directory:")
+        print("  - images/kisi_A_1.jpg (person A - photo 1)")
+        print("  - images/kisi_A_2.jpg (person A - photo 2)")
+        print("  - images/kisi_B_1.jpg (person B - photo 1)")
+        print("\nYou can use any face images for testing.")
+        sys.exit(1)
+
+    # Run demos
+    demo_basic_verification()
+    demo_model_comparison()
+    demo_detector_comparison()
+    demo_batch_verification()
+
+    print("\n" + "="*70)
+    print(" "*25 + "TUTORIAL COMPLETE!")
+    print(" "*15 + "Check the 'output' folder for visualizations.")
+    print("="*70 + "\n")

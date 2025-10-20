@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Face Verification Report</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            color: #667eea;
+        }
+
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .person-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .person-section h2 {
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .image-item {
+            text-align: center;
+        }
+
+        .image-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .image-item .label {
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .verification-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .verification-table th, .verification-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .verification-table th {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .match {
+            color: green;
+            font-weight: bold;
+        }
+
+        .no-match {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>Face Verification Report</h1>
+    <p>Comprehensive analysis of face verification results</p>
+</div>
+
+<div class="stats">
+    <div class="stat-card">
+        <h3>Total Persons</h3>
+        <div class="value">3</div>
+    </div>
+    <div class="stat-card">
+        <h3>Total Images</h3>
+        <div class="value">19</div>
+    </div>
+    <div class="stat-card">
+        <h3>Verifications</h3>
+        <div class="value">70</div>
+    </div>
+    <div class="stat-card">
+        <h3>Avg Images/Person</h3>
+        <div class="value">6.3</div>
+    </div>
+</div>
+
+<div class="person-section">
+    <h2>person_0001 (7 images)</h2>
+    <div class="image-grid">
+
+        <div class="image-item">
+            <img alt="img_003.jpg" src="../images/person_0001/img_003.jpg">
+            <div class="label">img_003.jpg</div>
+        </div>
+
+        <div class="image-item">
+            <img alt="img_004.jpg" src="../images/person_0001/img_004.jpg">
+            <div class="label">img_004.jpg</div>
+        </div>
+
+        <div class="image-item">
+            <img alt="img_005.jpg" src="../images/person_0001/img_005.jpg">
+            <div class="label">img_005.jpg</div>
+        </div>
+
+        <div class="image-item">
+            <img alt="img_006.jpg" src="../images/person_0001/img_006.jpg">
+            <div class="label">img_006.jpg</div>
+        </div>
+
+        <div class="image-item">
+            <img alt="img_007.jpg" src="../images/person_0001/img_007.jpg">
+            <div class="label">img_007.jpg</div>
+        </div>
+
+        <div class="image-item">
+            <img alt="img_008.jpg" src="../images/person_0001/img_008.jpg">
+            <div class="label">img_008.jpg</div>
+        </div>
+
+        <div class="image-item">
+            <img alt="img_009.png" src="../images/person_0001/img_009.png">
+            <div class="label">img_009.png</div>
+        </div>
+
+    </div>
+</div>
+
+<div class="person-section">
+    <h2>person_0002 (10 images)</h2>
+    <div class="image-grid">
+
+        <div class="image-item">
+            <img alt="img_002.jpg" src="../images/person_0002/img_002.jpg">
+            <div class="label">img_002.jpg</div>
+        </div>
+
+        <div class="image-item">
+            <img alt="img_003.jpg" src="../images/person_0002/img_003.jpg">
+            <div class="label">img_003.jpg</div>
+        </div>
+
+        <div class="image-item">
+            <img alt="img_004.jpg" src="../images/person_0002/img_004.jpg">
+            <div class="label">img_004.jpg</div>
+        </div>
+
+        <div class="image-item">
+            <img alt="img_005.jpg" src="../images/person_0002/img_005.jpg">
+            <div class="label">img_005.jpg</div>
+        </div>
+
+        <div class="image-item">
+            <img alt="img_006.jpg" src="../images/person_0002/img_006.jpg">
+            <div class="label">img_006.jpg</div>
+        </div>
+
+        <div class="image-item">
+            <img alt="img_007.jpg" src="../images/person_0002/img_007.jpg">
+            <div class="label">img_007.jpg</div>
+        </div>
+
+        <div class="image-item">
+            <img alt="img_008.jpg" src="../images/person_0002/img_008.jpg">
+            <div class="label">img_008.jpg</div>
+        </div>
+
+        <div class="image-item">
+            <img alt="img_009.jpg" src="../images/person_0002/img_009.jpg">
+            <div class="label">img_009.jpg</div>
+        </div>
+
+        <div class="image-item">
+            <img alt="img_010.jpg" src="../images/person_0002/img_010.jpg">
+            <div class="label">img_010.jpg</div>
+        </div>
+
+        <div class="image-item">
+            <img alt="img_011.png" src="../images/person_0002/img_011.png">
+            <div class="label">img_011.png</div>
+        </div>
+
+    </div>
+</div>
+
+<div class="person-section">
+    <h2>person_0003 (2 images)</h2>
+    <div class="image-grid">
+
+        <div class="image-item">
+            <img alt="img_001.jpg" src="../images/person_0003/img_001.jpg">
+            <div class="label">img_001.jpg</div>
+        </div>
+
+        <div class="image-item">
+            <img alt="img_002.jpg" src="../images/person_0003/img_002.jpg">
+            <div class="label">img_002.jpg</div>
+        </div>
+
+    </div>
+</div>
+
+<div class="person-section">
+    <h2>Verification Results</h2>
+    <table class="verification-table">
+        <tr>
+            <th>Person 1</th>
+            <th>Person 2</th>
+            <th>Result</th>
+            <th>Distance</th>
+            <th>Threshold</th>
+            <th>Confidence</th>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="match">MATCH</td>
+            <td>0.2533</td>
+            <td>0.3000</td>
+            <td>15.6%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.9180</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.4192</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.4319</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.4637</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.3912</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.7833</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.4998</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.6148</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.4811</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.5373</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.6685</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.7694</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.6551</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.9040</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="match">MATCH</td>
+            <td>0.2233</td>
+            <td>0.3000</td>
+            <td>25.6%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="match">MATCH</td>
+            <td>0.2788</td>
+            <td>0.3000</td>
+            <td>7.1%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.3540</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.3207</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.3580</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0001</td>
+            <td class="match">MATCH</td>
+            <td>0.1729</td>
+            <td>0.3000</td>
+            <td>42.4%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.2445</td>
+            <td>0.3000</td>
+            <td>18.5%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.2569</td>
+            <td>0.3000</td>
+            <td>14.4%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>1.0662</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.3607</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.5703</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.1871</td>
+            <td>0.3000</td>
+            <td>37.6%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.2677</td>
+            <td>0.3000</td>
+            <td>10.8%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.2006</td>
+            <td>0.3000</td>
+            <td>33.1%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.2684</td>
+            <td>0.3000</td>
+            <td>10.5%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.3347</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.8863</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.3033</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.6211</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.1257</td>
+            <td>0.3000</td>
+            <td>58.1%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.2152</td>
+            <td>0.3000</td>
+            <td>28.3%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.1442</td>
+            <td>0.3000</td>
+            <td>51.9%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.1339</td>
+            <td>0.3000</td>
+            <td>55.4%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.8998</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.2017</td>
+            <td>0.3000</td>
+            <td>32.8%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.4503</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.3762</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.2383</td>
+            <td>0.3000</td>
+            <td>20.6%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.2897</td>
+            <td>0.3000</td>
+            <td>3.4%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.2580</td>
+            <td>0.3000</td>
+            <td>14.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.9459</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>1.0332</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.9519</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.8996</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.9096</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.9038</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.5174</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.3656</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.2175</td>
+            <td>0.3000</td>
+            <td>27.5%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.2500</td>
+            <td>0.3000</td>
+            <td>16.7%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.2429</td>
+            <td>0.3000</td>
+            <td>19.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.5657</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.4750</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.5100</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.4628</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.1904</td>
+            <td>0.3000</td>
+            <td>36.5%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.1394</td>
+            <td>0.3000</td>
+            <td>53.5%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.2517</td>
+            <td>0.3000</td>
+            <td>16.1%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.1721</td>
+            <td>0.3000</td>
+            <td>42.6%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.1852</td>
+            <td>0.3000</td>
+            <td>38.3%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0002</td>
+            <td class="match">MATCH</td>
+            <td>0.2141</td>
+            <td>0.3000</td>
+            <td>28.6%</td>
+        </tr>
+
+        <tr>
+            <td>person_0003</td>
+            <td>person_0003</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.4541</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0002</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.5743</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0001</td>
+            <td>person_0003</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.8396</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+        <tr>
+            <td>person_0002</td>
+            <td>person_0003</td>
+            <td class="no-match">DIFFERENT</td>
+            <td>0.7772</td>
+            <td>0.3000</td>
+            <td>0.0%</td>
+        </tr>
+
+    </table>
+</div>
+
+</body>
+</html>
