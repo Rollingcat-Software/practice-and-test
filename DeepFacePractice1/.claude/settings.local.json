@@ -33,7 +33,9 @@
       "Bash(\".venv1/Scripts/python.exe\" generate_full_report.py)",
       "Bash(\".venv1/Scripts/python.exe\" create_shareable_package.py)",
       "Bash(unzip -q face_verification_report_20251020_232717.zip)",
-      "Bash(unzip -q face_verification_report_20251020_233001.zip)"
+      "Bash(unzip -q face_verification_report_20251020_233001.zip)",
+      "Bash(\".venv1/Scripts/python.exe\" src/demos/demo_2_analysis.py)",
+      "Bash(\".venv1/Scripts/python.exe\" run_quality_inspection.py)"
     ],
     "deny": [],
     "ask": []

@@ -130,7 +130,7 @@ Edit `src/config/naming_config.py` to customize:
 PERSON_ID_DIGITS = 6  # Now supports 999,999 persons!
 
 # Change number of digits for images
-IMAGE_ID_DIGITS = 4   # Now supports 9,999 images per person!
+IMAGE_ID_DIGITS = 4  # Now supports 9,999 images per person!
 
 # Change prefixes
 PERSON_PREFIX = "person_"

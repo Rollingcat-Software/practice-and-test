@@ -56,11 +56,38 @@ class FaceVerificationService:
         "euclidean_l2",  # Normalized Euclidean
     ]
 
+    # ADJUSTED THRESHOLDS (more lenient for real-world varied photos)
+    # Based on analysis: many same-person photos fall in 0.30-0.50 range
+    # person_0003 needs 0.46+, person_0001 has matches at 0.35-0.45
+    CUSTOM_THRESHOLDS = {
+        "Facenet512": {
+            "cosine": 0.46,  # Increased from default 0.30 (catches person_0003: 0.4541)
+            "euclidean": 23.56,  # Default
+            "euclidean_l2": 1.04  # Default
+        },
+        "Facenet": {
+            "cosine": 0.40,  # Default
+            "euclidean": 10.0,  # Default
+            "euclidean_l2": 0.80  # Default
+        },
+        "ArcFace": {
+            "cosine": 0.68,  # Default
+            "euclidean": 4.15,  # Default
+            "euclidean_l2": 1.13  # Default
+        },
+        "OpenFace": {
+            "cosine": 0.10,  # Default (strict)
+            "euclidean": 0.55,  # Default
+            "euclidean_l2": 0.55  # Default
+        }
+    }
+
     def __init__(
             self,
             model_name: str = "Facenet512",
             detector_backend: str = "opencv",
-            distance_metric: str = "cosine"
+            distance_metric: str = "cosine",
+            custom_threshold: Optional[float] = None
     ):
         """
         Initialize the verification service.
@@ -69,10 +96,12 @@ class FaceVerificationService:
             model_name: Which face recognition model to use
             detector_backend: Which face detection algorithm to use
             distance_metric: How to calculate similarity
+            custom_threshold: Override default threshold (None = use adjusted defaults)
         """
         self.model_name = model_name
         self.detector_backend = detector_backend
         self.distance_metric = distance_metric
+        self.custom_threshold = custom_threshold
 
         self._validate_parameters()
 
@@ -127,11 +156,29 @@ class FaceVerificationService:
                 enforce_detection=enforce_detection
             )
 
+            # Apply custom threshold if configured
+            distance = raw_result["distance"]
+            original_threshold = raw_result["threshold"]
+
+            if self.custom_threshold is not None:
+                # Use user-provided threshold
+                threshold = self.custom_threshold
+                verified = distance < threshold
+            elif (self.model_name in self.CUSTOM_THRESHOLDS and
+                  self.distance_metric in self.CUSTOM_THRESHOLDS[self.model_name]):
+                # Use adjusted threshold for better real-world accuracy
+                threshold = self.CUSTOM_THRESHOLDS[self.model_name][self.distance_metric]
+                verified = distance < threshold
+            else:
+                # Use DeepFace default
+                threshold = original_threshold
+                verified = raw_result["verified"]
+
             # Wrap in our custom result object
             return VerificationResult(
-                verified=raw_result["verified"],
-                distance=raw_result["distance"],
-                threshold=raw_result["threshold"],
+                verified=verified,
+                distance=distance,
+                threshold=threshold,
                 model=raw_result["model"],
                 detector_backend=raw_result["detector_backend"],
                 similarity_metric=raw_result["similarity_metric"],

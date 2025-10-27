@@ -14,11 +14,13 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from src.services.face_analysis_service import FaceAnalysisService
+from src.services.person_manager import PersonManager
 from src.utils.visualizer import FaceVisualizer
 from src.utils.logger import setup_logger
 
 logger = setup_logger("Demo2_Analysis")
 visualizer = FaceVisualizer()
+person_manager = PersonManager()
 
 
 def demo_complete_analysis():
@@ -33,7 +35,14 @@ def demo_complete_analysis():
 
     service = FaceAnalysisService()
 
-    img_path = "images/kisi_A_1.jpg"
+    # Get a photo from the database instead of hardcoded path
+    persons = person_manager.scan_all_persons()
+    if not persons or not persons[0].image_paths:
+        print("[WARN] No images found in database. Please add images to 'images/person_XXXX/' folders.")
+        return
+
+    img_path = persons[1].image_paths[7]
+    print(f"Using image from database: {Path(img_path).name} (person: {persons[0].folder_name})\n")
 
     logger.info(f"Analyzing: {img_path}")
 
@@ -105,7 +114,13 @@ def demo_emotion_detection():
 
     service = FaceAnalysisService()
 
-    img_path = "images/kisi_A_1.jpg"
+    # Get a photo from the database
+    persons = person_manager.scan_all_persons()
+    if not persons or not persons[0].image_paths:
+        print("[WARN] No images found in database.")
+        return
+
+    img_path = persons[0].image_paths[0]
 
     logger.info("Detecting emotions...")
 
@@ -153,7 +168,13 @@ def demo_demographics():
 
     service = FaceAnalysisService()
 
-    img_path = "images/kisi_A_1.jpg"
+    # Get a photo from the database
+    persons = person_manager.scan_all_persons()
+    if not persons or not persons[0].image_paths:
+        print("[WARN] No images found in database.")
+        return
+
+    img_path = persons[0].image_paths[0]
 
     logger.info("Analyzing demographics...")
 
@@ -207,20 +228,19 @@ def demo_batch_analysis():
 
     service = FaceAnalysisService()
 
-    image_paths = [
-        "images/kisi_A_1.jpg",
-        "images/kisi_A_2.jpg",
-        "images/kisi_B_1.jpg",
-    ]
+    # Get images from the database (up to 3 from different persons)
+    persons = person_manager.scan_all_persons()
+    existing_images = []
 
-    # Filter to existing images
-    existing_images = [p for p in image_paths if Path(p).exists()]
+    for person in persons[:3]:  # Take up to 3 persons
+        if person.image_paths:
+            existing_images.append(person.image_paths[0])  # Take first image from each person
 
     if not existing_images:
         print("No images found for batch analysis")
         return
 
-    logger.info(f"Analyzing {len(existing_images)} images...")
+    logger.info(f"Analyzing {len(existing_images)} images from database...")
 
     results = service.batch_analyze(existing_images, actions=["age", "gender", "emotion"])
 
@@ -249,11 +269,12 @@ if __name__ == "__main__":
     Path("output").mkdir(exist_ok=True)
     Path("images").mkdir(exist_ok=True)
 
-    # Check for images
-    if not Path("images/kisi_A_1.jpg").exists():
-        print("\n[WARN]  WARNING: Sample images not found!")
-        print("Please add sample images to the 'images' directory.")
-        print("\nContinuing with available images...")
+    # Check for images in database
+    persons = person_manager.scan_all_persons()
+    if not persons or not any(p.image_paths for p in persons):
+        print("\n[WARN]  WARNING: No images found in database!")
+        print("Please add images to 'images/person_XXXX/' folders.")
+        print("\nContinuing anyway...")
 
     # Run demos
     demo_complete_analysis()

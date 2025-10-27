@@ -14,11 +14,13 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from src.services.face_recognition_service import FaceRecognitionService
+from src.services.person_manager import PersonManager
 from src.utils.visualizer import FaceVisualizer
 from src.utils.logger import setup_logger
 
 logger = setup_logger("Demo3_Embeddings")
 visualizer = FaceVisualizer()
+person_manager = PersonManager()
 
 
 def demo_extract_embeddings():
@@ -33,7 +35,14 @@ def demo_extract_embeddings():
 
     service = FaceRecognitionService(model_name="Facenet512")
 
-    img_path = "images/kisi_A_1.jpg"
+    # Get a photo from the database
+    persons = person_manager.scan_all_persons()
+    if not persons or not persons[0].image_paths:
+        print("[WARN] No images found in database. Please add images to 'images/person_XXXX/' folders.")
+        return
+
+    img_path = persons[0].image_paths[0]
+    print(f"Using image from database: {Path(img_path).name} (person: {persons[0].folder_name})\n")
 
     logger.info(f"Extracting embedding from: {img_path}")
 
@@ -87,19 +96,25 @@ def demo_compare_embeddings():
 
     service = FaceRecognitionService(model_name="Facenet512")
 
-    # Extract embeddings from multiple images
-    images = {
-        "Person A - Photo 1": "images/kisi_A_1.jpg",
-        "Person A - Photo 2": "images/kisi_A_2.jpg",
-        "Person B - Photo 1": "images/kisi_B_1.jpg",
-    }
+    # Get images from the database
+    persons = person_manager.scan_all_persons()
+    existing_images = {}
 
-    # Filter to existing images
-    existing_images = {k: v for k, v in images.items() if Path(v).exists()}
+    # Get 2 images from first person (same person comparison)
+    if persons and len(persons[0].image_paths) >= 2:
+        existing_images[f"{persons[0].folder_name} - Photo 1"] = persons[0].image_paths[0]
+        existing_images[f"{persons[0].folder_name} - Photo 2"] = persons[0].image_paths[1]
+
+    # Get 1 image from second person (different person comparison)
+    if len(persons) > 1 and persons[1].image_paths:
+        existing_images[f"{persons[1].folder_name} - Photo 1"] = persons[1].image_paths[0]
 
     if len(existing_images) < 2:
-        print("Need at least 2 images for comparison")
+        print("[WARN] Need at least 2 images from database for comparison")
+        print("Please add more images to person folders.")
         return
+
+    print(f"Comparing {len(existing_images)} images from database\n")
 
     logger.info("Extracting embeddings from all images...")
 
@@ -191,11 +206,14 @@ def demo_model_embeddings():
     print("DEMO 3C: Embeddings from Different Models")
     print("=" * 60 + "\n")
 
-    img_path = "images/kisi_A_1.jpg"
-
-    if not Path(img_path).exists():
-        print(f"Image not found: {img_path}")
+    # Get a photo from the database
+    persons = person_manager.scan_all_persons()
+    if not persons or not persons[0].image_paths:
+        print("[WARN] No images found in database.")
         return
+
+    img_path = persons[0].image_paths[0]
+    print(f"Using image: {Path(img_path).name}\n")
 
     models = [
         ("OpenFace", 128),
@@ -254,30 +272,28 @@ We'll demonstrate recognition by:
 2. Searching for a query face in that database
     """)
 
-    # Check if we have a database directory
-    db_path = Path("database")
+    # Use the existing images directory as the database
+    db_path = Path("images")
 
-    if not db_path.exists() or not list(db_path.glob("*.jpg")):
+    if not db_path.exists():
         print("\n[WARN]  No face database found.")
-        print("\nTo try face recognition:")
-        print("  1. Create a 'database' folder")
-        print("  2. Add images of known people, organized by person:")
-        print("     database/")
-        print("       person1/")
-        print("         photo1.jpg")
-        print("         photo2.jpg")
-        print("       person2/")
-        print("         photo1.jpg")
+        print("Please add images to 'images/person_XXXX/' folders.")
+        print("\nSkipping this demo for now.")
+        return
+
+    # Check if we have persons with images
+    persons = person_manager.scan_all_persons()
+    if not persons or not any(p.image_paths for p in persons):
+        print("\n[WARN]  No images found in database.")
+        print("Please add images to 'images/person_XXXX/' folders.")
         print("\nSkipping this demo for now.")
         return
 
     service = FaceRecognitionService()
 
-    query_img = "images/kisi_A_1.jpg"
-
-    if not Path(query_img).exists():
-        print(f"Query image not found: {query_img}")
-        return
+    # Use first person's first image as query
+    query_img = persons[0].image_paths[0]
+    print(f"Query image: {Path(query_img).name} from {persons[0].folder_name}\n")
 
     logger.info(f"Searching for: {query_img} in database: {db_path}")
 

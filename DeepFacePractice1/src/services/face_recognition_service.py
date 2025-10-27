@@ -177,19 +177,24 @@ class FaceRecognitionService:
             detector = detector_backend or self.detector_backend
 
             # DeepFace.find searches the database
+            # FIX: Use enforce_detection=False to handle problematic images gracefully
             results = DeepFace.find(
                 img_path=img_path,
                 db_path=db_path,
                 model_name=model,
                 detector_backend=detector,
                 distance_metric=distance_metric,
-                enforce_detection=True,
+                enforce_detection=False,  # Changed: Don't crash on detection failures
                 silent=True
             )
 
             # Convert DataFrame results to list of dicts
+            # FIX: Handle empty results and index mismatches properly
             if len(results) > 0 and not results[0].empty:
-                return results[0].to_dict('records')
+                # Filter out any NaN or invalid entries
+                df = results[0]
+                df = df.dropna(subset=['identity'])  # Remove rows with missing identity
+                return df.to_dict('records')
             else:
                 return []
 

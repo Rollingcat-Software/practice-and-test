@@ -16,28 +16,46 @@ This project teaches you:
 ## 📁 Project Structure
 
 ```
-DeepFacePractice/
+DeepFacePractice1/
 ├── src/
-│   ├── models/              # Data models
-│   │   ├── verification_result.py
-│   │   ├── face_analysis_result.py
-│   │   └── face_embedding.py
-│   ├── services/            # Business logic
+│   ├── models/              # Domain Models
+│   │   ├── photo.py                    # Photo entity with quality metrics
+│   │   ├── person.py                   # Person entity with photo management
+│   │   ├── verification_result.py      # Verification results
+│   │   ├── face_analysis_result.py     # Analysis results
+│   │   └── face_embedding.py           # Face embeddings
+│   ├── services/            # Application Services
 │   │   ├── face_verification_service.py
 │   │   ├── face_analysis_service.py
-│   │   └── face_recognition_service.py
+│   │   ├── face_recognition_service.py
+│   │   ├── person_manager.py           # Person/image management
+│   │   ├── image_quality_validator.py  # Quality validation
+│   │   └── image_inspection_tool.py    # Quality visualization
 │   ├── utils/               # Utilities
 │   │   ├── logger.py
 │   │   ├── visualizer.py
 │   │   └── file_helper.py
-│   ├── demos/               # Tutorial scripts
-│   │   ├── demo_1_verification.py
-│   │   ├── demo_2_analysis.py
-│   │   └── demo_3_embeddings.py
-│   └── config.py            # Configuration
-├── images/                  # Input images
-├── output/                  # Generated outputs
-├── database/                # Face database (for recognition)
+│   ├── demos/               # Interactive Tutorials
+│   │   ├── demo_1_verification.py      # Face verification
+│   │   ├── demo_2_analysis.py          # Facial attributes
+│   │   ├── demo_3_embeddings.py        # Face embeddings
+│   │   └── demo_4_dynamic_recognition.py
+│   └── config/              # Configuration
+│       ├── __init__.py
+│       └── naming_config.py
+├── images/                  # Face Database (person_XXXX folders)
+│   ├── person_0001/
+│   ├── person_0002/
+│   └── person_0003/
+├── output/                  # Generated Reports & Visualizations
+│   └── inspection/          # Quality inspection reports
+├── docs/                    # Documentation
+│   ├── START_HERE.md        # Quick start guide
+│   ├── LEARNING_GUIDE.md    # Learning path
+│   ├── PROJECT_SUMMARY.md   # Technical summary
+│   └── DYNAMIC_SYSTEM_GUIDE.md
+├── quick_start.py           # Main interactive launcher
+├── run_quality_inspection.py # Quality analysis tool
 ├── requirements.txt
 └── README.md
 ```
@@ -52,15 +70,39 @@ pip install -r requirements.txt
 
 ### 2. Add Sample Images
 
-Place your test images in the `images/` folder:
+Organize your images in person folders:
 
-- `kisi_A_1.jpg` - Person A, photo 1
-- `kisi_A_2.jpg` - Person A, photo 2
-- `kisi_B_1.jpg` - Person B, photo 1
+```
+images/
+├── person_0001/
+│   ├── img_001.jpg
+│   ├── img_002.jpg
+│   └── ...
+├── person_0002/
+│   └── img_001.jpg
+└── person_0003/
+    └── img_001.jpg
+```
 
-You can use any face images for testing.
+### 3. Quick Start
 
-### 3. Run the Demos
+**Option A: Interactive Launcher**
+
+```bash
+python quick_start.py
+```
+
+This presents a menu with all available demos and tools.
+
+**Option B: Quality Inspection**
+
+```bash
+python run_quality_inspection.py
+```
+
+Automatically validates all photos and generates quality reports.
+
+### 4. Run Individual Demos
 
 **Demo 1: Face Verification**
 
