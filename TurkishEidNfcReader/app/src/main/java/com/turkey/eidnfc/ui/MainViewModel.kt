@@ -3,18 +3,17 @@ package com.turkey.eidnfc.ui
 import android.nfc.Tag
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.turkey.eidnfc.data.nfc.NfcCardReader
+import com.turkey.eidnfc.data.repository.EidRepository
 import com.turkey.eidnfc.domain.model.CardData
-import com.turkey.eidnfc.domain.model.NfcError
-import com.turkey.eidnfc.domain.model.NfcResult
-import com.turkey.eidnfc.domain.model.toUserMessage
+import com.turkey.eidnfc.domain.model.Result
+import com.turkey.eidnfc.domain.model.onError
+import com.turkey.eidnfc.domain.model.onSuccess
 import com.turkey.eidnfc.util.Constants
 import com.turkey.eidnfc.util.isValidPin
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -22,11 +21,12 @@ import javax.inject.Inject
 /**
  * ViewModel for the main screen.
  *
- * Manages UI state and coordinates NFC card reading operations.
+ * Manages UI state and coordinates NFC card reading operations through the repository layer.
+ * This separation allows for better testability and follows clean architecture principles.
  */
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val cardReader: NfcCardReader
+    private val repository: EidRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
@@ -61,22 +61,17 @@ class MainViewModel @Inject constructor(
         _uiState.value = UiState.Reading
 
         viewModelScope.launch {
-            when (val result = cardReader.readCard(tag, currentPin)) {
-                is NfcResult.Success -> {
+            repository.readCard(tag, currentPin)
+                .onSuccess { cardData ->
                     Timber.d("Card read successfully")
-                    _uiState.value = UiState.Success(result.data)
+                    _uiState.value = UiState.Success(cardData)
                     // Clear PIN for security
                     clearPin()
                 }
-                is NfcResult.Error -> {
-                    Timber.e("Card reading failed: ${result.error}")
-                    _uiState.value = UiState.Error(result.error.toUserMessage())
+                .onError { exception ->
+                    Timber.e("Card reading failed: ${exception.message}")
+                    _uiState.value = UiState.Error(exception.message ?: "Unknown error occurred")
                 }
-                NfcResult.Loading -> {
-                    // Should not happen in this flow
-                    _uiState.value = UiState.Reading
-                }
-            }
         }
     }
 
