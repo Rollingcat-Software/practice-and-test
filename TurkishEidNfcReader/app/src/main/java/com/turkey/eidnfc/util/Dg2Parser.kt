@@ -209,16 +209,18 @@ object Dg2Parser {
      * Tries alternative decoding methods if JPEG2000 decoding fails.
      *
      * Some cards might use regular JPEG instead of JPEG2000.
+     * Uses BitmapUtils for memory-efficient decoding.
      */
     private fun tryAlternativeDecoding(imageData: ByteArray): Bitmap? {
         return try {
             Timber.d("Trying alternative decoding (regular JPEG)...")
 
-            // Try to decode as regular JPEG
-            val bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.size)
+            // Try to decode as regular JPEG with optimization
+            val bitmap = BitmapUtils.decodeOptimized(imageData)
 
             if (bitmap != null) {
-                Timber.d("Successfully decoded as regular JPEG: ${bitmap.width}x${bitmap.height}")
+                val memSize = BitmapUtils.formatMemorySize(bitmap.byteCount)
+                Timber.d("Successfully decoded as regular JPEG: ${bitmap.width}x${bitmap.height}, size: $memSize")
             } else {
                 Timber.e("Failed to decode image with alternative methods")
             }
