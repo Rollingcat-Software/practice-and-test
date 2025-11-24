@@ -57,7 +57,7 @@ abstract class UseCase<in P, R>(
  * Use case that doesn't require parameters.
  */
 abstract class NoParamsUseCase<R>(
-    dispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
 
     suspend operator fun invoke(): Result<R> {

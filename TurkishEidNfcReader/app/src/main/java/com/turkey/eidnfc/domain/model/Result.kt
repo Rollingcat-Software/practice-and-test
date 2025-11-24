@@ -96,8 +96,8 @@ inline fun <T> Result<T>.onLoading(action: () -> Unit): Result<T> {
 inline fun <T, R> Result<T>.map(transform: (T) -> R): Result<R> {
     return when (this) {
         is Result.Success -> Result.Success(transform(data))
-        is Result.Error -> this
-        Result.Loading -> this
+        is Result.Error -> Result.Error(exception)
+        Result.Loading -> Result.Loading
     }
 }
 
@@ -108,7 +108,7 @@ inline fun <T, R> Result<T>.map(transform: (T) -> R): Result<R> {
 inline fun <T, R> Result<T>.flatMap(transform: (T) -> Result<R>): Result<R> {
     return when (this) {
         is Result.Success -> transform(data)
-        is Result.Error -> this
-        Result.Loading -> this
+        is Result.Error -> Result.Error(exception)
+        Result.Loading -> Result.Loading
     }
 }

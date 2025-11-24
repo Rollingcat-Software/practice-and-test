@@ -23,7 +23,6 @@ import com.turkey.eidnfc.ui.MainViewModel
 import com.turkey.eidnfc.ui.theme.TurkishEidNfcReaderTheme
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
-import javax.inject.Inject
 
 /**
  * Main Activity for Turkish eID NFC Reader.
@@ -39,8 +38,7 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
 
-    @Inject
-    var nfcAdapter: NfcAdapter? = null
+    private var nfcAdapter: NfcAdapter? = null
     private var pendingIntent: PendingIntent? = null
     private var intentFilters: Array<IntentFilter>? = null
     private var techLists: Array<Array<String>>? = null
@@ -53,7 +51,10 @@ class MainActivity : ComponentActivity() {
         // Enable edge-to-edge display
         enableEdgeToEdge()
 
-        // Check NFC availability (injected by Hilt)
+        // Get NFC adapter from system service
+        nfcAdapter = NfcAdapter.getDefaultAdapter(this)
+
+        // Check NFC availability
         if (nfcAdapter == null) {
             Timber.e("NFC is not available on this device")
             Toast.makeText(

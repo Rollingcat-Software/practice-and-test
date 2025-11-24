@@ -1,5 +1,6 @@
 package com.turkey.eidnfc.ui
 
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.turkey.eidnfc.domain.model.CardData

@@ -2,10 +2,11 @@ package com.turkey.eidnfc.ui
 
 import android.nfc.Tag
 import app.cash.turbine.test
-import com.turkey.eidnfc.data.repository.EidRepository
 import com.turkey.eidnfc.domain.model.CardData
 import com.turkey.eidnfc.domain.model.PersonalData
 import com.turkey.eidnfc.domain.model.Result
+import com.turkey.eidnfc.domain.usecase.ReadEidCardUseCase
+import com.turkey.eidnfc.domain.usecase.ValidatePinUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -24,13 +25,14 @@ import org.junit.Test
 /**
  * Unit tests for MainViewModel.
  *
- * Tests ViewModel logic with mocked Repository and Tag dependencies.
+ * Tests ViewModel logic with mocked Use Cases and Tag dependencies.
  * Uses Turbine for testing StateFlow emissions.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModelTest {
 
-    private lateinit var repository: EidRepository
+    private lateinit var readEidCardUseCase: ReadEidCardUseCase
+    private lateinit var validatePinUseCase: ValidatePinUseCase
     private lateinit var viewModel: MainViewModel
     private lateinit var mockTag: Tag
 
@@ -39,8 +41,9 @@ class MainViewModelTest {
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        repository = mockk()
-        viewModel = MainViewModel(repository)
+        readEidCardUseCase = mockk()
+        validatePinUseCase = mockk()
+        viewModel = MainViewModel(readEidCardUseCase, validatePinUseCase)
         mockTag = mockk(relaxed = true)
     }
 
@@ -159,7 +162,7 @@ class MainViewModelTest {
         viewModel.onPinChanged(validPin)
         advanceUntilIdle()
 
-        coEvery { repository.readCard(mockTag, validPin) } returns Result.Success(cardData)
+        coEvery { readEidCardUseCase(any()) } returns Result.Success(cardData)
 
         // When
         viewModel.uiState.test {
@@ -180,7 +183,7 @@ class MainViewModelTest {
         viewModel.onPinChanged(validPin)
         advanceUntilIdle()
 
-        coEvery { repository.readCard(mockTag, validPin) } returns Result.Success(cardData)
+        coEvery { readEidCardUseCase(any()) } returns Result.Success(cardData)
 
         // When
         viewModel.onTagDetected(mockTag)
@@ -197,7 +200,7 @@ class MainViewModelTest {
     // ============================================================================
 
     @Test
-    fun `onTagDetected with invalid PIN shows error without calling repository`() = runTest {
+    fun `onTagDetected with invalid PIN shows error without calling use case`() = runTest {
         // Given
         val invalidPin = "12345" // Too short
 
@@ -214,8 +217,8 @@ class MainViewModelTest {
             assertEquals("Please enter a valid 6-digit PIN", (state as MainViewModel.UiState.Error).message)
         }
 
-        // Repository should not be called
-        coVerify(exactly = 0) { repository.readCard(any(), any()) }
+        // Use case should not be called
+        coVerify(exactly = 0) { readEidCardUseCase(any()) }
     }
 
     @Test
@@ -234,7 +237,7 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `onTagDetected with repository error updates state to Error`() = runTest {
+    fun `onTagDetected with use case error updates state to Error`() = runTest {
         // Given
         val validPin = "123456"
         val errorMessage = "Card reading failed"
@@ -242,7 +245,7 @@ class MainViewModelTest {
         viewModel.onPinChanged(validPin)
         advanceUntilIdle()
 
-        coEvery { repository.readCard(mockTag, validPin) } returns Result.Error(Exception(errorMessage))
+        coEvery { readEidCardUseCase(any()) } returns Result.Error(Exception(errorMessage))
 
         // When
         viewModel.uiState.test {
@@ -265,7 +268,7 @@ class MainViewModelTest {
         viewModel.onPinChanged(validPin)
         advanceUntilIdle()
 
-        coEvery { repository.readCard(mockTag, validPin) } returns Result.Error(Exception())
+        coEvery { readEidCardUseCase(any()) } returns Result.Error(Exception())
 
         // When
         viewModel.uiState.test {
@@ -326,7 +329,7 @@ class MainViewModelTest {
         viewModel.onPinChanged(validPin)
         advanceUntilIdle()
 
-        coEvery { repository.readCard(mockTag, validPin) } returns Result.Success(cardData)
+        coEvery { readEidCardUseCase(any()) } returns Result.Success(cardData)
 
         viewModel.onTagDetected(mockTag)
         advanceUntilIdle()
@@ -353,7 +356,7 @@ class MainViewModelTest {
         viewModel.onPinChanged(validPin)
         advanceUntilIdle()
 
-        coEvery { repository.readCard(mockTag, validPin) } returns Result.Success(cardData)
+        coEvery { readEidCardUseCase(any()) } returns Result.Success(cardData)
 
         // When/Then
         viewModel.uiState.test {
@@ -374,7 +377,7 @@ class MainViewModelTest {
         viewModel.onPinChanged(validPin)
         advanceUntilIdle()
 
-        coEvery { repository.readCard(mockTag, validPin) } returns Result.Error(Exception(errorMessage))
+        coEvery { readEidCardUseCase(any()) } returns Result.Error(Exception(errorMessage))
 
         // When/Then
         viewModel.uiState.test {
@@ -398,7 +401,7 @@ class MainViewModelTest {
 
         // First attempt - success
         val cardData = createMockCardData()
-        coEvery { repository.readCard(mockTag, validPin) } returns Result.Success(cardData)
+        coEvery { readEidCardUseCase(any()) } returns Result.Success(cardData)
 
         viewModel.onTagDetected(mockTag)
         advanceUntilIdle()
@@ -410,13 +413,13 @@ class MainViewModelTest {
         // Second attempt - error
         viewModel.onPinChanged(validPin)
         advanceUntilIdle()
-        coEvery { repository.readCard(mockTag, validPin) } returns Result.Error(Exception("Error"))
+        coEvery { readEidCardUseCase(any()) } returns Result.Error(Exception("Error"))
 
         viewModel.onTagDetected(mockTag)
         advanceUntilIdle()
 
-        // Verify repository was called twice
-        coVerify(exactly = 2) { repository.readCard(mockTag, validPin) }
+        // Verify use case was called twice
+        coVerify(exactly = 2) { readEidCardUseCase(any()) }
     }
 
     // ============================================================================
@@ -432,14 +435,14 @@ class MainViewModelTest {
         viewModel.onPinChanged(validPin)
         advanceUntilIdle()
 
-        coEvery { repository.readCard(mockTag, validPin) } returns Result.Success(cardData)
+        coEvery { readEidCardUseCase(any()) } returns Result.Success(cardData)
 
         // When
         viewModel.onTagDetected(mockTag)
         advanceUntilIdle()
 
         // Then
-        coVerify { repository.readCard(mockTag, validPin) }
+        coVerify { readEidCardUseCase(any()) }
     }
 
     @Test
@@ -453,7 +456,7 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `repository is called with correct parameters`() = runTest {
+    fun `use case is called with correct parameters`() = runTest {
         // Given
         val validPin = "123456"
         val cardData = createMockCardData()
@@ -461,14 +464,14 @@ class MainViewModelTest {
         viewModel.onPinChanged(validPin)
         advanceUntilIdle()
 
-        coEvery { repository.readCard(mockTag, validPin) } returns Result.Success(cardData)
+        coEvery { readEidCardUseCase(any()) } returns Result.Success(cardData)
 
         // When
         viewModel.onTagDetected(mockTag)
         advanceUntilIdle()
 
         // Then
-        coVerify(exactly = 1) { repository.readCard(mockTag, validPin) }
+        coVerify(exactly = 1) { readEidCardUseCase(match { it.pin == validPin && it.tag == mockTag }) }
     }
 
     // ============================================================================
