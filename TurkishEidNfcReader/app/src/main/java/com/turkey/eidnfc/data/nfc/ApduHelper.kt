@@ -16,9 +16,16 @@ import timber.log.Timber
  */
 object ApduHelper {
 
-    // Turkish eID AID (Application Identifier)
+    // ICAO MRTD AID (Application Identifier) - Standard for ePassports and eID cards
+    // A0 00 00 02 47 10 01
+    // This is the standard AID for Machine Readable Travel Documents (ICAO Doc 9303)
+    val MRTD_AID = byteArrayOf(
+        0xA0.toByte(), 0x00, 0x00, 0x02, 0x47, 0x10, 0x01
+    )
+
+    // Legacy Turkish eID AID (kept for fallback/compatibility)
     // A0 00 00 01 67 45 53 49 44
-    val TURKISH_EID_AID = byteArrayOf(
+    val TURKISH_EID_AID_LEGACY = byteArrayOf(
         0xA0.toByte(), 0x00, 0x00, 0x01, 0x67,
         0x45, 0x53, 0x49, 0x44
     )
@@ -65,12 +72,21 @@ object ApduHelper {
     }
 
     /**
-     * Constructs a SELECT AID command for Turkish eID.
+     * Constructs a SELECT AID command for ICAO MRTD (ePassport/eID).
      *
      * @return The SELECT AID APDU command bytes
      */
     fun selectEidAid(): ByteArray {
-        return selectCommand(TURKISH_EID_AID, isAid = true)
+        return selectCommand(MRTD_AID, isAid = true)
+    }
+
+    /**
+     * Constructs a SELECT AID command for legacy Turkish eID.
+     *
+     * @return The SELECT AID APDU command bytes
+     */
+    fun selectLegacyEidAid(): ByteArray {
+        return selectCommand(TURKISH_EID_AID_LEGACY, isAid = true)
     }
 
     /**

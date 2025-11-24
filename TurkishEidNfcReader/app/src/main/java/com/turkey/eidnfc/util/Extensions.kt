@@ -39,11 +39,29 @@ fun ByteArray.toInt(): Int {
 // ============================================================================
 
 /**
- * Checks if string is a valid 6-digit PIN.
+ * Checks if string is a valid MRZ data format.
+ * Format: documentNumber|dateOfBirth|dateOfExpiry
+ * Example: A12345678|900115|301231
  */
 fun String.isValidPin(): Boolean {
-    return length == PIN_LENGTH && all { it.isDigit() }
+    val parts = split("|")
+    if (parts.size != 3) return false
+
+    val (docNo, dob, doe) = parts
+
+    return docNo.isNotEmpty() &&
+            docNo.length <= 9 &&
+            docNo.all { it.isLetterOrDigit() } &&
+            dob.length == 6 &&
+            dob.all { it.isDigit() } &&
+            doe.length == 6 &&
+            doe.all { it.isDigit() }
 }
+
+/**
+ * Checks if string is a valid MRZ data format (alias for isValidPin).
+ */
+fun String.isValidMrzData(): Boolean = isValidPin()
 
 /**
  * Checks if string is a valid Turkish Citizenship Number (TCKN).

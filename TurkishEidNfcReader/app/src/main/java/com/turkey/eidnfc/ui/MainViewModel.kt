@@ -39,13 +39,13 @@ class MainViewModel @Inject constructor(
     val pin: StateFlow<String> = _pin.asStateFlow()
 
     /**
-     * Updates the PIN value.
-     * Only allows digits and max 6 characters.
+     * Updates the MRZ data value.
+     * Accepts format: documentNumber|dateOfBirth|dateOfExpiry
+     * Example: A12345678|900115|301231
      */
-    fun onPinChanged(newPin: String) {
-        if (newPin.all { it.isDigit() } && newPin.length <= Constants.Nfc.PIN_LENGTH) {
-            _pin.value = newPin
-        }
+    fun onPinChanged(newValue: String) {
+        // Allow alphanumeric characters, digits, and pipe separator for MRZ format
+        _pin.value = newValue
     }
 
     /**
@@ -53,11 +53,16 @@ class MainViewModel @Inject constructor(
      * Uses ReadEidCardUseCase to encapsulate business logic.
      */
     fun onTagDetected(tag: Tag) {
-        val currentPin = _pin.value
+        val currentMrzData = _pin.value
 
         // Quick validation for immediate UI feedback
-        if (!ValidatePinUseCase.validateQuick(currentPin)) {
-            _uiState.value = UiState.Error("Please enter a valid 6-digit PIN")
+        if (!ValidatePinUseCase.validateQuick(currentMrzData)) {
+            _uiState.value = UiState.Error(
+                "Please enter valid MRZ data:\n" +
+                "- Document Number (1-9 characters)\n" +
+                "- Date of Birth (YYMMDD)\n" +
+                "- Date of Expiry (YYMMDD)"
+            )
             return
         }
 
@@ -66,7 +71,7 @@ class MainViewModel @Inject constructor(
 
         viewModelScope.launch {
             // Use case handles validation and reading
-            val params = ReadEidCardUseCase.Params(tag, currentPin)
+            val params = ReadEidCardUseCase.Params(tag, currentMrzData)
             readEidCardUseCase(params)
                 .onSuccess { cardData ->
                     Timber.d("Card read successfully via use case")
@@ -90,7 +95,7 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Clears the PIN from memory for security.
+     * Clears the MRZ data from memory for security.
      */
     private fun clearPin() {
         _pin.value = ""

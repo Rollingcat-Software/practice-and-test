@@ -23,29 +23,31 @@ class EidRepositoryImpl @Inject constructor(
 ) : EidRepository {
 
     /**
-     * Reads card data from the NFC tag with PIN authentication.
+     * Reads card data from the NFC tag with MRZ-based BAC authentication.
      *
      * This method:
-     * 1. Validates PIN format
-     * 2. Calls NFC card reader
+     * 1. Validates MRZ data format
+     * 2. Calls NFC card reader with BAC authentication
      * 3. Transforms NfcResult to Result
      * 4. Handles errors appropriately
      *
      * @param tag The NFC tag detected by the system
-     * @param pin The 6-digit PIN for authentication
+     * @param pin MRZ data in format: documentNumber|dateOfBirth|dateOfExpiry
      * @return Result<CardData> containing the card data on success, or an error
      */
     override suspend fun readCard(tag: Tag, pin: String): Result<CardData> {
         return try {
-            // Validate PIN before attempting to read
+            // Validate MRZ data before attempting to read
             if (!validatePin(pin)) {
-                Timber.e("Invalid PIN format provided")
+                Timber.e("Invalid MRZ data format provided")
                 return Result.Error(
-                    IllegalArgumentException("PIN must be exactly 6 digits")
+                    IllegalArgumentException(
+                        "Invalid MRZ data. Format: documentNumber|dateOfBirth|dateOfExpiry (e.g., A12345678|900115|301231)"
+                    )
                 )
             }
 
-            Timber.d("Reading card with validated PIN...")
+            Timber.d("Reading card with validated MRZ data...")
 
             // Call NFC card reader
             when (val nfcResult = cardReader.readCard(tag, pin)) {
@@ -73,10 +75,10 @@ class EidRepositoryImpl @Inject constructor(
     }
 
     /**
-     * Validates if the provided PIN format is correct.
+     * Validates if the provided MRZ data format is correct.
      *
-     * @param pin The PIN to validate
-     * @return True if PIN is valid (6 digits), false otherwise
+     * @param pin The MRZ data to validate (format: docNo|dob|doe)
+     * @return True if MRZ data is valid, false otherwise
      */
     override fun validatePin(pin: String): Boolean {
         return pin.isValidPin()

@@ -26,6 +26,31 @@ import com.turkey.eidnfc.ui.components.LoadingSkeleton
 import com.turkey.eidnfc.ui.components.PulsingDotsIndicator
 
 /**
+ * MRZ data holder for UI state.
+ */
+data class MrzInputData(
+    val documentNumber: String = "",
+    val dateOfBirth: String = "",
+    val dateOfExpiry: String = ""
+) {
+    /**
+     * Converts to pipe-separated format for backward compatibility.
+     */
+    fun toFormattedString(): String {
+        return "$documentNumber|$dateOfBirth|$dateOfExpiry"
+    }
+
+    /**
+     * Checks if all required fields are filled.
+     */
+    fun isComplete(): Boolean {
+        return documentNumber.isNotBlank() &&
+                dateOfBirth.length == 6 &&
+                dateOfExpiry.length == 6
+    }
+}
+
+/**
  * Main screen of the Turkish eID NFC Reader app.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -87,13 +112,30 @@ fun MainScreen(
 }
 
 /**
- * Idle screen - shows instructions and PIN input with animations.
+ * Idle screen - shows instructions and MRZ input with animations.
  */
 @Composable
 fun IdleScreen(
     pin: String,
     onPinChanged: (String) -> Unit
 ) {
+    // Parse existing pin to MRZ data
+    val parts = pin.split("|")
+    var mrzData by remember {
+        mutableStateOf(
+            if (parts.size == 3) {
+                MrzInputData(parts[0], parts[1], parts[2])
+            } else {
+                MrzInputData()
+            }
+        )
+    }
+
+    // Update parent when MRZ data changes
+    LaunchedEffect(mrzData) {
+        onPinChanged(mrzData.toFormattedString())
+    }
+
     // Animated entrance for elements
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -103,10 +145,12 @@ fun IdleScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Spacer(modifier = Modifier.height(16.dp))
+
         // Animated NFC icon with scale and fade
         AnimatedVisibility(
             visible = visible,
@@ -116,12 +160,12 @@ fun IdleScreen(
             Icon(
                 imageVector = Icons.Default.Nfc,
                 contentDescription = "NFC Icon",
-                modifier = Modifier.size(120.dp),
+                modifier = Modifier.size(80.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Animated title with slide
         AnimatedVisibility(
@@ -136,7 +180,7 @@ fun IdleScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Animated subtitle
         AnimatedVisibility(
@@ -145,24 +189,24 @@ fun IdleScreen(
                     slideInVertically(initialOffsetY = { -20 }, animationSpec = tween(600, delayMillis = 200))
         ) {
             Text(
-                text = "Enter your 6-digit PIN and hold your ID card near the device",
-                style = MaterialTheme.typography.bodyLarge,
+                text = "Enter your MRZ data from the back of your ID card, then hold it near the device",
+                style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        // Animated PIN input field
+        // Animated MRZ input fields
         AnimatedVisibility(
             visible = visible,
             enter = fadeIn(animationSpec = tween(600, delayMillis = 300)) +
                     slideInVertically(initialOffsetY = { 20 }, animationSpec = tween(600, delayMillis = 300))
         ) {
-            PinInputField(
-                pin = pin,
-                onPinChanged = onPinChanged
+            MrzInputFields(
+                mrzData = mrzData,
+                onMrzDataChanged = { mrzData = it }
             )
         }
 
@@ -180,29 +224,193 @@ fun IdleScreen(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer
                 )
             ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = "Info",
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "Info",
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "MRZ Data Location",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Make sure NFC is enabled in your device settings",
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = "Find the MRZ data on the back of your Turkish ID card:\n" +
+                                "- Document Number: First 9 characters\n" +
+                                "- Date of Birth: YYMMDD format\n" +
+                                "- Date of Expiry: YYMMDD format",
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // NFC info card
+        AnimatedVisibility(
+            visible = visible,
+            enter = fadeIn(animationSpec = tween(600, delayMillis = 500)) +
+                    slideInVertically(initialOffsetY = { 20 }, animationSpec = tween(600, delayMillis = 500))
+        ) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (mrzData.isComplete()) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    }
+                )
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Nfc,
+                        contentDescription = "NFC",
+                        tint = if (mrzData.isComplete()) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = if (mrzData.isComplete()) {
+                            "Ready! Hold your ID card near the device"
+                        } else {
+                            "Fill in all MRZ fields to read your card"
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (mrzData.isComplete()) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
 /**
- * PIN input field with mask toggle.
+ * MRZ input fields for BAC authentication.
+ */
+@Composable
+fun MrzInputFields(
+    mrzData: MrzInputData,
+    onMrzDataChanged: (MrzInputData) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = "MRZ Authentication Data",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            // Document Number
+            OutlinedTextField(
+                value = mrzData.documentNumber,
+                onValueChange = { value ->
+                    // Allow alphanumeric characters, max 9 chars
+                    if (value.length <= 9 && value.all { it.isLetterOrDigit() }) {
+                        onMrzDataChanged(mrzData.copy(documentNumber = value.uppercase()))
+                    }
+                },
+                label = { Text("Document Number") },
+                placeholder = { Text("e.g., A12345678") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                modifier = Modifier.fillMaxWidth(),
+                supportingText = {
+                    Text("${mrzData.documentNumber.length}/9 characters")
+                },
+                isError = mrzData.documentNumber.isNotEmpty() && mrzData.documentNumber.length < 1
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Date of Birth
+            OutlinedTextField(
+                value = mrzData.dateOfBirth,
+                onValueChange = { value ->
+                    // Only digits, max 6
+                    if (value.length <= 6 && value.all { it.isDigit() }) {
+                        onMrzDataChanged(mrzData.copy(dateOfBirth = value))
+                    }
+                },
+                label = { Text("Date of Birth") },
+                placeholder = { Text("YYMMDD (e.g., 900115)") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth(),
+                supportingText = {
+                    val formatted = formatDatePreview(mrzData.dateOfBirth)
+                    Text(if (formatted != null) "Preview: $formatted" else "${mrzData.dateOfBirth.length}/6 digits")
+                },
+                isError = mrzData.dateOfBirth.isNotEmpty() && mrzData.dateOfBirth.length != 6
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Date of Expiry
+            OutlinedTextField(
+                value = mrzData.dateOfExpiry,
+                onValueChange = { value ->
+                    // Only digits, max 6
+                    if (value.length <= 6 && value.all { it.isDigit() }) {
+                        onMrzDataChanged(mrzData.copy(dateOfExpiry = value))
+                    }
+                },
+                label = { Text("Date of Expiry") },
+                placeholder = { Text("YYMMDD (e.g., 301231)") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth(),
+                supportingText = {
+                    val formatted = formatDatePreview(mrzData.dateOfExpiry)
+                    Text(if (formatted != null) "Preview: $formatted" else "${mrzData.dateOfExpiry.length}/6 digits")
+                },
+                isError = mrzData.dateOfExpiry.isNotEmpty() && mrzData.dateOfExpiry.length != 6
+            )
+        }
+    }
+}
+
+/**
+ * Formats YYMMDD date to human-readable format.
+ */
+private fun formatDatePreview(date: String): String? {
+    if (date.length != 6) return null
+    return try {
+        val yy = date.substring(0, 2)
+        val mm = date.substring(2, 4)
+        val dd = date.substring(4, 6)
+        val year = if (yy.toInt() > 50) "19$yy" else "20$yy"
+        "$dd/$mm/$year"
+    } catch (e: Exception) {
+        null
+    }
+}
+
+/**
+ * Legacy PIN input field with mask toggle (kept for backward compatibility).
  */
 @Composable
 fun PinInputField(

@@ -109,9 +109,23 @@ object Dg1Parser {
     private fun parseMrz(mrz: String): PersonalData? {
         try {
             // Remove any whitespace and split into lines
-            val lines = mrz.replace(" ", "").replace("\r", "").split("\n").filter { it.isNotEmpty() }
+            val cleanMrz = mrz.replace(" ", "").replace("\r", "")
+            var lines = cleanMrz.split("\n").filter { it.isNotEmpty() }
 
-            Timber.d("MRZ lines: ${lines.size}")
+            Timber.d("MRZ raw length: ${cleanMrz.length}")
+            Timber.d("MRZ lines from split: ${lines.size}")
+
+            // If we got a single line of 90 chars, it's TD1 format without line breaks
+            if (lines.size == 1 && lines[0].length >= 90) {
+                val singleLine = lines[0]
+                Timber.d("Single line MRZ detected (${singleLine.length} chars), splitting into 3 lines of 30")
+                lines = listOf(
+                    singleLine.substring(0, 30),
+                    singleLine.substring(30, 60),
+                    singleLine.substring(60, minOf(90, singleLine.length))
+                )
+            }
+
             lines.forEachIndexed { index, line ->
                 Timber.d("Line $index: $line (${line.length} chars)")
             }

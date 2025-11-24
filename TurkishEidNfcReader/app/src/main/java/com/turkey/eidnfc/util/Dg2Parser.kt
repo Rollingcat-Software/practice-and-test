@@ -4,8 +4,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import timber.log.Timber
 import java.io.ByteArrayInputStream
-import javax.imageio.ImageIO
-import java.io.ByteArrayOutputStream
 
 /**
  * Parser for DG2 (Data Group 2) from Turkish eID card.
@@ -28,9 +26,19 @@ object Dg2Parser {
     private const val TAG_BIOMETRIC_DATA_BLOCK = 0x5F2E
     private const val TAG_IMAGE_DATA = 0x7F2E
 
-    // JPEG2000 magic bytes
-    private val JPEG2000_MAGIC_BYTES = byteArrayOf(
+    // JPEG2000 JP2 container magic bytes (full format)
+    private val JPEG2000_JP2_MAGIC = byteArrayOf(
         0x00, 0x00, 0x00, 0x0C, 0x6A, 0x50, 0x20, 0x20
+    )
+
+    // JPEG2000 codestream magic bytes (.j2k, .j2c format) - FF 4F FF 51
+    private val JPEG2000_CODESTREAM_MAGIC = byteArrayOf(
+        0xFF.toByte(), 0x4F, 0xFF.toByte(), 0x51
+    )
+
+    // Regular JPEG magic bytes - FF D8 FF
+    private val JPEG_MAGIC = byteArrayOf(
+        0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte()
     )
 
     /**
@@ -89,16 +97,22 @@ object Dg2Parser {
 
                 when (tag) {
                     TAG_BIOMETRIC_DATA_BLOCK, TAG_IMAGE_DATA -> {
-                        // This should contain the JPEG2000 data
+                        // This should contain the image data
                         val imageBytes = ByteArray(length)
                         stream.read(imageBytes)
 
-                        // Check if it's JPEG2000
-                        if (isJpeg2000(imageBytes)) {
-                            Timber.d("Found JPEG2000 image data")
+                        // Check if it's a supported image format
+                        val imageType = detectImageType(imageBytes)
+                        if (imageType != null) {
+                            Timber.d("Found $imageType image data")
                             return imageBytes
                         } else {
-                            Timber.w("Data block is not JPEG2000, continuing search...")
+                            Timber.w("Data block is not a recognized image format, continuing search...")
+                            // Try to find image within this block
+                            val innerImage = findImageInRawData(imageBytes)
+                            if (innerImage != null) {
+                                return innerImage
+                            }
                         }
                     }
                     else -> {
@@ -122,9 +136,9 @@ object Dg2Parser {
                 }
             }
 
-            // If we haven't found it in the structure, search for JPEG2000 magic bytes
-            Timber.d("Searching for JPEG2000 magic bytes in raw data...")
-            return findJpeg2000InRawData(data)
+            // If we haven't found it in the structure, search for image magic bytes
+            Timber.d("Searching for image magic bytes in raw data...")
+            return findImageInRawData(data)
 
         } catch (e: Exception) {
             Timber.e(e, "Failed to extract image data")
@@ -133,19 +147,36 @@ object Dg2Parser {
     }
 
     /**
-     * Searches for JPEG2000 magic bytes in raw data.
+     * Searches for any supported image format magic bytes in raw data.
      */
-    private fun findJpeg2000InRawData(data: ByteArray): ByteArray? {
-        for (i in 0 until data.size - JPEG2000_MAGIC_BYTES.size) {
+    private fun findImageInRawData(data: ByteArray): ByteArray? {
+        // Search for JPEG2000 JP2 container
+        findMagicBytes(data, JPEG2000_JP2_MAGIC, "JPEG2000 JP2")?.let { return it }
+
+        // Search for JPEG2000 codestream
+        findMagicBytes(data, JPEG2000_CODESTREAM_MAGIC, "JPEG2000 codestream")?.let { return it }
+
+        // Search for regular JPEG
+        findMagicBytes(data, JPEG_MAGIC, "JPEG")?.let { return it }
+
+        Timber.w("No recognized image format found in data")
+        return null
+    }
+
+    /**
+     * Searches for specific magic bytes in data.
+     */
+    private fun findMagicBytes(data: ByteArray, magic: ByteArray, formatName: String): ByteArray? {
+        for (i in 0 until data.size - magic.size) {
             var match = true
-            for (j in JPEG2000_MAGIC_BYTES.indices) {
-                if (data[i + j] != JPEG2000_MAGIC_BYTES[j]) {
+            for (j in magic.indices) {
+                if (data[i + j] != magic[j]) {
                     match = false
                     break
                 }
             }
             if (match) {
-                Timber.d("Found JPEG2000 magic bytes at offset $i")
+                Timber.d("Found $formatName magic bytes at offset $i")
                 return data.copyOfRange(i, data.size)
             }
         }
@@ -153,16 +184,37 @@ object Dg2Parser {
     }
 
     /**
-     * Checks if data starts with JPEG2000 magic bytes.
+     * Detects the image type from data.
+     * Returns format name if recognized, null otherwise.
      */
-    private fun isJpeg2000(data: ByteArray): Boolean {
-        if (data.size < JPEG2000_MAGIC_BYTES.size) {
-            return false
+    private fun detectImageType(data: ByteArray): String? {
+        if (data.size < 4) return null
+
+        // Check JPEG2000 JP2 container
+        if (startsWith(data, JPEG2000_JP2_MAGIC)) {
+            return "JPEG2000 JP2"
         }
-        for (i in JPEG2000_MAGIC_BYTES.indices) {
-            if (data[i] != JPEG2000_MAGIC_BYTES[i]) {
-                return false
-            }
+
+        // Check JPEG2000 codestream
+        if (startsWith(data, JPEG2000_CODESTREAM_MAGIC)) {
+            return "JPEG2000 codestream"
+        }
+
+        // Check regular JPEG
+        if (startsWith(data, JPEG_MAGIC)) {
+            return "JPEG"
+        }
+
+        return null
+    }
+
+    /**
+     * Checks if data starts with the given bytes.
+     */
+    private fun startsWith(data: ByteArray, prefix: ByteArray): Boolean {
+        if (data.size < prefix.size) return false
+        for (i in prefix.indices) {
+            if (data[i] != prefix[i]) return false
         }
         return true
     }
@@ -170,37 +222,27 @@ object Dg2Parser {
     /**
      * Decodes JPEG2000 image data to Android Bitmap.
      *
-     * This uses JAI ImageIO library for JPEG2000 decoding.
+     * Note: Android doesn't natively support JPEG2000.
+     * This attempts to decode using BitmapFactory first (for regular JPEG),
+     * then falls back to alternative methods.
      */
     private fun decodeJpeg2000(imageData: ByteArray): Bitmap? {
         return try {
-            Timber.d("Attempting to decode JPEG2000 image...")
+            Timber.d("Attempting to decode image (${imageData.size} bytes)...")
 
-            // Try using JAI ImageIO for JPEG2000
-            val inputStream = ByteArrayInputStream(imageData)
-            val bufferedImage = ImageIO.read(inputStream)
+            // Try using BitmapFactory first (works for JPEG, PNG, etc.)
+            val bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.size)
 
-            if (bufferedImage == null) {
-                Timber.e("ImageIO.read returned null")
-                return tryAlternativeDecoding(imageData)
+            if (bitmap != null) {
+                Timber.d("Successfully decoded image: ${bitmap.width}x${bitmap.height}")
+                return bitmap
             }
 
-            // Convert BufferedImage to Android Bitmap
-            val width = bufferedImage.width
-            val height = bufferedImage.height
-            Timber.d("Decoded image: ${width}x${height}")
-
-            val pixels = IntArray(width * height)
-            bufferedImage.getRGB(0, 0, width, height, pixels, 0, width)
-
-            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-            bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
-
-            Timber.d("Successfully decoded JPEG2000 to Bitmap")
-            bitmap
+            Timber.w("BitmapFactory.decodeByteArray returned null, trying alternative methods")
+            tryAlternativeDecoding(imageData)
 
         } catch (e: Exception) {
-            Timber.e(e, "Failed to decode JPEG2000 with JAI ImageIO")
+            Timber.e(e, "Failed to decode image")
             tryAlternativeDecoding(imageData)
         }
     }
