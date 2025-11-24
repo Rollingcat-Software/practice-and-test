@@ -3,13 +3,12 @@ package com.turkey.eidnfc.ui
 import android.nfc.Tag
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.turkey.eidnfc.data.repository.EidRepository
 import com.turkey.eidnfc.domain.model.CardData
-import com.turkey.eidnfc.domain.model.Result
 import com.turkey.eidnfc.domain.model.onError
 import com.turkey.eidnfc.domain.model.onSuccess
+import com.turkey.eidnfc.domain.usecase.ReadEidCardUseCase
+import com.turkey.eidnfc.domain.usecase.ValidatePinUseCase
 import com.turkey.eidnfc.util.Constants
-import com.turkey.eidnfc.util.isValidPin
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,12 +20,16 @@ import javax.inject.Inject
 /**
  * ViewModel for the main screen.
  *
- * Manages UI state and coordinates NFC card reading operations through the repository layer.
- * This separation allows for better testability and follows clean architecture principles.
+ * Manages UI state and coordinates NFC card reading operations through use cases.
+ * This follows Clean Architecture by separating:
+ * - Presentation (ViewModel)
+ * - Domain (Use Cases)
+ * - Data (Repository)
  */
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val repository: EidRepository
+    private val readEidCardUseCase: ReadEidCardUseCase,
+    private val validatePinUseCase: ValidatePinUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
@@ -47,12 +50,13 @@ class MainViewModel @Inject constructor(
 
     /**
      * Handles NFC tag detection.
+     * Uses ReadEidCardUseCase to encapsulate business logic.
      */
     fun onTagDetected(tag: Tag) {
         val currentPin = _pin.value
 
-        // Validate PIN using extension function
-        if (!currentPin.isValidPin()) {
+        // Quick validation for immediate UI feedback
+        if (!ValidatePinUseCase.validateQuick(currentPin)) {
             _uiState.value = UiState.Error("Please enter a valid 6-digit PIN")
             return
         }
@@ -61,9 +65,11 @@ class MainViewModel @Inject constructor(
         _uiState.value = UiState.Reading
 
         viewModelScope.launch {
-            repository.readCard(tag, currentPin)
+            // Use case handles validation and reading
+            val params = ReadEidCardUseCase.Params(tag, currentPin)
+            readEidCardUseCase(params)
                 .onSuccess { cardData ->
-                    Timber.d("Card read successfully")
+                    Timber.d("Card read successfully via use case")
                     _uiState.value = UiState.Success(cardData)
                     // Clear PIN for security
                     clearPin()
