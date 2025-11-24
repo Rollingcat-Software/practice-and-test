@@ -8,21 +8,26 @@ import com.turkey.eidnfc.domain.model.CardData
 import com.turkey.eidnfc.domain.model.NfcError
 import com.turkey.eidnfc.domain.model.NfcResult
 import com.turkey.eidnfc.domain.model.toUserMessage
+import com.turkey.eidnfc.util.Constants
+import com.turkey.eidnfc.util.isValidPin
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import javax.inject.Inject
 
 /**
  * ViewModel for the main screen.
  *
  * Manages UI state and coordinates NFC card reading operations.
  */
-class MainViewModel : ViewModel() {
-
-    private val cardReader = NfcCardReader()
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    private val cardReader: NfcCardReader
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
@@ -32,10 +37,10 @@ class MainViewModel : ViewModel() {
 
     /**
      * Updates the PIN value.
+     * Only allows digits and max 6 characters.
      */
     fun onPinChanged(newPin: String) {
-        // Only allow digits and max 6 characters
-        if (newPin.all { it.isDigit() } && newPin.length <= 6) {
+        if (newPin.all { it.isDigit() } && newPin.length <= Constants.Nfc.PIN_LENGTH) {
             _pin.value = newPin
         }
     }
@@ -46,8 +51,9 @@ class MainViewModel : ViewModel() {
     fun onTagDetected(tag: Tag) {
         val currentPin = _pin.value
 
-        if (currentPin.length != 6) {
-            _uiState.value = UiState.Error("Please enter a 6-digit PIN")
+        // Validate PIN using extension function
+        if (!currentPin.isValidPin()) {
+            _uiState.value = UiState.Error("Please enter a valid 6-digit PIN")
             return
         }
 
