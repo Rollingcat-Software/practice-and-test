@@ -15,8 +15,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -326,6 +328,9 @@ fun MrzInputFields(
     mrzData: MrzInputData,
     onMrzDataChanged: (MrzInputData) -> Unit
 ) {
+    val clipboardManager = LocalClipboardManager.current
+    var showCopySnackbar by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -336,11 +341,115 @@ fun MrzInputFields(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            Text(
-                text = "MRZ Authentication Data",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "MRZ Authentication Data",
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                // Action buttons (Copy and Clear)
+                if (mrzData.isComplete()) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        // Copy button
+                        TextButton(
+                            onClick = {
+                                clipboardManager.setText(AnnotatedString(mrzData.toFormattedString()))
+                                showCopySnackbar = true
+                            },
+                            modifier = Modifier.semantics {
+                                contentDescription = "Copy MRZ data to clipboard button"
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Copy")
+                        }
+
+                        // Clear All button
+                        TextButton(
+                            onClick = {
+                                onMrzDataChanged(MrzInputData())
+                            },
+                            modifier = Modifier.semantics {
+                                contentDescription = "Clear all MRZ fields button"
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Clear")
+                        }
+                    }
+                } else if (mrzData.documentNumber.isNotEmpty() ||
+                    mrzData.dateOfBirth.isNotEmpty() ||
+                    mrzData.dateOfExpiry.isNotEmpty()) {
+                    // Show only clear if incomplete
+                    TextButton(
+                        onClick = {
+                            onMrzDataChanged(MrzInputData())
+                        },
+                        modifier = Modifier.semantics {
+                            contentDescription = "Clear all MRZ fields button"
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Clear")
+                    }
+                }
+            }
+
+            // Success feedback for copy action
+            if (showCopySnackbar) {
+                LaunchedEffect(Unit) {
+                    kotlinx.coroutines.delay(2000)
+                    showCopySnackbar = false
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "MRZ data copied to clipboard",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Document Number
             OutlinedTextField(
@@ -355,6 +464,20 @@ fun MrzInputFields(
                 placeholder = { Text("e.g., A12345678") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                trailingIcon = {
+                    if (mrzData.documentNumber.isNotEmpty()) {
+                        IconButton(
+                            onClick = {
+                                onMrzDataChanged(mrzData.copy(documentNumber = ""))
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Clear document number"
+                            )
+                        }
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .semantics {
@@ -381,6 +504,20 @@ fun MrzInputFields(
                 placeholder = { Text("YYMMDD (e.g., 900115)") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                trailingIcon = {
+                    if (mrzData.dateOfBirth.isNotEmpty()) {
+                        IconButton(
+                            onClick = {
+                                onMrzDataChanged(mrzData.copy(dateOfBirth = ""))
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Clear date of birth"
+                            )
+                        }
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .semantics {
@@ -389,7 +526,7 @@ fun MrzInputFields(
                 supportingText = {
                     val formatted = formatDatePreview(mrzData.dateOfBirth)
                     when {
-                        formatted != null -> Text("Preview: $formatted")
+                        formatted != null -> Text("Preview: $formatted", color = MaterialTheme.colorScheme.primary)
                         mrzData.dateOfBirth.length == 6 && !isValidDate(mrzData.dateOfBirth) ->
                             Text("Invalid date. Check month (01-12) and day (01-31)", color = MaterialTheme.colorScheme.error)
                         else -> Text("${mrzData.dateOfBirth.length}/6 digits")
@@ -414,6 +551,20 @@ fun MrzInputFields(
                 placeholder = { Text("YYMMDD (e.g., 301231)") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                trailingIcon = {
+                    if (mrzData.dateOfExpiry.isNotEmpty()) {
+                        IconButton(
+                            onClick = {
+                                onMrzDataChanged(mrzData.copy(dateOfExpiry = ""))
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Clear date of expiry"
+                            )
+                        }
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .semantics {
@@ -422,7 +573,7 @@ fun MrzInputFields(
                 supportingText = {
                     val formatted = formatDatePreview(mrzData.dateOfExpiry)
                     when {
-                        formatted != null -> Text("Preview: $formatted")
+                        formatted != null -> Text("Preview: $formatted", color = MaterialTheme.colorScheme.primary)
                         mrzData.dateOfExpiry.length == 6 && !isValidDate(mrzData.dateOfExpiry) ->
                             Text("Invalid date. Check month (01-12) and day (01-31)", color = MaterialTheme.colorScheme.error)
                         else -> Text("${mrzData.dateOfExpiry.length}/6 digits")
@@ -649,11 +800,45 @@ fun SuccessScreen(
             }
         }
 
-        // Animated reset button
+        // Helpful tip about MRZ data preservation
         AnimatedVisibility(
             visible = visible,
             enter = fadeIn(animationSpec = tween(400, delayMillis = 350)) +
                     slideInVertically(initialOffsetY = { 20 }, animationSpec = tween(400, delayMillis = 350))
+        ) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Your MRZ data is saved. You can read another card without re-entering.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Animated reset button
+        AnimatedVisibility(
+            visible = visible,
+            enter = fadeIn(animationSpec = tween(400, delayMillis = 400)) +
+                    slideInVertically(initialOffsetY = { 20 }, animationSpec = tween(400, delayMillis = 400))
         ) {
             Button(
                 onClick = onResetClick,

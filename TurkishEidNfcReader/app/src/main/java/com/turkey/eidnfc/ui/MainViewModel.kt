@@ -78,8 +78,8 @@ class MainViewModel @Inject constructor(
                 .onSuccess { cardData ->
                     Timber.d("Card read successfully via use case")
                     _uiState.value = UiState.Success(cardData)
-                    // Clear PIN for security
-                    clearPin()
+                    // Note: MRZ data is NOT cleared to allow reuse for multiple reads
+                    // Users can manually clear using the Clear button if desired
                 }
                 .onError { exception ->
                     Timber.e("Card reading failed: ${exception.message}")
@@ -90,10 +90,11 @@ class MainViewModel @Inject constructor(
 
     /**
      * Resets the UI state to idle.
+     * Note: Does not clear MRZ data to allow reuse.
      */
     fun resetState() {
         _uiState.value = UiState.Idle
-        clearPin()
+        // MRZ data is intentionally NOT cleared for reuse
     }
 
     /**
