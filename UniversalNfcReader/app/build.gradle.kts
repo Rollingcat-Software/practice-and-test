@@ -84,6 +84,18 @@ dependencies {
     // Biometric Authentication
     implementation(libs.androidx.biometric)
 
+    // CameraX for MRZ scanning
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+
+    // ML Kit Text Recognition for MRZ OCR
+    implementation(libs.mlkit.text.recognition)
+
+    // Accompanist Permissions
+    implementation(libs.accompanist.permissions)
+
     // Unit Testing
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

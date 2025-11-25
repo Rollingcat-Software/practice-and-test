@@ -5,10 +5,21 @@
     <!-- NFC Permission -->
     <uses-permission android:name="android.permission.NFC" />
 
+    <!-- Camera Permission for MRZ scanning -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
     <!-- NFC Feature Declaration -->
     <uses-feature
         android:name="android.hardware.nfc"
         android:required="true" />
+
+    <!-- Camera Feature (optional - for MRZ OCR) -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
 
     <application
         android:name=".UniversalNfcReaderApplication"

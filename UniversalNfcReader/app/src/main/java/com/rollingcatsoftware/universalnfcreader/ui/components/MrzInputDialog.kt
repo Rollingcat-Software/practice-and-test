@@ -7,17 +7,20 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -44,6 +47,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.rollingcatsoftware.universalnfcreader.domain.model.AuthenticationData
+import com.rollingcatsoftware.universalnfcreader.ui.scanner.MrzScannerScreen
+import com.rollingcatsoftware.universalnfcreader.ui.scanner.ScannedMrzData
 
 /**
  * Dialog for entering MRZ (Machine Readable Zone) data for BAC authentication.
@@ -71,11 +76,29 @@ fun MrzInputDialog(
     var dateOfBirthError by remember { mutableStateOf<String?>(null) }
     var dateOfExpiryError by remember { mutableStateOf<String?>(null) }
 
+    var showScanner by remember { mutableStateOf(false) }
+
     val focusRequester = remember { FocusRequester() }
 
     // Request focus on first field
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
+    }
+
+    // MRZ Scanner Dialog
+    if (showScanner) {
+        MrzScannerScreen(
+            onMrzScanned = { scannedData ->
+                documentNumber = scannedData.documentNumber
+                dateOfBirth = scannedData.dateOfBirth
+                dateOfExpiry = scannedData.dateOfExpiry
+                documentNumberError = null
+                dateOfBirthError = null
+                dateOfExpiryError = null
+                showScanner = false
+            },
+            onDismiss = { showScanner = false }
+        )
     }
 
     fun validateAndSubmit() {
@@ -163,7 +186,10 @@ fun MrzInputDialog(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Badge,
                             contentDescription = null,
@@ -185,8 +211,24 @@ fun MrzInputDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // Scan MRZ Button
+                FilledTonalButton(
+                    onClick = { showScanner = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CameraAlt,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Scan MRZ with Camera")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 Text(
-                    text = "Enter the MRZ data from the back of your ID card:",
+                    text = "Or enter the MRZ data manually:",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

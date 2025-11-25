@@ -652,12 +652,12 @@ private fun ErrorContent(
  */
 private fun getErrorGuidance(error: CardError): String {
     return when (error) {
-        is CardError.TagLost -> """
+        is CardError.ConnectionLost -> """
             ✓ Hold your card steady near the device
             ✓ Keep the card in place until reading completes
             ✓ Try different positioning
         """.trimIndent()
-        is CardError.ReadError -> """
+        is CardError.IoError -> """
             ✓ Remove any phone cases that may interfere
             ✓ Clean the card surface
             ✓ Try a different card position
@@ -679,6 +679,16 @@ private fun getErrorGuidance(error: CardError): String {
         is CardError.NfcDisabled -> """
             ✓ Enable NFC in device settings
             ✓ Go to Settings → Connected devices → NFC
+        """.trimIndent()
+        is CardError.CardBlocked -> """
+            ✓ Card has been locked due to too many failed attempts
+            ✓ You may need to contact the card issuer
+            ✓ Some cards can be unblocked with a PUK code
+        """.trimIndent()
+        is CardError.Timeout -> """
+            ✓ Keep the card near the device longer
+            ✓ Try again with card held steady
+            ✓ Ensure card is properly positioned
         """.trimIndent()
         else -> """
             ✓ Try again with the card held steady

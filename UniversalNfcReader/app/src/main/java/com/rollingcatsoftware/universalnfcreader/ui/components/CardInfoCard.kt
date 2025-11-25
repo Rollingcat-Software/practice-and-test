@@ -52,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardData
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardType
@@ -556,6 +557,14 @@ private fun Iso15693Content(data: Iso15693Data) {
 @Composable
 private fun TurkishEidContent(data: TurkishEidData) {
     val clipboardManager = LocalClipboardManager.current
+    var showPhotoPopup by remember { mutableStateOf(false) }
+
+    // Photo Popup Viewer
+    ImagePopupViewer(
+        bitmap = data.photo,
+        isVisible = showPhotoPopup,
+        onDismiss = { showPhotoPopup = false }
+    )
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (data.bacSuccessful) {
@@ -565,16 +574,18 @@ private fun TurkishEidContent(data: TurkishEidData) {
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.Top
             ) {
-                // Photo
+                // Photo - Clickable to open popup
                 data.photo?.let { bitmap ->
                     Surface(
-                        modifier = Modifier.size(100.dp),
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clickable { showPhotoPopup = true },
                         shape = RoundedCornerShape(8.dp),
                         shadowElevation = 2.dp
                     ) {
                         Image(
                             bitmap = bitmap.asImageBitmap(),
-                            contentDescription = "ID Photo",
+                            contentDescription = "ID Photo - Tap to enlarge",
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp)),
