@@ -46,9 +46,11 @@ class MifareUltralightReader : BaseCardReader() {
 
         if (ultralight == null) {
             Log.e(TAG, "Failed to get MifareUltralight from tag")
-            return@withContext Result.error(CardError.UnsupportedCard(
-                detectedTechnologies = basicInfo.technologies
-            ))
+            return@withContext Result.error(
+                CardError.UnsupportedCard(
+                    detectedTechnologies = basicInfo.technologies
+                )
+            )
         }
 
         try {
@@ -134,6 +136,7 @@ class MifareUltralightReader : BaseCardReader() {
                 // Try to detect NTAG by reading signature or version
                 tryDetectNtag(ultralight) ?: UltralightType.ULTRALIGHT
             }
+
             MifareUltralight.TYPE_ULTRALIGHT_C -> UltralightType.ULTRALIGHT_C
             else -> UltralightType.UNKNOWN
         }

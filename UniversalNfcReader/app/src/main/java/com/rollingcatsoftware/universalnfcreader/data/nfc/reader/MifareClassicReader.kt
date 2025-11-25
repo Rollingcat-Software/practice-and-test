@@ -13,7 +13,6 @@ import com.rollingcatsoftware.universalnfcreader.domain.model.MifareClassicData
 import com.rollingcatsoftware.universalnfcreader.domain.model.Result
 import com.rollingcatsoftware.universalnfcreader.domain.model.SectorData
 import com.rollingcatsoftware.universalnfcreader.domain.model.StudentCardData
-import com.rollingcatsoftware.universalnfcreader.util.Constants
 import com.rollingcatsoftware.universalnfcreader.util.toHexString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -35,12 +34,47 @@ class MifareClassicReader : BaseCardReader() {
 
         // Common default keys to try
         private val DEFAULT_KEYS = listOf(
-            byteArrayOf(0xFF.toByte(), 0xFF.toByte(), 0xFF.toByte(), 0xFF.toByte(), 0xFF.toByte(), 0xFF.toByte()), // Factory default
+            byteArrayOf(
+                0xFF.toByte(),
+                0xFF.toByte(),
+                0xFF.toByte(),
+                0xFF.toByte(),
+                0xFF.toByte(),
+                0xFF.toByte()
+            ), // Factory default
             byteArrayOf(0x00, 0x00, 0x00, 0x00, 0x00, 0x00), // All zeros
-            byteArrayOf(0xA0.toByte(), 0xA1.toByte(), 0xA2.toByte(), 0xA3.toByte(), 0xA4.toByte(), 0xA5.toByte()), // MAD key
-            byteArrayOf(0xB0.toByte(), 0xB1.toByte(), 0xB2.toByte(), 0xB3.toByte(), 0xB4.toByte(), 0xB5.toByte()), // Alternative
-            byteArrayOf(0xD3.toByte(), 0xF7.toByte(), 0xD3.toByte(), 0xF7.toByte(), 0xD3.toByte(), 0xF7.toByte()), // NFC Forum
-            byteArrayOf(0x4D.toByte(), 0x3A.toByte(), 0x99.toByte(), 0xC3.toByte(), 0x51.toByte(), 0xDD.toByte())  // Common
+            byteArrayOf(
+                0xA0.toByte(),
+                0xA1.toByte(),
+                0xA2.toByte(),
+                0xA3.toByte(),
+                0xA4.toByte(),
+                0xA5.toByte()
+            ), // MAD key
+            byteArrayOf(
+                0xB0.toByte(),
+                0xB1.toByte(),
+                0xB2.toByte(),
+                0xB3.toByte(),
+                0xB4.toByte(),
+                0xB5.toByte()
+            ), // Alternative
+            byteArrayOf(
+                0xD3.toByte(),
+                0xF7.toByte(),
+                0xD3.toByte(),
+                0xF7.toByte(),
+                0xD3.toByte(),
+                0xF7.toByte()
+            ), // NFC Forum
+            byteArrayOf(
+                0x4D.toByte(),
+                0x3A.toByte(),
+                0x99.toByte(),
+                0xC3.toByte(),
+                0x51.toByte(),
+                0xDD.toByte()
+            )  // Common
         )
     }
 
@@ -58,9 +92,11 @@ class MifareClassicReader : BaseCardReader() {
 
         if (mifare == null) {
             Log.e(TAG, "Failed to get MifareClassic from tag")
-            return@withContext Result.error(CardError.UnsupportedCard(
-                detectedTechnologies = basicInfo.technologies
-            ))
+            return@withContext Result.error(
+                CardError.UnsupportedCard(
+                    detectedTechnologies = basicInfo.technologies
+                )
+            )
         }
 
         // Get NfcA for SAK and ATQA values
@@ -194,7 +230,10 @@ class MifareClassicReader : BaseCardReader() {
                     val c = b.toInt() and 0xFF
                     if (c in 0x20..0x7E) c.toChar() else '.'
                 }.joinToString("")
-                Log.d(TAG, "Sector $sectorIndex Block $blockIndex: $hexString | ASCII: $asciiString")
+                Log.d(
+                    TAG,
+                    "Sector $sectorIndex Block $blockIndex: $hexString | ASCII: $asciiString"
+                )
 
                 // Last block in sector contains access bits (bytes 6-9)
                 if (blockOffset == blocksInSector - 1) {
@@ -231,7 +270,8 @@ class MifareClassicReader : BaseCardReader() {
                     if (upperText.contains("UNIV") ||
                         upperText.contains("STUDENT") ||
                         upperText.contains("OGRENCI") ||
-                        upperText.contains("KIMLIK")) {
+                        upperText.contains("KIMLIK")
+                    ) {
                         return true
                     }
                 }
@@ -261,7 +301,8 @@ class MifareClassicReader : BaseCardReader() {
                     when {
                         text.matches(Regex("\\d{7,12}")) -> studentId = text
                         text.contains("Üniversite", ignoreCase = true) ||
-                        text.contains("University", ignoreCase = true) -> universityName = text
+                                text.contains("University", ignoreCase = true) -> universityName =
+                            text
                     }
                 }
             }
@@ -337,6 +378,7 @@ class MifareClassicReader : BaseCardReader() {
                 val authenticated = when (keyData.keyType) {
                     AuthenticationData.MifareKeyData.MifareKeyType.KEY_A ->
                         mifare.authenticateSectorWithKeyA(sectorIndex, key)
+
                     AuthenticationData.MifareKeyData.MifareKeyType.KEY_B ->
                         mifare.authenticateSectorWithKeyB(sectorIndex, key)
                 }
@@ -347,35 +389,42 @@ class MifareClassicReader : BaseCardReader() {
                     val blocks = (0 until blocksInSector).map { offset ->
                         mifare.readBlock(firstBlock + offset)
                     }
-                    sectorsRead.add(SectorData(
-                        sectorNumber = sectorIndex,
-                        blocks = blocks,
-                        keyType = if (keyData.keyType == AuthenticationData.MifareKeyData.MifareKeyType.KEY_A)
-                            SectorData.KeyType.KEY_A else SectorData.KeyType.KEY_B,
-                        accessBits = blocks.lastOrNull()?.copyOfRange(6, 10)
-                    ))
+                    sectorsRead.add(
+                        SectorData(
+                            sectorNumber = sectorIndex,
+                            blocks = blocks,
+                            keyType = if (keyData.keyType == AuthenticationData.MifareKeyData.MifareKeyType.KEY_A)
+                                SectorData.KeyType.KEY_A else SectorData.KeyType.KEY_B,
+                            accessBits = blocks.lastOrNull()?.copyOfRange(6, 10)
+                        )
+                    )
                 }
             }
 
-            Result.success(MifareClassicData(
-                uid = basicInfo.uid.toHexString(),
-                cardType = CardType.MIFARE_CLASSIC_1K,
-                readTimestamp = System.currentTimeMillis(),
-                technologies = basicInfo.technologies.map { it.substringAfterLast('.') },
-                rawData = buildRawDataMap(sectorsRead),
-                sectorCount = mifare.sectorCount,
-                blockCount = mifare.blockCount,
-                size = mifare.size,
-                sectorsRead = sectorsRead,
-                accessibleSectors = sectorsRead.size
-            ))
+            Result.success(
+                MifareClassicData(
+                    uid = basicInfo.uid.toHexString(),
+                    cardType = CardType.MIFARE_CLASSIC_1K,
+                    readTimestamp = System.currentTimeMillis(),
+                    technologies = basicInfo.technologies.map { it.substringAfterLast('.') },
+                    rawData = buildRawDataMap(sectorsRead),
+                    sectorCount = mifare.sectorCount,
+                    blockCount = mifare.blockCount,
+                    size = mifare.size,
+                    sectorsRead = sectorsRead,
+                    accessibleSectors = sectorsRead.size
+                )
+            )
 
         } catch (e: Exception) {
             Log.e(TAG, "Error with custom key: ${e.message}")
             Result.error(CardError.AuthenticationFailed())
         } finally {
             keyData.clear()
-            try { mifare.close() } catch (_: Exception) {}
+            try {
+                mifare.close()
+            } catch (_: Exception) {
+            }
         }
     }
 }

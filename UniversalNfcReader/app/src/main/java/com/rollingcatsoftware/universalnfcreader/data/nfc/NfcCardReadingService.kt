@@ -92,6 +92,7 @@ class NfcCardReadingService @Inject constructor(
                     Log.d(TAG, "Card read successful: ${result.data.uid}")
                     CardReadResult.Success(result.data)
                 }
+
                 is Result.Error -> {
                     Log.e(TAG, "Card read failed: ${result.error.message}")
                     CardReadResult.Failure(cardType, result.error)
@@ -138,6 +139,7 @@ class NfcCardReadingService @Inject constructor(
                     Log.d(TAG, "Authenticated read successful: ${result.data.uid}")
                     CardReadResult.Success(result.data)
                 }
+
                 is Result.Error -> {
                     Log.e(TAG, "Authenticated read failed: ${result.error.message}")
                     CardReadResult.Failure(cardType, result.error)
@@ -188,9 +190,11 @@ class NfcCardReadingService @Inject constructor(
             CardType.MIFARE_CLASSIC_1K,
             CardType.MIFARE_CLASSIC_4K,
             CardType.STUDENT_CARD_CLASSIC -> AuthenticationType.MIFARE_KEY
+
             CardType.MIFARE_DESFIRE,
             CardType.ISTANBULKART,
             CardType.STUDENT_CARD_DESFIRE -> AuthenticationType.DESFIRE_KEY
+
             CardType.MIFARE_ULTRALIGHT_C -> AuthenticationType.THREE_DES
             else -> AuthenticationType.UNKNOWN
         }

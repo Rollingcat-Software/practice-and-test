@@ -104,8 +104,8 @@ class MrzAnalyzer(
             .map { line -> line.replace(" ", "").trim() }
             .filter { line ->
                 line.length >= 15 &&
-                    (line.contains("<") || line.any { it.isDigit() }) &&
-                    line.count { it.isLetterOrDigit() || it == '<' } > line.length * 0.7
+                        (line.contains("<") || line.any { it.isDigit() }) &&
+                        line.count { it.isLetterOrDigit() || it == '<' } > line.length * 0.7
             }
             .take(3)
 
@@ -245,7 +245,10 @@ class MrzAnalyzer(
             natPart.all { it.isLetter() || it == '<' }
         } else false
 
-        Log.d(TAG, "Line2 check - DOB: $potentialDob, DOE: $potentialDoe, Sex: $sexChar, Nat: $hasNationality")
+        Log.d(
+            TAG,
+            "Line2 check - DOB: $potentialDob, DOE: $potentialDoe, Sex: $sexChar, Nat: $hasNationality"
+        )
 
         return potentialDob != null && potentialDoe != null && (validSex || hasNationality)
     }
@@ -283,7 +286,8 @@ class MrzAnalyzer(
         for (line in mrzLines) {
             if (line.length >= 28) {
                 val docNumRaw = line.take(9).trimEnd('<').replace("<", "")
-                val docNum = if (docNumRaw.isNotEmpty() && docNumRaw.length <= 9) docNumRaw else null
+                val docNum =
+                    if (docNumRaw.isNotEmpty() && docNumRaw.length <= 9) docNumRaw else null
 
                 val dob = extractDateWithOcrCorrection(line, 13, 19)
                 val doe = extractDateWithOcrCorrection(line, 21, 27)
@@ -420,7 +424,10 @@ class MrzAnalyzer(
         val expected = calculateCheckDigit(data)
         val actual = checkDigit.digitToInt()
         val isValid = expected == actual
-        Log.d(TAG, "Check digit verification: data='$data', expected=$expected, actual=$actual, valid=$isValid")
+        Log.d(
+            TAG,
+            "Check digit verification: data='$data', expected=$expected, actual=$actual, valid=$isValid"
+        )
         return isValid
     }
 

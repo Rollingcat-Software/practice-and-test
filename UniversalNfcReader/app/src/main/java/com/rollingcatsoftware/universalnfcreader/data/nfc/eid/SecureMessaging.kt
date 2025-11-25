@@ -171,6 +171,7 @@ class SecureMessaging(
                         encryptedData = value.copyOfRange(1, value.size)
                     }
                 }
+
                 0x99 -> responseSw = value
                 0x8E -> responseMac = value
             }

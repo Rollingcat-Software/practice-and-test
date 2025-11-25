@@ -206,7 +206,10 @@ object EidApduHelper {
     fun logResponse(response: ByteArray) {
         val (data, statusWord) = parseResponse(response)
         Log.d(TAG, "← APDU: ${toHexString(response)}")
-        Log.d(TAG, "  Status: ${getStatusDescription(statusWord)} (0x${String.format("%04X", statusWord)})")
+        Log.d(
+            TAG,
+            "  Status: ${getStatusDescription(statusWord)} (0x${String.format("%04X", statusWord)})"
+        )
         if (data.isNotEmpty()) {
             Log.d(TAG, "  Data length: ${data.size} bytes")
         }

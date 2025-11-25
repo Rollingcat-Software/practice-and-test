@@ -56,9 +56,11 @@ fun AuthenticationScreen(
                 is BiometricAuthManager.AuthenticationState.Idle -> {
                     IdleContent(onAuthenticate = onAuthenticate)
                 }
+
                 is BiometricAuthManager.AuthenticationState.Authenticating -> {
                     AuthenticatingContent()
                 }
+
                 is BiometricAuthManager.AuthenticationState.Failed -> {
                     FailedContent(
                         message = authState.message,
@@ -66,12 +68,14 @@ fun AuthenticationScreen(
                         onExit = onExit
                     )
                 }
+
                 is BiometricAuthManager.AuthenticationState.Cancelled -> {
                     CancelledContent(
                         onRetry = onAuthenticate,
                         onExit = onExit
                     )
                 }
+
                 is BiometricAuthManager.AuthenticationState.Authenticated -> {
                     // Should not be shown - handled by parent
                 }

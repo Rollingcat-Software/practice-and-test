@@ -226,7 +226,10 @@ class BacAuthentication {
             val (data, statusWord) = EidApduHelper.parseResponse(response)
 
             if (!EidApduHelper.isSuccess(statusWord)) {
-                Log.e(TAG, "BAC authentication failed: ${EidApduHelper.getStatusDescription(statusWord)}")
+                Log.e(
+                    TAG,
+                    "BAC authentication failed: ${EidApduHelper.getStatusDescription(statusWord)}"
+                )
                 return null
             }
 

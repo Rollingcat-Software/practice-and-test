@@ -48,7 +48,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.rollingcatsoftware.universalnfcreader.domain.model.AuthenticationData
 import com.rollingcatsoftware.universalnfcreader.ui.scanner.MrzScannerScreen
-import com.rollingcatsoftware.universalnfcreader.ui.scanner.ScannedMrzData
 
 /**
  * Dialog for entering MRZ (Machine Readable Zone) data for BAC authentication.

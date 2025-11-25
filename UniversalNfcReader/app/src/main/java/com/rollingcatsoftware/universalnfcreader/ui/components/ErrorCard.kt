@@ -90,8 +90,10 @@ private fun getErrorIcon(error: CardError): ImageVector {
         is CardError.AuthenticationRequired,
         is CardError.AuthenticationFailed,
         is CardError.CardBlocked -> Icons.Default.Lock
+
         is CardError.NfcNotAvailable,
         is CardError.NfcDisabled -> Icons.Default.PortableWifiOff
+
         is CardError.SecurityValidationFailed -> Icons.Default.Warning
         else -> Icons.Default.Error
     }

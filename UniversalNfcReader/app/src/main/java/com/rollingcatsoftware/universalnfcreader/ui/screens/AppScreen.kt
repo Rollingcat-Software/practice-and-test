@@ -103,6 +103,7 @@ fun AppScreen(
                         )
                     }
                 }
+
                 1 -> {
                     AnimatedVisibility(
                         visible = true,
@@ -115,6 +116,7 @@ fun AppScreen(
                         )
                     }
                 }
+
                 2 -> {
                     AnimatedVisibility(
                         visible = true,

@@ -167,36 +167,45 @@ sealed class CardError(
                         )
                     }
                 }
+
                 sw == 0x6982 -> AuthenticationRequired(
                     message = "Security status not satisfied. Authentication required."
                 )
+
                 sw == 0x6983 -> CardBlocked(
                     message = "Authentication method blocked."
                 )
+
                 sw == 0x6984 -> InvalidResponse(
                     message = "Referenced data invalidated.",
                     statusWord = sw
                 )
+
                 sw == 0x6A82 -> InvalidResponse(
                     message = "File or application not found.",
                     statusWord = sw
                 )
+
                 sw == 0x6A86 -> InvalidResponse(
                     message = "Incorrect parameters P1-P2.",
                     statusWord = sw
                 )
+
                 sw == 0x6700 -> InvalidResponse(
                     message = "Wrong length.",
                     statusWord = sw
                 )
+
                 sw == 0x6E00 -> InvalidResponse(
                     message = "Class not supported.",
                     statusWord = sw
                 )
+
                 sw == 0x6D00 -> InvalidResponse(
                     message = "Instruction not supported.",
                     statusWord = sw
                 )
+
                 else -> InvalidResponse(
                     message = "Card error: ${String.format("0x%04X", sw)}",
                     statusWord = sw
@@ -212,14 +221,19 @@ sealed class CardError(
 enum class AuthenticationType {
     /** MRZ-based BAC authentication (eID, passport) */
     MRZ_BAC,
+
     /** PIN authentication */
     PIN,
+
     /** MIFARE key authentication (Key A or Key B) */
     MIFARE_KEY,
+
     /** DESFire authentication */
     DESFIRE_KEY,
+
     /** 3DES authentication (Ultralight C) */
     THREE_DES,
+
     /** Unknown authentication type */
     UNKNOWN
 }

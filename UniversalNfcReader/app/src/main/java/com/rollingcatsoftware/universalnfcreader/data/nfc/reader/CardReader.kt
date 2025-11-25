@@ -71,7 +71,10 @@ abstract class BaseCardReader : CardReader {
      * Default implementation throws authentication required error.
      * Override in readers that support authentication.
      */
-    override suspend fun readCardWithAuth(tag: Tag, authData: AuthenticationData): Result<CardData> {
+    override suspend fun readCardWithAuth(
+        tag: Tag,
+        authData: AuthenticationData
+    ): Result<CardData> {
         // Default: delegate to readCard, ignore auth
         return readCard(tag)
     }

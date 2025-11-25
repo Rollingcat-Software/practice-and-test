@@ -1,11 +1,5 @@
 package com.rollingcatsoftware.universalnfcreader.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,7 +15,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Contactless
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.PortableWifiOff
 import androidx.compose.material.icons.filled.Warning
@@ -46,7 +39,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -55,7 +47,6 @@ import com.rollingcatsoftware.universalnfcreader.domain.model.CardData
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardError
 import com.rollingcatsoftware.universalnfcreader.ui.MainUiState
 import com.rollingcatsoftware.universalnfcreader.ui.MainViewModel
-import com.rollingcatsoftware.universalnfcreader.ui.PendingAuthData
 import com.rollingcatsoftware.universalnfcreader.ui.components.CardInfoCard
 import com.rollingcatsoftware.universalnfcreader.ui.components.ErrorCard
 import com.rollingcatsoftware.universalnfcreader.ui.components.MrzInputDialog
@@ -137,17 +128,21 @@ private fun MainScreenContent(
             !uiState.isNfcAvailable -> {
                 NfcUnavailableContent()
             }
+
             !uiState.isNfcEnabled -> {
                 NfcDisabledContent()
             }
+
             uiState.isReading -> {
                 ReadingContent()
             }
+
             uiState.pendingAuthData != null -> {
                 WaitingForCardRetapContent(
                     onCancel = onPendingAuthCancelled
                 )
             }
+
             uiState.lastReadCard != null -> {
                 CardReadContent(
                     cardData = uiState.lastReadCard,
@@ -155,9 +150,11 @@ private fun MainScreenContent(
                     onDismiss = onCardDismissed
                 )
             }
+
             uiState.error != null -> {
                 ErrorContent(error = uiState.error)
             }
+
             else -> {
                 IdleContent(readHistory = uiState.readHistory)
             }

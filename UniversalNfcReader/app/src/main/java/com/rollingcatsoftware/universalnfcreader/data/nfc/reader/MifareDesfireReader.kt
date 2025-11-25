@@ -49,9 +49,11 @@ class MifareDesfireReader : BaseCardReader() {
 
         if (isoDep == null) {
             Log.e(TAG, "Failed to get IsoDep from tag")
-            return@withContext Result.error(CardError.UnsupportedCard(
-                detectedTechnologies = basicInfo.technologies
-            ))
+            return@withContext Result.error(
+                CardError.UnsupportedCard(
+                    detectedTechnologies = basicInfo.technologies
+                )
+            )
         }
 
         try {
@@ -173,18 +175,67 @@ class MifareDesfireReader : BaseCardReader() {
 
             // Log detailed version info
             Log.d(TAG, "═══ DESFIRE VERSION DETAILS ═══")
-            Log.d(TAG, "Hardware: Vendor=0x${String.format("%02X", version.hardwareVendorId)} (${if (version.hardwareVendorId == 0x04) "NXP" else "Unknown"})")
-            Log.d(TAG, "Hardware: Type=0x${String.format("%02X", version.hardwareType)} SubType=0x${String.format("%02X", version.hardwareSubType)}")
-            Log.d(TAG, "Hardware: Version=${version.hardwareMajorVersion}.${version.hardwareMinorVersion}")
-            Log.d(TAG, "Hardware: Storage=0x${String.format("%02X", version.hardwareStorageSize)} (${version.storageSizeBytes} bytes)")
+            Log.d(
+                TAG,
+                "Hardware: Vendor=0x${
+                    String.format(
+                        "%02X",
+                        version.hardwareVendorId
+                    )
+                } (${if (version.hardwareVendorId == 0x04) "NXP" else "Unknown"})"
+            )
+            Log.d(
+                TAG,
+                "Hardware: Type=0x${
+                    String.format(
+                        "%02X",
+                        version.hardwareType
+                    )
+                } SubType=0x${String.format("%02X", version.hardwareSubType)}"
+            )
+            Log.d(
+                TAG,
+                "Hardware: Version=${version.hardwareMajorVersion}.${version.hardwareMinorVersion}"
+            )
+            Log.d(
+                TAG,
+                "Hardware: Storage=0x${
+                    String.format(
+                        "%02X",
+                        version.hardwareStorageSize
+                    )
+                } (${version.storageSizeBytes} bytes)"
+            )
             Log.d(TAG, "Hardware: Protocol=0x${String.format("%02X", version.hardwareProtocol)}")
             Log.d(TAG, "Software: Vendor=0x${String.format("%02X", version.softwareVendorId)}")
-            Log.d(TAG, "Software: Type=0x${String.format("%02X", version.softwareType)} SubType=0x${String.format("%02X", version.softwareSubType)}")
-            Log.d(TAG, "Software: Version=${version.softwareMajorVersion}.${version.softwareMinorVersion}")
+            Log.d(
+                TAG,
+                "Software: Type=0x${
+                    String.format(
+                        "%02X",
+                        version.softwareType
+                    )
+                } SubType=0x${String.format("%02X", version.softwareSubType)}"
+            )
+            Log.d(
+                TAG,
+                "Software: Version=${version.softwareMajorVersion}.${version.softwareMinorVersion}"
+            )
             Log.d(TAG, "Software: Protocol=0x${String.format("%02X", version.softwareProtocol)}")
             Log.d(TAG, "Card UID: ${version.uid.joinToString("") { "%02X".format(it) }}")
-            Log.d(TAG, "Batch Number: ${version.batchNumber.joinToString("") { "%02X".format(it) }}")
-            Log.d(TAG, "Production: Week ${version.productionWeek}, Year 20${String.format("%02d", version.productionYear)}")
+            Log.d(
+                TAG,
+                "Batch Number: ${version.batchNumber.joinToString("") { "%02X".format(it) }}"
+            )
+            Log.d(
+                TAG,
+                "Production: Week ${version.productionWeek}, Year 20${
+                    String.format(
+                        "%02d",
+                        version.productionYear
+                    )
+                }"
+            )
             Log.d(TAG, "═══════════════════════════════")
 
             return version

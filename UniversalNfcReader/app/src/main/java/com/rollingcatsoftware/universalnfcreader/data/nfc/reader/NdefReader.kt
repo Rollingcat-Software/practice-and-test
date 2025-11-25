@@ -16,7 +16,6 @@ import com.rollingcatsoftware.universalnfcreader.util.toHexString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
-import java.nio.charset.Charset
 
 /**
  * Reader for NDEF formatted NFC tags.
@@ -92,9 +91,11 @@ class NdefReader : BaseCardReader() {
 
         if (ndef == null) {
             Log.e(TAG, "Failed to get Ndef from tag")
-            return@withContext Result.error(CardError.UnsupportedCard(
-                detectedTechnologies = basicInfo.technologies
-            ))
+            return@withContext Result.error(
+                CardError.UnsupportedCard(
+                    detectedTechnologies = basicInfo.technologies
+                )
+            )
         }
 
         try {

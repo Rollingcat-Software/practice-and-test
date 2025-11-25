@@ -50,7 +50,8 @@ sealed class AuthenticationData {
             dateOfExpiry = "000000"
         }
 
-        override fun toString(): String = "MrzData(documentNumber=***, dateOfBirth=***, dateOfExpiry=***)"
+        override fun toString(): String =
+            "MrzData(documentNumber=***, dateOfBirth=***, dateOfExpiry=***)"
     }
 
     /**
@@ -145,9 +146,30 @@ sealed class AuthenticationData {
                 DEFAULT_KEY,
                 NXP_DEFAULT_KEY,
                 MAD_KEY,
-                byteArrayOf(0xD3.toByte(), 0xF7.toByte(), 0xD3.toByte(), 0xF7.toByte(), 0xD3.toByte(), 0xF7.toByte()),
-                byteArrayOf(0xA0.toByte(), 0xB0.toByte(), 0xC0.toByte(), 0xD0.toByte(), 0xE0.toByte(), 0xF0.toByte()),
-                byteArrayOf(0xB0.toByte(), 0xB1.toByte(), 0xB2.toByte(), 0xB3.toByte(), 0xB4.toByte(), 0xB5.toByte())
+                byteArrayOf(
+                    0xD3.toByte(),
+                    0xF7.toByte(),
+                    0xD3.toByte(),
+                    0xF7.toByte(),
+                    0xD3.toByte(),
+                    0xF7.toByte()
+                ),
+                byteArrayOf(
+                    0xA0.toByte(),
+                    0xB0.toByte(),
+                    0xC0.toByte(),
+                    0xD0.toByte(),
+                    0xE0.toByte(),
+                    0xF0.toByte()
+                ),
+                byteArrayOf(
+                    0xB0.toByte(),
+                    0xB1.toByte(),
+                    0xB2.toByte(),
+                    0xB3.toByte(),
+                    0xB4.toByte(),
+                    0xB5.toByte()
+                )
             )
         }
     }

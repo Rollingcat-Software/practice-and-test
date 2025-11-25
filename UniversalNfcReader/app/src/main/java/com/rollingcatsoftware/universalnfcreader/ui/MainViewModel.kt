@@ -44,55 +44,67 @@ class MainViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(
-                isReading = true,
-                error = null,
-                lastReadCard = null
-            )}
+            _uiState.update {
+                it.copy(
+                    isReading = true,
+                    error = null,
+                    lastReadCard = null
+                )
+            }
 
             when (val result = nfcCardReadingService.readCard(tag)) {
                 is CardReadResult.Success -> {
-                    _uiState.update { it.copy(
-                        isReading = false,
-                        lastReadCard = result.cardData,
-                        readHistory = listOf(result.cardData) + it.readHistory.take(9)
-                    )}
+                    _uiState.update {
+                        it.copy(
+                            isReading = false,
+                            lastReadCard = result.cardData,
+                            readHistory = listOf(result.cardData) + it.readHistory.take(9)
+                        )
+                    }
                 }
 
                 is CardReadResult.Failure -> {
-                    _uiState.update { it.copy(
-                        isReading = false,
-                        error = result.error
-                    )}
+                    _uiState.update {
+                        it.copy(
+                            isReading = false,
+                            error = result.error
+                        )
+                    }
                 }
 
                 is CardReadResult.AuthenticationRequired -> {
-                    _uiState.update { it.copy(
-                        isReading = false,
-                        authRequired = AuthRequirement(
-                            cardType = result.cardType,
-                            authType = result.authType,
-                            pendingTag = tag
+                    _uiState.update {
+                        it.copy(
+                            isReading = false,
+                            authRequired = AuthRequirement(
+                                cardType = result.cardType,
+                                authType = result.authType,
+                                pendingTag = tag
+                            )
                         )
-                    )}
+                    }
                 }
 
                 is CardReadResult.UnsupportedCard -> {
-                    _uiState.update { it.copy(
-                        isReading = false,
-                        error = CardError.UnsupportedCard(
-                            detectedTechnologies = result.technologies
+                    _uiState.update {
+                        it.copy(
+                            isReading = false,
+                            error = CardError.UnsupportedCard(
+                                detectedTechnologies = result.technologies
+                            )
                         )
-                    )}
+                    }
                 }
 
                 is CardReadResult.Exception -> {
-                    _uiState.update { it.copy(
-                        isReading = false,
-                        error = CardError.Unknown(
-                            message = result.exception.message ?: "Unknown error"
+                    _uiState.update {
+                        it.copy(
+                            isReading = false,
+                            error = CardError.Unknown(
+                                message = result.exception.message ?: "Unknown error"
+                            )
                         )
-                    )}
+                    }
                 }
             }
         }
@@ -109,13 +121,15 @@ class MainViewModel @Inject constructor(
         val auth = _uiState.value.authRequired ?: return
 
         // Store auth data and wait for fresh tag tap
-        _uiState.update { it.copy(
-            authRequired = null,
-            pendingAuthData = PendingAuthData(
-                cardType = auth.cardType,
-                authData = authData
+        _uiState.update {
+            it.copy(
+                authRequired = null,
+                pendingAuthData = PendingAuthData(
+                    cardType = auth.cardType,
+                    authData = authData
+                )
             )
-        )}
+        }
     }
 
     /**
@@ -130,32 +144,40 @@ class MainViewModel @Inject constructor(
      */
     private fun performAuthenticatedRead(tag: Tag, authData: AuthenticationData) {
         viewModelScope.launch {
-            _uiState.update { it.copy(
-                isReading = true,
-                pendingAuthData = null
-            )}
+            _uiState.update {
+                it.copy(
+                    isReading = true,
+                    pendingAuthData = null
+                )
+            }
 
             when (val result = nfcCardReadingService.readCardWithAuth(tag, authData)) {
                 is CardReadResult.Success -> {
-                    _uiState.update { it.copy(
-                        isReading = false,
-                        lastReadCard = result.cardData,
-                        readHistory = listOf(result.cardData) + it.readHistory.take(9)
-                    )}
+                    _uiState.update {
+                        it.copy(
+                            isReading = false,
+                            lastReadCard = result.cardData,
+                            readHistory = listOf(result.cardData) + it.readHistory.take(9)
+                        )
+                    }
                 }
 
                 is CardReadResult.Failure -> {
-                    _uiState.update { it.copy(
-                        isReading = false,
-                        error = result.error
-                    )}
+                    _uiState.update {
+                        it.copy(
+                            isReading = false,
+                            error = result.error
+                        )
+                    }
                 }
 
                 else -> {
-                    _uiState.update { it.copy(
-                        isReading = false,
-                        error = CardError.Unknown()
-                    )}
+                    _uiState.update {
+                        it.copy(
+                            isReading = false,
+                            error = CardError.Unknown()
+                        )
+                    }
                 }
             }
         }
@@ -193,17 +215,19 @@ class MainViewModel @Inject constructor(
      * Update NFC availability status.
      */
     fun updateNfcStatus(isAvailable: Boolean, isEnabled: Boolean) {
-        _uiState.update { it.copy(
-            isNfcAvailable = isAvailable,
-            isNfcEnabled = isEnabled,
-            error = when {
-                !isAvailable -> CardError.NfcNotAvailable()
-                !isEnabled -> CardError.NfcDisabled()
-                else -> it.error?.takeUnless { e ->
-                    e is CardError.NfcNotAvailable || e is CardError.NfcDisabled
+        _uiState.update {
+            it.copy(
+                isNfcAvailable = isAvailable,
+                isNfcEnabled = isEnabled,
+                error = when {
+                    !isAvailable -> CardError.NfcNotAvailable()
+                    !isEnabled -> CardError.NfcDisabled()
+                    else -> it.error?.takeUnless { e ->
+                        e is CardError.NfcNotAvailable || e is CardError.NfcDisabled
+                    }
                 }
-            }
-        )}
+            )
+        }
     }
 }
 

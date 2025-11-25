@@ -1,29 +1,26 @@
 package com.rollingcatsoftware.universalnfcreader.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,7 +39,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -97,7 +93,12 @@ fun SettingsScreen(
             // Security Section
             AnimatedVisibility(
                 visible = visible,
-                enter = fadeIn(tween(300, delayMillis = 100)) + slideInVertically(tween(300, delayMillis = 100)) { 20 }
+                enter = fadeIn(tween(300, delayMillis = 100)) + slideInVertically(
+                    tween(
+                        300,
+                        delayMillis = 100
+                    )
+                ) { 20 }
             ) {
                 SettingsSection(title = "Security") {
                     var biometricEnabled by remember { mutableStateOf(true) }
@@ -116,7 +117,12 @@ fun SettingsScreen(
             // Appearance Section
             AnimatedVisibility(
                 visible = visible,
-                enter = fadeIn(tween(300, delayMillis = 200)) + slideInVertically(tween(300, delayMillis = 200)) { 20 }
+                enter = fadeIn(tween(300, delayMillis = 200)) + slideInVertically(
+                    tween(
+                        300,
+                        delayMillis = 200
+                    )
+                ) { 20 }
             ) {
                 SettingsSection(title = "Appearance") {
                     var dynamicColors by remember { mutableStateOf(true) }
@@ -135,7 +141,12 @@ fun SettingsScreen(
             // About Section
             AnimatedVisibility(
                 visible = visible,
-                enter = fadeIn(tween(300, delayMillis = 300)) + slideInVertically(tween(300, delayMillis = 300)) { 20 }
+                enter = fadeIn(tween(300, delayMillis = 300)) + slideInVertically(
+                    tween(
+                        300,
+                        delayMillis = 300
+                    )
+                ) { 20 }
             ) {
                 SettingsSection(title = "About") {
                     SettingsInfoItem(
@@ -157,7 +168,12 @@ fun SettingsScreen(
             // Supported Cards Info
             AnimatedVisibility(
                 visible = visible,
-                enter = fadeIn(tween(300, delayMillis = 400)) + slideInVertically(tween(300, delayMillis = 400)) { 20 }
+                enter = fadeIn(tween(300, delayMillis = 400)) + slideInVertically(
+                    tween(
+                        300,
+                        delayMillis = 400
+                    )
+                ) { 20 }
             ) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),

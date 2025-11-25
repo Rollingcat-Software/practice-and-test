@@ -54,14 +54,16 @@ class TurkishEidReader : BaseCardReader() {
     override suspend fun readCard(tag: Tag): Result<CardData> {
         val basicInfo = readBasicInfo(tag)
 
-        return Result.success(TurkishEidData(
-            uid = basicInfo.uid.joinToString("") { "%02X".format(it) },
-            cardType = CardType.TURKISH_EID,
-            readTimestamp = System.currentTimeMillis(),
-            technologies = basicInfo.technologies.map { it.substringAfterLast('.') },
-            rawData = emptyMap(),
-            bacSuccessful = false
-        ))
+        return Result.success(
+            TurkishEidData(
+                uid = basicInfo.uid.joinToString("") { "%02X".format(it) },
+                cardType = CardType.TURKISH_EID,
+                readTimestamp = System.currentTimeMillis(),
+                technologies = basicInfo.technologies.map { it.substringAfterLast('.') },
+                rawData = emptyMap(),
+                bacSuccessful = false
+            )
+        )
     }
 
     /**
@@ -72,9 +74,11 @@ class TurkishEidReader : BaseCardReader() {
         authData: AuthenticationData
     ): Result<CardData> = withContext(Dispatchers.IO) {
         if (authData !is AuthenticationData.MrzData) {
-            return@withContext Result.error(CardError.AuthenticationRequired(
-                message = "Turkish eID requires MRZ authentication data"
-            ))
+            return@withContext Result.error(
+                CardError.AuthenticationRequired(
+                    message = "Turkish eID requires MRZ authentication data"
+                )
+            )
         }
 
         try {
@@ -110,9 +114,11 @@ class TurkishEidReader : BaseCardReader() {
             isoDep = IsoDep.get(tag)
             if (isoDep == null) {
                 Log.e(TAG, "IsoDep not supported by this tag")
-                return Result.error(CardError.UnsupportedCard(
-                    detectedTechnologies = basicInfo.technologies
-                ))
+                return Result.error(
+                    CardError.UnsupportedCard(
+                        detectedTechnologies = basicInfo.technologies
+                    )
+                )
             }
 
             // Connect to the card
@@ -136,18 +142,22 @@ class TurkishEidReader : BaseCardReader() {
                 )
             } catch (e: IllegalArgumentException) {
                 Log.e(TAG, "Invalid MRZ data: ${e.message}")
-                return Result.error(CardError.AuthenticationFailed(
-                    message = "Invalid MRZ data: ${e.message}"
-                ))
+                return Result.error(
+                    CardError.AuthenticationFailed(
+                        message = "Invalid MRZ data: ${e.message}"
+                    )
+                )
             }
 
             // Perform BAC authentication
             secureMessaging = performBacAuthentication(isoDep, mrzData)
             if (secureMessaging == null) {
                 Log.e(TAG, "BAC authentication failed")
-                return Result.error(CardError.AuthenticationFailed(
-                    message = "BAC authentication failed. Check MRZ data."
-                ))
+                return Result.error(
+                    CardError.AuthenticationFailed(
+                        message = "BAC authentication failed. Check MRZ data."
+                    )
+                )
             }
 
             Log.d(TAG, "BAC authentication successful, reading data with secure messaging...")
@@ -217,10 +227,17 @@ class TurkishEidReader : BaseCardReader() {
                 Log.d(TAG, "MRTD application selected successfully")
                 null // Success - continue
             } else {
-                Log.e(TAG, "Failed to select MRTD application: ${EidApduHelper.getStatusDescription(statusWord)}")
-                Result.error(CardError.UnsupportedCard(
-                    message = "Not a valid Turkish eID card"
-                ))
+                Log.e(
+                    TAG,
+                    "Failed to select MRTD application: ${
+                        EidApduHelper.getStatusDescription(statusWord)
+                    }"
+                )
+                Result.error(
+                    CardError.UnsupportedCard(
+                        message = "Not a valid Turkish eID card"
+                    )
+                )
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error selecting MRTD application", e)
@@ -253,7 +270,10 @@ class TurkishEidReader : BaseCardReader() {
             val (rndIcc, challengeStatus) = EidApduHelper.parseResponse(challengeResponse)
 
             if (!EidApduHelper.isSuccess(challengeStatus) || rndIcc.size != 8) {
-                Log.e(TAG, "Failed to get challenge: ${EidApduHelper.getStatusDescription(challengeStatus)}")
+                Log.e(
+                    TAG,
+                    "Failed to get challenge: ${EidApduHelper.getStatusDescription(challengeStatus)}"
+                )
                 return null
             }
 
@@ -341,7 +361,10 @@ class TurkishEidReader : BaseCardReader() {
 
                 if (!EidApduHelper.isSuccess(statusWord) && statusWord != 0x6282) {
                     if (offset == 0) {
-                        Log.e(TAG, "Failed to read file: ${EidApduHelper.getStatusDescription(statusWord)}")
+                        Log.e(
+                            TAG,
+                            "Failed to read file: ${EidApduHelper.getStatusDescription(statusWord)}"
+                        )
                         return null
                     }
                     break

@@ -1,6 +1,8 @@
 package com.rollingcatsoftware.universalnfcreader.ui.components
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -12,11 +14,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Contactless
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Badge
-import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -50,10 +52,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardData
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardType
 import com.rollingcatsoftware.universalnfcreader.domain.model.GenericCardData
@@ -219,17 +217,52 @@ private fun IstanbulkartContent(data: IstanbulkartData) {
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary
             )
-            InfoRow("Hardware Version", "${version.hardwareMajorVersion}.${version.hardwareMinorVersion}")
-            InfoRow("Software Version", "${version.softwareMajorVersion}.${version.softwareMinorVersion}")
-            InfoRow("Hardware Vendor ID", "0x${version.hardwareVendorId.toString(16).uppercase().padStart(2, '0')} (${if (version.hardwareVendorId == 0x04) "NXP" else "Unknown"})")
-            InfoRow("Hardware Type", "0x${version.hardwareType.toString(16).uppercase().padStart(2, '0')}")
-            InfoRow("Hardware SubType", "0x${version.hardwareSubType.toString(16).uppercase().padStart(2, '0')}")
-            InfoRow("Hardware Protocol", "0x${version.hardwareProtocol.toString(16).uppercase().padStart(2, '0')}")
-            InfoRow("Software Vendor ID", "0x${version.softwareVendorId.toString(16).uppercase().padStart(2, '0')}")
-            InfoRow("Software Type", "0x${version.softwareType.toString(16).uppercase().padStart(2, '0')}")
-            InfoRow("Software SubType", "0x${version.softwareSubType.toString(16).uppercase().padStart(2, '0')}")
-            InfoRow("Software Protocol", "0x${version.softwareProtocol.toString(16).uppercase().padStart(2, '0')}")
-            InfoRow("Storage Size Code", "0x${version.hardwareStorageSize.toString(16).uppercase().padStart(2, '0')}")
+            InfoRow(
+                "Hardware Version",
+                "${version.hardwareMajorVersion}.${version.hardwareMinorVersion}"
+            )
+            InfoRow(
+                "Software Version",
+                "${version.softwareMajorVersion}.${version.softwareMinorVersion}"
+            )
+            InfoRow(
+                "Hardware Vendor ID",
+                "0x${
+                    version.hardwareVendorId.toString(16).uppercase().padStart(2, '0')
+                } (${if (version.hardwareVendorId == 0x04) "NXP" else "Unknown"})"
+            )
+            InfoRow(
+                "Hardware Type",
+                "0x${version.hardwareType.toString(16).uppercase().padStart(2, '0')}"
+            )
+            InfoRow(
+                "Hardware SubType",
+                "0x${version.hardwareSubType.toString(16).uppercase().padStart(2, '0')}"
+            )
+            InfoRow(
+                "Hardware Protocol",
+                "0x${version.hardwareProtocol.toString(16).uppercase().padStart(2, '0')}"
+            )
+            InfoRow(
+                "Software Vendor ID",
+                "0x${version.softwareVendorId.toString(16).uppercase().padStart(2, '0')}"
+            )
+            InfoRow(
+                "Software Type",
+                "0x${version.softwareType.toString(16).uppercase().padStart(2, '0')}"
+            )
+            InfoRow(
+                "Software SubType",
+                "0x${version.softwareSubType.toString(16).uppercase().padStart(2, '0')}"
+            )
+            InfoRow(
+                "Software Protocol",
+                "0x${version.softwareProtocol.toString(16).uppercase().padStart(2, '0')}"
+            )
+            InfoRow(
+                "Storage Size Code",
+                "0x${version.hardwareStorageSize.toString(16).uppercase().padStart(2, '0')}"
+            )
             InfoRow("Storage Size", "${version.storageSizeBytes} bytes")
             InfoRow("Card UID (from version)", version.uid.joinToString("") { "%02X".format(it) })
             InfoRow("Batch Number", version.batchNumber.joinToString("") { "%02X".format(it) })
@@ -276,7 +309,11 @@ private fun IstanbulkartContent(data: IstanbulkartData) {
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+            Icon(
+                Icons.Default.ContentCopy,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp)
+            )
             Spacer(modifier = Modifier.width(4.dp))
             Text("Copy All Data to Clipboard")
         }
@@ -308,10 +345,20 @@ private fun buildIstanbulkartDataString(data: IstanbulkartData): String {
             appendLine("Software Type: 0x${v.softwareType.toString(16).uppercase()}")
             appendLine("Software SubType: 0x${v.softwareSubType.toString(16).uppercase()}")
             appendLine("Software Protocol: 0x${v.softwareProtocol.toString(16).uppercase()}")
-            appendLine("Storage Size: ${v.storageSizeBytes} bytes (code: 0x${v.hardwareStorageSize.toString(16).uppercase()})")
+            appendLine(
+                "Storage Size: ${v.storageSizeBytes} bytes (code: 0x${
+                    v.hardwareStorageSize.toString(
+                        16
+                    ).uppercase()
+                })"
+            )
             appendLine("Card UID: ${v.uid.joinToString("") { "%02X".format(it) }}")
             appendLine("Batch Number: ${v.batchNumber.joinToString("") { "%02X".format(it) }}")
-            appendLine("Production: Week ${v.productionWeek}, 20${v.productionYear.toString().padStart(2, '0')}")
+            appendLine(
+                "Production: Week ${v.productionWeek}, 20${
+                    v.productionYear.toString().padStart(2, '0')
+                }"
+            )
             appendLine()
         }
         data.freeMemory?.let { appendLine("Free Memory: $it bytes") }
@@ -330,8 +377,14 @@ private fun buildIstanbulkartDataString(data: IstanbulkartData): String {
 private fun DesfireContent(data: MifareDesfireData) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         data.version?.let { version ->
-            InfoRow("Hardware Version", "${version.hardwareMajorVersion}.${version.hardwareMinorVersion}")
-            InfoRow("Software Version", "${version.softwareMajorVersion}.${version.softwareMinorVersion}")
+            InfoRow(
+                "Hardware Version",
+                "${version.hardwareMajorVersion}.${version.hardwareMinorVersion}"
+            )
+            InfoRow(
+                "Software Version",
+                "${version.softwareMajorVersion}.${version.softwareMinorVersion}"
+            )
             InfoRow("Storage Size", "${version.storageSizeBytes} bytes")
         }
         InfoRow("Applications", data.applicationIds.size.toString())
@@ -380,7 +433,11 @@ private fun MifareClassicContent(data: MifareClassicData) {
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+                Icon(
+                    Icons.Default.ContentCopy,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text("Copy All Data to Clipboard")
             }
@@ -652,7 +709,8 @@ private fun TurkishEidContent(data: TurkishEidData) {
             data.surname.takeIf { it.isNotEmpty() }?.let { InfoRow("Surname", it) }
             data.givenNames.takeIf { it.isNotEmpty() }?.let { InfoRow("Given Names", it) }
             data.dateOfBirth.takeIf { it.isNotEmpty() }?.let { InfoRow("Date of Birth", it) }
-            data.sex.takeIf { it.isNotEmpty() }?.let { InfoRow("Sex", if (it == "M") "Male" else if (it == "F") "Female" else it) }
+            data.sex.takeIf { it.isNotEmpty() }
+                ?.let { InfoRow("Sex", if (it == "M") "Male" else if (it == "F") "Female" else it) }
             data.nationality.takeIf { it.isNotEmpty() }?.let { InfoRow("Nationality", it) }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -666,7 +724,8 @@ private fun TurkishEidContent(data: TurkishEidData) {
 
             data.documentNumber.takeIf { it.isNotEmpty() }?.let { InfoRow("Document Number", it) }
             data.dateOfExpiry.takeIf { it.isNotEmpty() }?.let { InfoRow("Expiry Date", it) }
-            data.personalNumber.takeIf { it.isNotEmpty() }?.let { InfoRow("Personal Number (TCKN)", it) }
+            data.personalNumber.takeIf { it.isNotEmpty() }
+                ?.let { InfoRow("Personal Number (TCKN)", it) }
 
             // Authentication Status
             Spacer(modifier = Modifier.height(8.dp))
@@ -681,7 +740,12 @@ private fun TurkishEidContent(data: TurkishEidData) {
                 data.sodValid?.let { valid ->
                     AssistChip(
                         onClick = { },
-                        label = { Text("SOD: ${if (valid) "Valid" else "Invalid"}", style = MaterialTheme.typography.labelSmall) }
+                        label = {
+                            Text(
+                                "SOD: ${if (valid) "Valid" else "Invalid"}",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
                     )
                 }
             }
@@ -695,7 +759,11 @@ private fun TurkishEidContent(data: TurkishEidData) {
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+                Icon(
+                    Icons.Default.ContentCopy,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text("Copy All Data to Clipboard")
             }
@@ -792,11 +860,13 @@ private fun getCardIcon(cardType: CardType): ImageVector {
         CardType.ISTANBULKART -> Icons.Default.DirectionsBus
         CardType.STUDENT_CARD_CLASSIC,
         CardType.STUDENT_CARD_DESFIRE -> Icons.Default.School
+
         CardType.MIFARE_CLASSIC_1K,
         CardType.MIFARE_CLASSIC_4K,
         CardType.MIFARE_DESFIRE,
         CardType.MIFARE_ULTRALIGHT,
         CardType.MIFARE_ULTRALIGHT_C -> Icons.Default.Memory
+
         CardType.TURKISH_EID -> Icons.Default.Badge
         CardType.NDEF -> Icons.Default.Nfc
         else -> Icons.Default.Contactless

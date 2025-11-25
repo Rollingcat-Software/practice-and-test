@@ -5,10 +5,6 @@ import android.nfc.tech.IsoDep
 import android.nfc.tech.MifareClassic
 import android.nfc.tech.MifareUltralight
 import android.nfc.tech.Ndef
-import android.nfc.tech.NfcA
-import android.nfc.tech.NfcB
-import android.nfc.tech.NfcF
-import android.nfc.tech.NfcV
 import android.util.Log
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardType
 import com.rollingcatsoftware.universalnfcreader.util.Constants
@@ -220,28 +216,34 @@ class UniversalCardDetector : CardDetector {
                             Log.d(TAG, "MIFARE Classic 1K detected")
                             CardType.MIFARE_CLASSIC_1K
                         }
+
                         MifareClassic.SIZE_4K -> {
                             Log.d(TAG, "MIFARE Classic 4K detected")
                             CardType.MIFARE_CLASSIC_4K
                         }
+
                         MifareClassic.SIZE_MINI -> {
                             Log.d(TAG, "MIFARE Mini detected")
                             CardType.MIFARE_CLASSIC_1K
                         }
+
                         else -> {
                             Log.d(TAG, "MIFARE Classic (unknown size) detected")
                             CardType.MIFARE_CLASSIC_1K
                         }
                     }
                 }
+
                 MifareClassic.TYPE_PLUS -> {
                     Log.d(TAG, "MIFARE Plus detected")
                     CardType.MIFARE_CLASSIC_1K
                 }
+
                 MifareClassic.TYPE_PRO -> {
                     Log.d(TAG, "MIFARE Pro detected")
                     CardType.MIFARE_CLASSIC_4K
                 }
+
                 else -> {
                     Log.d(TAG, "Unknown MIFARE Classic type")
                     CardType.MIFARE_CLASSIC_1K
@@ -271,10 +273,12 @@ class UniversalCardDetector : CardDetector {
                     Log.d(TAG, "MIFARE Ultralight detected")
                     CardType.MIFARE_ULTRALIGHT
                 }
+
                 MifareUltralight.TYPE_ULTRALIGHT_C -> {
                     Log.d(TAG, "MIFARE Ultralight C detected")
                     CardType.MIFARE_ULTRALIGHT_C
                 }
+
                 else -> {
                     // Could be NTAG - check by reading pages
                     Log.d(TAG, "Unknown Ultralight type, assuming standard")

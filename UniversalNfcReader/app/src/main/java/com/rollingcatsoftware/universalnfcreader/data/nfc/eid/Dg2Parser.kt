@@ -60,7 +60,10 @@ object Dg2Parser {
             }
 
             Log.d(TAG, "Extracted image data (${imageData.size} bytes)")
-            Log.d(TAG, "Image data first 16 bytes: ${toHexString(imageData.take(16).toByteArray())}")
+            Log.d(
+                TAG,
+                "Image data first 16 bytes: ${toHexString(imageData.take(16).toByteArray())}"
+            )
 
             // Decode to Bitmap
             decodeImage(imageData)
@@ -115,6 +118,7 @@ object Dg2Parser {
                             }
                         }
                     }
+
                     else -> {
                         // For container tags, continue recursively
                         if (length > 0 && length < stream.available()) {
@@ -267,7 +271,10 @@ object Dg2Parser {
             val bitmap = BitmapFactory.decodeByteArray(data, 0, data.size, decodeOptions)
 
             if (bitmap != null) {
-                Log.d(TAG, "Decoded bitmap size: ${bitmap.width}x${bitmap.height}, bytes: ${bitmap.byteCount}")
+                Log.d(
+                    TAG,
+                    "Decoded bitmap size: ${bitmap.width}x${bitmap.height}, bytes: ${bitmap.byteCount}"
+                )
             }
 
             bitmap

@@ -9,7 +9,6 @@ import androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,7 +33,8 @@ class BiometricAuthManager(private val context: Context) {
 
     private val biometricManager = BiometricManager.from(context)
 
-    private val _authenticationState = MutableStateFlow<AuthenticationState>(AuthenticationState.Idle)
+    private val _authenticationState =
+        MutableStateFlow<AuthenticationState>(AuthenticationState.Idle)
     val authenticationState: StateFlow<AuthenticationState> = _authenticationState.asStateFlow()
 
     /**
@@ -77,18 +77,22 @@ class BiometricAuthManager(private val context: Context) {
                 Log.d(TAG, "Biometric authentication is available")
                 BiometricCapability.Available
             }
+
             BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> {
                 Log.d(TAG, "No biometric hardware available")
                 BiometricCapability.NoHardware
             }
+
             BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> {
                 Log.d(TAG, "Biometric hardware unavailable")
                 BiometricCapability.HardwareUnavailable
             }
+
             BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
                 Log.d(TAG, "No biometrics enrolled")
                 BiometricCapability.NoneEnrolled
             }
+
             else -> {
                 Log.d(TAG, "Unknown biometric status")
                 BiometricCapability.Unknown
@@ -140,13 +144,17 @@ class BiometricAuthManager(private val context: Context) {
                         _authenticationState.value = AuthenticationState.Cancelled
                         onCancel()
                     }
+
                     BiometricPrompt.ERROR_LOCKOUT,
                     BiometricPrompt.ERROR_LOCKOUT_PERMANENT -> {
-                        _authenticationState.value = AuthenticationState.Failed("Too many failed attempts. Try again later.")
+                        _authenticationState.value =
+                            AuthenticationState.Failed("Too many failed attempts. Try again later.")
                         onError("Too many failed attempts. Try again later.")
                     }
+
                     else -> {
-                        _authenticationState.value = AuthenticationState.Failed(errString.toString())
+                        _authenticationState.value =
+                            AuthenticationState.Failed(errString.toString())
                         onError(errString.toString())
                     }
                 }

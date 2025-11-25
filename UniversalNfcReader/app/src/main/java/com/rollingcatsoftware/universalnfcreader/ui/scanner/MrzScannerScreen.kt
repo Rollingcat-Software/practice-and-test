@@ -626,7 +626,12 @@ private fun IdCardScanningOverlay(
                 cornerRadius = CornerRadius(8f, 8f),
                 style = Stroke(
                     width = 2f,
-                    pathEffect = if (hasResult) null else PathEffect.dashPathEffect(floatArrayOf(10f, 8f), 0f)
+                    pathEffect = if (hasResult) null else PathEffect.dashPathEffect(
+                        floatArrayOf(
+                            10f,
+                            8f
+                        ), 0f
+                    )
                 )
             )
 
@@ -933,8 +938,16 @@ private fun ScannedDataCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             DetectedDataRow("Document Number", data.documentNumber, data.checksumValid)
-            DetectedDataRow("Date of Birth", formatDateDisplay(data.dateOfBirth), data.checksumValid)
-            DetectedDataRow("Date of Expiry", formatDateDisplay(data.dateOfExpiry), data.checksumValid)
+            DetectedDataRow(
+                "Date of Birth",
+                formatDateDisplay(data.dateOfBirth),
+                data.checksumValid
+            )
+            DetectedDataRow(
+                "Date of Expiry",
+                formatDateDisplay(data.dateOfExpiry),
+                data.checksumValid
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 

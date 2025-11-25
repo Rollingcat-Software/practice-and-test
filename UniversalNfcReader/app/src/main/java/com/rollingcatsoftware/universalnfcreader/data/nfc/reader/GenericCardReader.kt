@@ -9,7 +9,6 @@ import android.nfc.tech.NfcV
 import android.util.Log
 import com.rollingcatsoftware.universalnfcreader.domain.model.AuthenticationData
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardData
-import com.rollingcatsoftware.universalnfcreader.domain.model.CardError
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardType
 import com.rollingcatsoftware.universalnfcreader.domain.model.GenericCardData
 import com.rollingcatsoftware.universalnfcreader.domain.model.Iso15693Data
@@ -18,7 +17,6 @@ import com.rollingcatsoftware.universalnfcreader.util.Constants
 import com.rollingcatsoftware.universalnfcreader.util.toHexString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.IOException
 
 /**
  * Generic reader for unidentified or basic NFC cards.
@@ -118,7 +116,10 @@ class GenericCardReader : BaseCardReader() {
                 rawData = emptyMap()
             )
         } finally {
-            try { nfcV?.close() } catch (_: Exception) {}
+            try {
+                nfcV?.close()
+            } catch (_: Exception) {
+            }
         }
     }
 
@@ -235,7 +236,10 @@ class GenericCardReader : BaseCardReader() {
                     historicalBytes?.let { put("historicalBytes", it.toHexString()) }
                     hiLayerResponse?.let { put("hiLayerResponse", it.toHexString()) }
                     put("maxTransceiveLength", isoDep?.maxTransceiveLength ?: 0)
-                    put("isExtendedLengthApduSupported", isoDep?.isExtendedLengthApduSupported ?: false)
+                    put(
+                        "isExtendedLengthApduSupported",
+                        isoDep?.isExtendedLengthApduSupported ?: false
+                    )
                 },
                 historicalBytes = historicalBytes
             )
@@ -243,7 +247,10 @@ class GenericCardReader : BaseCardReader() {
             Log.e(TAG, "Error reading IsoDep: ${e.message}")
             readBasicOnly(basicInfo)
         } finally {
-            try { isoDep?.close() } catch (_: Exception) {}
+            try {
+                isoDep?.close()
+            } catch (_: Exception) {
+            }
         }
     }
 

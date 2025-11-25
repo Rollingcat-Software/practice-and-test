@@ -125,7 +125,10 @@ object Dg1Parser {
             // If we got a single line of 90 chars, it's TD1 format without line breaks
             if (lines.size == 1 && lines[0].length >= 90) {
                 val singleLine = lines[0]
-                Log.d(TAG, "Single line MRZ detected (${singleLine.length} chars), splitting into 3 lines of 30")
+                Log.d(
+                    TAG,
+                    "Single line MRZ detected (${singleLine.length} chars), splitting into 3 lines of 30"
+                )
                 lines = listOf(
                     singleLine.substring(0, 30),
                     singleLine.substring(30, 60),

@@ -6,7 +6,6 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.Arrangement
@@ -106,6 +105,7 @@ fun ScanScreen(
                 readHistory = uiState.readHistory,
                 onDismiss = onCardDismissed
             )
+
             is ScanState.Error -> ErrorContent(error = state.error, onRetry = onCardDismissed)
             is ScanState.NfcUnavailable -> NfcUnavailableContent()
             is ScanState.NfcDisabled -> NfcDisabledContent()
@@ -130,7 +130,10 @@ private fun IdleContent(
         item {
             AnimatedVisibility(
                 visible = visible,
-                enter = fadeIn(tween(600)) + scaleIn(initialScale = 0.9f, animationSpec = tween(600))
+                enter = fadeIn(tween(600)) + scaleIn(
+                    initialScale = 0.9f,
+                    animationSpec = tween(600)
+                )
             ) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -173,7 +176,7 @@ private fun IdleContent(
             AnimatedVisibility(
                 visible = visible,
                 enter = fadeIn(tween(600, delayMillis = 150)) +
-                    slideInVertically(tween(600, delayMillis = 150)) { 20 }
+                        slideInVertically(tween(600, delayMillis = 150)) { 20 }
             ) {
                 Card(
                     modifier = Modifier
@@ -224,7 +227,7 @@ private fun IdleContent(
                 AnimatedVisibility(
                     visible = visible,
                     enter = fadeIn(tween(400, delayMillis = 350)) +
-                        slideInVertically(tween(400, delayMillis = 350)) { 30 }
+                            slideInVertically(tween(400, delayMillis = 350)) { 30 }
                 ) {
                     CardInfoCard(
                         cardData = card,
@@ -270,7 +273,8 @@ private fun ReadingContent(
             .fillMaxSize()
             .padding(24.dp)
             .semantics {
-                contentDescription = "Reading card in progress. Please keep your card near the device."
+                contentDescription =
+                    "Reading card in progress. Please keep your card near the device."
             },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -325,7 +329,12 @@ private fun ReadingContent(
         // Loading skeleton
         AnimatedVisibility(
             visible = visible,
-            enter = fadeIn(tween(400, delayMillis = 300)) + expandVertically(tween(400, delayMillis = 300))
+            enter = fadeIn(tween(400, delayMillis = 300)) + expandVertically(
+                tween(
+                    400,
+                    delayMillis = 300
+                )
+            )
         ) {
             Card(modifier = Modifier.fillMaxWidth()) {
                 LoadingSkeleton()
@@ -352,7 +361,10 @@ private fun WaitingForRetapContent(
         ) {
             AnimatedVisibility(
                 visible = visible,
-                enter = fadeIn(tween(400)) + scaleIn(initialScale = 0.8f, animationSpec = tween(400))
+                enter = fadeIn(tween(400)) + scaleIn(
+                    initialScale = 0.8f,
+                    animationSpec = tween(400)
+                )
             ) {
                 Icon(
                     imageVector = Icons.Default.Contactless,
@@ -366,7 +378,12 @@ private fun WaitingForRetapContent(
 
             AnimatedVisibility(
                 visible = visible,
-                enter = fadeIn(tween(400, delayMillis = 100)) + slideInVertically(tween(400, delayMillis = 100)) { -20 }
+                enter = fadeIn(tween(400, delayMillis = 100)) + slideInVertically(
+                    tween(
+                        400,
+                        delayMillis = 100
+                    )
+                ) { -20 }
             ) {
                 Text(
                     text = "Tap Your Card Again",
@@ -393,7 +410,12 @@ private fun WaitingForRetapContent(
 
             AnimatedVisibility(
                 visible = visible,
-                enter = fadeIn(tween(400, delayMillis = 300)) + scaleIn(tween(400, delayMillis = 300))
+                enter = fadeIn(tween(400, delayMillis = 300)) + scaleIn(
+                    tween(
+                        400,
+                        delayMillis = 300
+                    )
+                )
             ) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(48.dp),
@@ -468,7 +490,7 @@ private fun SuccessContent(
             AnimatedVisibility(
                 visible = visible,
                 enter = fadeIn(tween(400, delayMillis = 150)) +
-                    scaleIn(initialScale = 0.95f, animationSpec = tween(400, delayMillis = 150))
+                        scaleIn(initialScale = 0.95f, animationSpec = tween(400, delayMillis = 150))
             ) {
                 CardInfoCard(
                     cardData = cardData,
@@ -481,7 +503,12 @@ private fun SuccessContent(
         item {
             AnimatedVisibility(
                 visible = visible,
-                enter = fadeIn(tween(400, delayMillis = 250)) + slideInVertically(tween(400, delayMillis = 250)) { 20 }
+                enter = fadeIn(tween(400, delayMillis = 250)) + slideInVertically(
+                    tween(
+                        400,
+                        delayMillis = 250
+                    )
+                ) { 20 }
             ) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -514,7 +541,12 @@ private fun SuccessContent(
         item {
             AnimatedVisibility(
                 visible = visible,
-                enter = fadeIn(tween(400, delayMillis = 350)) + slideInVertically(tween(400, delayMillis = 350)) { 20 }
+                enter = fadeIn(tween(400, delayMillis = 350)) + slideInVertically(
+                    tween(
+                        400,
+                        delayMillis = 350
+                    )
+                ) { 20 }
             ) {
                 Button(
                     onClick = onDismiss,
@@ -544,7 +576,12 @@ private fun SuccessContent(
             items(readHistory.drop(1).take(3)) { card ->
                 AnimatedVisibility(
                     visible = visible,
-                    enter = fadeIn(tween(300, delayMillis = 450)) + slideInVertically(tween(300, delayMillis = 450)) { 30 }
+                    enter = fadeIn(tween(300, delayMillis = 450)) + slideInVertically(
+                        tween(
+                            300,
+                            delayMillis = 450
+                        )
+                    ) { 30 }
                 ) {
                     CardInfoCard(
                         cardData = card,
@@ -575,7 +612,10 @@ private fun ErrorContent(
         // Animated error icon
         AnimatedVisibility(
             visible = visible,
-            enter = fadeIn(tween(400)) + scaleIn(initialScale = 0.7f, animationSpec = tween(400, easing = FastOutSlowInEasing))
+            enter = fadeIn(tween(400)) + scaleIn(
+                initialScale = 0.7f,
+                animationSpec = tween(400, easing = FastOutSlowInEasing)
+            )
         ) {
             Icon(
                 imageVector = Icons.Default.Warning,
@@ -590,7 +630,12 @@ private fun ErrorContent(
         // Error title
         AnimatedVisibility(
             visible = visible,
-            enter = fadeIn(tween(400, delayMillis = 150)) + slideInVertically(tween(400, delayMillis = 150)) { -20 }
+            enter = fadeIn(tween(400, delayMillis = 150)) + slideInVertically(
+                tween(
+                    400,
+                    delayMillis = 150
+                )
+            ) { -20 }
         ) {
             Text(
                 text = "Error Reading Card",
@@ -604,7 +649,12 @@ private fun ErrorContent(
         // Error message card with guidance
         AnimatedVisibility(
             visible = visible,
-            enter = fadeIn(tween(400, delayMillis = 250)) + expandVertically(tween(400, delayMillis = 250))
+            enter = fadeIn(tween(400, delayMillis = 250)) + expandVertically(
+                tween(
+                    400,
+                    delayMillis = 250
+                )
+            )
         ) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -633,7 +683,12 @@ private fun ErrorContent(
         // Try again button
         AnimatedVisibility(
             visible = visible,
-            enter = fadeIn(tween(400, delayMillis = 350)) + slideInVertically(tween(400, delayMillis = 350)) { 40 }
+            enter = fadeIn(tween(400, delayMillis = 350)) + slideInVertically(
+                tween(
+                    400,
+                    delayMillis = 350
+                )
+            ) { 40 }
         ) {
             Button(
                 onClick = onRetry,
@@ -657,39 +712,47 @@ private fun getErrorGuidance(error: CardError): String {
             ✓ Keep the card in place until reading completes
             ✓ Try different positioning
         """.trimIndent()
+
         is CardError.IoError -> """
             ✓ Remove any phone cases that may interfere
             ✓ Clean the card surface
             ✓ Try a different card position
         """.trimIndent()
+
         is CardError.AuthenticationFailed -> """
             ✓ Verify your MRZ data is correct
             ✓ Check document number, DOB, and DOE
             ✓ The card may be locked after too many attempts
         """.trimIndent()
+
         is CardError.UnsupportedCard -> """
             ✓ This card type may not be supported
             ✓ Check if the card has an NFC chip
             ✓ Some cards require specific authentication
         """.trimIndent()
+
         is CardError.NfcNotAvailable -> """
             ✓ This device does not have NFC hardware
             ✓ NFC is required to read cards
         """.trimIndent()
+
         is CardError.NfcDisabled -> """
             ✓ Enable NFC in device settings
             ✓ Go to Settings → Connected devices → NFC
         """.trimIndent()
+
         is CardError.CardBlocked -> """
             ✓ Card has been locked due to too many failed attempts
             ✓ You may need to contact the card issuer
             ✓ Some cards can be unblocked with a PUK code
         """.trimIndent()
+
         is CardError.Timeout -> """
             ✓ Keep the card near the device longer
             ✓ Try again with card held steady
             ✓ Ensure card is properly positioned
         """.trimIndent()
+
         else -> """
             ✓ Try again with the card held steady
             ✓ Make sure NFC is enabled

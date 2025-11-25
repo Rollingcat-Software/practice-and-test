@@ -1,10 +1,9 @@
 package com.rollingcatsoftware.universalnfcreader.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -142,7 +141,7 @@ private fun HistoryList(
             AnimatedVisibility(
                 visible = visible,
                 enter = fadeIn(tween(300, delayMillis = index * 50)) +
-                    slideInVertically(tween(300, delayMillis = index * 50)) { 30 }
+                        slideInVertically(tween(300, delayMillis = index * 50)) { 30 }
             ) {
                 CardInfoCard(
                     cardData = card,
