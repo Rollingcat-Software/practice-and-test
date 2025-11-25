@@ -1,4 +1,116 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- App Name -->
     <string name="app_name">Turkish eID NFC Reader</string>
+
+    <!-- Main Screen - Title and Instructions -->
+    <string name="app_title">Turkish eID Card Reader</string>
+    <string name="mrz_instruction">Enter your MRZ data from the back of your ID card, then hold it near the device</string>
+
+    <!-- MRZ Input Section -->
+    <string name="mrz_section_title">MRZ Authentication Data</string>
+    <string name="document_number_label">Document Number</string>
+    <string name="document_number_placeholder">e.g., A12345678</string>
+    <string name="document_number_hint">%1$d/9 characters</string>
+    <string name="document_number_content_desc">Document number input field. Enter 1 to 9 alphanumeric characters from your ID card.</string>
+
+    <string name="date_of_birth_label">Date of Birth</string>
+    <string name="date_of_birth_placeholder">YYMMDD (e.g., 900115)</string>
+    <string name="date_of_birth_hint">%1$d/6 digits</string>
+    <string name="date_of_birth_preview">Preview: %1$s</string>
+    <string name="date_of_birth_content_desc">Date of birth input field. Enter 6 digits in YYMMDD format.</string>
+
+    <string name="date_of_expiry_label">Date of Expiry</string>
+    <string name="date_of_expiry_placeholder">YYMMDD (e.g., 301231)</string>
+    <string name="date_of_expiry_hint">%1$d/6 digits</string>
+    <string name="date_of_expiry_preview">Preview: %1$s</string>
+    <string name="date_of_expiry_content_desc">Date of expiry input field. Enter 6 digits in YYMMDD format.</string>
+
+    <string name="invalid_date_error">Invalid date. Check month (01-12) and day (01-31)</string>
+
+    <!-- MRZ Info Card -->
+    <string name="mrz_location_title">MRZ Data Location</string>
+    <string name="mrz_location_description">Find the MRZ data on the back of your Turkish ID card:\n- Document Number: First 9 characters\n- Date of Birth: YYMMDD format\n- Date of Expiry: YYMMDD format</string>
+    <string name="mrz_location_content_desc">Information card. MRZ Data Location: Find the MRZ data on the back of your Turkish ID card. Document Number is the first 9 characters. Date of Birth and Date of Expiry are in YYMMDD format.</string>
+
+    <!-- NFC Status Card -->
+    <string name="nfc_ready">Ready! Hold your ID card near the device</string>
+    <string name="nfc_not_ready">Fill in all MRZ fields to read your card</string>
+    <string name="nfc_ready_content_desc">NFC status: Ready. You can now hold your ID card near the device to read it.</string>
+    <string name="nfc_not_ready_content_desc">NFC status: Not ready. Please fill in all MRZ fields before scanning your card.</string>
+
+    <!-- Reading Screen -->
+    <string name="reading_card">Reading card</string>
+    <string name="keep_card_near">Keep your card near the device</string>
+    <string name="reading_screen_content_desc">Reading card in progress. Please keep your card near the device.</string>
+    <string name="loading_indicator_content_desc">Loading indicator. Card reading in progress.</string>
+    <string name="loading_skeleton_content_desc">Loading placeholder for card data.</string>
+
+    <!-- Success Screen -->
+    <string name="card_read_success">Card Read Successfully</string>
+    <string name="read_another_card">Read Another Card</string>
+    <string name="read_another_card_content_desc">Read another card button. Tap to scan a new ID card.</string>
+
+    <!-- Personal Data Section -->
+    <string name="personal_information">Personal Information</string>
+    <string name="photo_section">Photo</string>
+    <string name="photo_section_content_desc">ID card photo section displaying the cardholder\'s photograph.</string>
+    <string name="photo_content_desc">ID card photograph of the cardholder</string>
+
+    <string name="field_name">Name</string>
+    <string name="field_tckn">TCKN</string>
+    <string name="field_birth_date">Birth Date</string>
+    <string name="field_gender">Gender</string>
+    <string name="field_nationality">Nationality</string>
+    <string name="field_document_number">Document Number</string>
+    <string name="field_issue_date">Issue Date</string>
+    <string name="field_expiry_date">Expiry Date</string>
+    <string name="field_place_of_birth">Place of Birth</string>
+
+    <!-- Error Screen -->
+    <string name="error_title">Error Reading Card</string>
+    <string name="try_again">Try Again</string>
+    <string name="try_again_content_desc">Try again button. Tap to retry reading your ID card.</string>
+
+    <!-- Error Messages -->
+    <string name="error_invalid_mrz">Please enter valid MRZ data:\n- Document Number (1-9 characters)\n- Date of Birth (YYMMDD)\n- Date of Expiry (YYMMDD)</string>
+
+    <string name="error_card_lost">Card connection lost.\n\n✓ Hold your card steady against the device\n✓ Don\'t move the card until reading completes\n✓ Try again</string>
+
+    <string name="error_communication">Communication error with card.\n\n✓ Ensure your card is touching the NFC area\n✓ Remove any metal cases or thick covers\n✓ Try cleaning the card surface\n✓ Try again</string>
+
+    <string name="error_security">Security error.\n\n✓ Verify your MRZ data is correct\n✓ Check document number, birth date, and expiry date\n✓ Ensure dates match your ID card exactly</string>
+
+    <string name="error_authentication">Authentication failed.\n\n✓ Double-check your MRZ data from the card\n✓ Verify document number (9 characters)\n✓ Verify birth date and expiry date (YYMMDD)\n✓ Make sure dates are entered correctly</string>
+
+    <string name="error_connection_interrupted">Card connection interrupted.\n\n✓ Keep the card steady on the device\n✓ Don\'t move until reading completes\n✓ Try again</string>
+
+    <string name="error_timeout">Reading timed out.\n\n✓ Keep the card on the device longer\n✓ Ensure good contact with NFC area\n✓ Try again</string>
+
+    <string name="error_nfc">NFC error.\n\n✓ Ensure NFC is enabled in Settings\n✓ Check if your device supports NFC\n✓ Try restarting NFC in device settings</string>
+
+    <string name="error_with_guidance">%1$s\n\n✓ Verify your MRZ data is correct\n✓ Try again with the card held steady</string>
+
+    <string name="error_generic">Unable to read card.\n\n✓ Check that your MRZ data is correct\n✓ Ensure NFC is enabled\n✓ Hold the card steady on the device\n✓ Try again</string>
+
+    <string name="error_invalid_input">Invalid input data. Please check your MRZ data.</string>
+
+    <!-- Content Descriptions -->
+    <string name="mrz_section_content_desc">MRZ Authentication Data input section. Enter document number, date of birth, and date of expiry from your ID card.</string>
+
+    <string name="personal_info_content_desc">Personal Information. Name: %1$s. TCKN: %2$s. Birth Date: %3$s. Gender: %4$s. Nationality: %5$s. Document Number: %6$s. Issue Date: %7$s. Expiry Date: %8$s. Place of Birth: %9$s.</string>
+
+    <!-- Icons Content Descriptions -->
+    <string name="icon_nfc">NFC Icon</string>
+    <string name="icon_info">Info</string>
+    <string name="icon_success">Success</string>
+    <string name="icon_error">Error</string>
+    <string name="icon_refresh">Refresh</string>
+
+    <!-- Legacy PIN (for backward compatibility) -->
+    <string name="pin_label">PIN (6 digits)</string>
+    <string name="pin_placeholder">Enter your PIN</string>
+    <string name="pin_hint">%1$d/6</string>
+    <string name="hide_pin">Hide PIN</string>
+    <string name="show_pin">Show PIN</string>
 </resources>

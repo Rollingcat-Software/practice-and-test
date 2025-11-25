@@ -15,6 +15,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -219,7 +221,11 @@ fun IdleScreen(
                     slideInVertically(initialOffsetY = { 20 }, animationSpec = tween(600, delayMillis = 400))
         ) {
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics {
+                        contentDescription = "Information card. MRZ Data Location: Find the MRZ data on the back of your Turkish ID card. Document Number is the first 9 characters. Date of Birth and Date of Expiry are in YYMMDD format."
+                    },
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer
                 )
@@ -228,7 +234,7 @@ fun IdleScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.Info,
-                            contentDescription = "Info",
+                            contentDescription = null, // Decorative, card has semantic description
                             tint = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                         Spacer(modifier = Modifier.width(12.dp))
@@ -260,7 +266,15 @@ fun IdleScreen(
                     slideInVertically(initialOffsetY = { 20 }, animationSpec = tween(600, delayMillis = 500))
         ) {
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics {
+                        contentDescription = if (mrzData.isComplete()) {
+                            "NFC status: Ready. You can now hold your ID card near the device to read it."
+                        } else {
+                            "NFC status: Not ready. Please fill in all MRZ fields before scanning your card."
+                        }
+                    },
                 colors = CardDefaults.cardColors(
                     containerColor = if (mrzData.isComplete()) {
                         MaterialTheme.colorScheme.primaryContainer
@@ -275,7 +289,7 @@ fun IdleScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Nfc,
-                        contentDescription = "NFC",
+                        contentDescription = null, // Decorative, card has semantic description
                         tint = if (mrzData.isComplete()) {
                             MaterialTheme.colorScheme.onPrimaryContainer
                         } else {
@@ -313,7 +327,11 @@ fun MrzInputFields(
     onMrzDataChanged: (MrzInputData) -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics(mergeDescendants = false) {
+                contentDescription = "MRZ Authentication Data input section. Enter document number, date of birth, and date of expiry from your ID card."
+            }
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -337,7 +355,11 @@ fun MrzInputFields(
                 placeholder = { Text("e.g., A12345678") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics {
+                        contentDescription = "Document number input field. Enter 1 to 9 alphanumeric characters from your ID card."
+                    },
                 supportingText = {
                     Text("${mrzData.documentNumber.length}/9 characters")
                 },
@@ -359,12 +381,22 @@ fun MrzInputFields(
                 placeholder = { Text("YYMMDD (e.g., 900115)") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics {
+                        contentDescription = "Date of birth input field. Enter 6 digits in YYMMDD format."
+                    },
                 supportingText = {
                     val formatted = formatDatePreview(mrzData.dateOfBirth)
-                    Text(if (formatted != null) "Preview: $formatted" else "${mrzData.dateOfBirth.length}/6 digits")
+                    when {
+                        formatted != null -> Text("Preview: $formatted")
+                        mrzData.dateOfBirth.length == 6 && !isValidDate(mrzData.dateOfBirth) ->
+                            Text("Invalid date. Check month (01-12) and day (01-31)", color = MaterialTheme.colorScheme.error)
+                        else -> Text("${mrzData.dateOfBirth.length}/6 digits")
+                    }
                 },
-                isError = mrzData.dateOfBirth.isNotEmpty() && mrzData.dateOfBirth.length != 6
+                isError = mrzData.dateOfBirth.isNotEmpty() &&
+                         (mrzData.dateOfBirth.length != 6 || !isValidDate(mrzData.dateOfBirth))
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -382,14 +414,38 @@ fun MrzInputFields(
                 placeholder = { Text("YYMMDD (e.g., 301231)") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics {
+                        contentDescription = "Date of expiry input field. Enter 6 digits in YYMMDD format."
+                    },
                 supportingText = {
                     val formatted = formatDatePreview(mrzData.dateOfExpiry)
-                    Text(if (formatted != null) "Preview: $formatted" else "${mrzData.dateOfExpiry.length}/6 digits")
+                    when {
+                        formatted != null -> Text("Preview: $formatted")
+                        mrzData.dateOfExpiry.length == 6 && !isValidDate(mrzData.dateOfExpiry) ->
+                            Text("Invalid date. Check month (01-12) and day (01-31)", color = MaterialTheme.colorScheme.error)
+                        else -> Text("${mrzData.dateOfExpiry.length}/6 digits")
+                    }
                 },
-                isError = mrzData.dateOfExpiry.isNotEmpty() && mrzData.dateOfExpiry.length != 6
+                isError = mrzData.dateOfExpiry.isNotEmpty() &&
+                         (mrzData.dateOfExpiry.length != 6 || !isValidDate(mrzData.dateOfExpiry))
             )
         }
+    }
+}
+
+/**
+ * Validates if a YYMMDD date string contains valid month and day values.
+ */
+private fun isValidDate(date: String): Boolean {
+    if (date.length != 6) return false
+    return try {
+        val month = date.substring(2, 4).toInt()
+        val day = date.substring(4, 6).toInt()
+        month in 1..12 && day in 1..31
+    } catch (e: Exception) {
+        false
     }
 }
 
@@ -398,6 +454,7 @@ fun MrzInputFields(
  */
 private fun formatDatePreview(date: String): String? {
     if (date.length != 6) return null
+    if (!isValidDate(date)) return null
     return try {
         val yy = date.substring(0, 2)
         val mm = date.substring(2, 4)
@@ -455,13 +512,20 @@ fun ReadingScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(24.dp)
+            .semantics {
+                contentDescription = "Reading card in progress. Please keep your card near the device."
+            },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         // Animated circular progress
         CircularProgressIndicator(
-            modifier = Modifier.size(64.dp),
+            modifier = Modifier
+                .size(64.dp)
+                .semantics {
+                    contentDescription = "Loading indicator. Card reading in progress."
+                },
             strokeWidth = 6.dp
         )
 
@@ -493,7 +557,11 @@ fun ReadingScreen() {
 
         // Loading skeleton
         Card(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics {
+                    contentDescription = "Loading placeholder for card data."
+                }
         ) {
             LoadingSkeleton()
         }
@@ -589,9 +657,13 @@ fun SuccessScreen(
         ) {
             Button(
                 onClick = onResetClick,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics {
+                        contentDescription = "Read another card button. Tap to scan a new ID card."
+                    }
             ) {
-                Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
+                Icon(imageVector = Icons.Default.Refresh, contentDescription = null) // Decorative
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Read Another Card")
             }
@@ -607,7 +679,11 @@ fun SuccessScreen(
 @Composable
 fun PhotoCard(photo: Bitmap) {
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics {
+                contentDescription = "ID card photo section displaying the cardholder's photograph."
+            }
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -621,7 +697,7 @@ fun PhotoCard(photo: Bitmap) {
             Spacer(modifier = Modifier.height(8.dp))
             Image(
                 bitmap = photo.asImageBitmap(),
-                contentDescription = "ID Photo",
+                contentDescription = "ID card photograph of the cardholder",
                 modifier = Modifier.size(200.dp)
             )
         }
@@ -634,7 +710,20 @@ fun PhotoCard(photo: Bitmap) {
 @Composable
 fun PersonalDataCard(personalData: PersonalData) {
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics(mergeDescendants = true) {
+                contentDescription = "Personal Information. " +
+                    "Name: ${personalData.firstName} ${personalData.lastName}. " +
+                    "TCKN: ${personalData.tckn}. " +
+                    "Birth Date: ${personalData.birthDate}. " +
+                    "Gender: ${personalData.gender}. " +
+                    "Nationality: ${personalData.nationality}. " +
+                    "Document Number: ${personalData.documentNumber}. " +
+                    "Issue Date: ${personalData.issueDate}. " +
+                    "Expiry Date: ${personalData.expiryDate}. " +
+                    "Place of Birth: ${personalData.placeOfBirth}."
+            }
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -765,9 +854,13 @@ fun ErrorScreen(
         ) {
             Button(
                 onClick = onResetClick,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics {
+                        contentDescription = "Try again button. Tap to retry reading your ID card."
+                    }
             ) {
-                Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
+                Icon(imageVector = Icons.Default.Refresh, contentDescription = null) // Decorative
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Try Again")
             }
