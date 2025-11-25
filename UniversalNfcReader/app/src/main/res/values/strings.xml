@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Universal NFC Reader</string>
+
+    <!-- NFC States -->
+    <string name="nfc_ready">Ready to Scan</string>
+    <string name="nfc_reading">Reading Card…</string>
+    <string name="nfc_disabled">NFC Disabled</string>
+    <string name="nfc_not_available">NFC Not Available</string>
+
+    <!-- Instructions -->
+    <string name="instruction_hold_card">Hold an NFC card near the device to read it</string>
+    <string name="instruction_keep_steady">Keep the card steady</string>
+    <string name="instruction_enable_nfc">Please enable NFC in your device settings</string>
+    <string name="instruction_nfc_not_supported">This device does not support NFC</string>
+
+    <!-- Card Types -->
+    <string name="card_type_turkish_eid">Turkish eID</string>
+    <string name="card_type_istanbulkart">Istanbulkart</string>
+    <string name="card_type_student_card">Student Card</string>
+    <string name="card_type_mifare_classic">MIFARE Classic</string>
+    <string name="card_type_mifare_desfire">MIFARE DESFire</string>
+    <string name="card_type_mifare_ultralight">MIFARE Ultralight</string>
+    <string name="card_type_ndef">NDEF Tag</string>
+    <string name="card_type_unknown">Unknown Card</string>
+
+    <!-- Labels -->
+    <string name="label_uid">UID</string>
+    <string name="label_technologies">Technologies</string>
+    <string name="label_copy">Copy</string>
+    <string name="label_expand">Expand</string>
+    <string name="label_collapse">Collapse</string>
+    <string name="label_supported_cards">Supported Cards</string>
+    <string name="label_recent_reads">Recent Reads</string>
+    <string name="label_clear_history">Clear History</string>
+
+    <!-- Errors -->
+    <string name="error_connection_lost">Connection to card was lost. Please hold the card steady.</string>
+    <string name="error_timeout">Operation timed out. Please try again.</string>
+    <string name="error_auth_required">This card requires authentication to read data.</string>
+    <string name="error_auth_failed">Authentication failed. Please verify your credentials.</string>
+    <string name="error_card_blocked">Card is blocked due to too many failed attempts.</string>
+    <string name="error_unsupported">This card type is not supported.</string>
+    <string name="error_unknown">An unexpected error occurred.</string>
+
+    <!-- Content Descriptions -->
+    <string name="cd_nfc_status">NFC Status</string>
+    <string name="cd_card_icon">Card Type Icon</string>
+    <string name="cd_copy_uid">Copy UID to clipboard</string>
+    <string name="cd_error_icon">Error Icon</string>
+</resources>

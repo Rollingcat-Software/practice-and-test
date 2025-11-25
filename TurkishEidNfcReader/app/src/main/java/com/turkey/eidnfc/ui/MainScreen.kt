@@ -1,26 +1,85 @@
 package com.turkey.eidnfc.ui
 
 import android.graphics.Bitmap
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Cake
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Nfc
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -28,6 +87,8 @@ import com.turkey.eidnfc.domain.model.CardData
 import com.turkey.eidnfc.domain.model.PersonalData
 import com.turkey.eidnfc.ui.components.LoadingSkeleton
 import com.turkey.eidnfc.ui.components.PulsingDotsIndicator
+import com.turkey.eidnfc.ui.scanner.MrzScannerScreen
+import java.util.Calendar
 
 /**
  * MRZ data holder for UI state.
@@ -49,8 +110,8 @@ data class MrzInputData(
      */
     fun isComplete(): Boolean {
         return documentNumber.isNotBlank() &&
-                dateOfBirth.length == 6 &&
-                dateOfExpiry.length == 6
+            dateOfBirth.length == 6 &&
+            dateOfExpiry.length == 6
     }
 }
 
@@ -94,15 +155,18 @@ fun MainScreen(
                             onPinChanged = onPinChanged
                         )
                     }
+
                     MainViewModel.UiState.Reading -> {
                         ReadingScreen()
                     }
+
                     is MainViewModel.UiState.Success -> {
                         SuccessScreen(
                             cardData = state.cardData,
                             onResetClick = onResetClick
                         )
                     }
+
                     is MainViewModel.UiState.Error -> {
                         ErrorScreen(
                             message = state.message,
@@ -159,7 +223,7 @@ fun IdleScreen(
         AnimatedVisibility(
             visible = visible,
             enter = fadeIn(animationSpec = tween(600)) +
-                    scaleIn(initialScale = 0.8f, animationSpec = tween(600))
+                scaleIn(initialScale = 0.8f, animationSpec = tween(600))
         ) {
             Icon(
                 imageVector = Icons.Default.Nfc,
@@ -175,7 +239,7 @@ fun IdleScreen(
         AnimatedVisibility(
             visible = visible,
             enter = fadeIn(animationSpec = tween(600, delayMillis = 100)) +
-                    slideInVertically(initialOffsetY = { -20 }, animationSpec = tween(600, delayMillis = 100))
+                slideInVertically(initialOffsetY = { -20 }, animationSpec = tween(600, delayMillis = 100))
         ) {
             Text(
                 text = "Turkish eID Card Reader",
@@ -190,7 +254,7 @@ fun IdleScreen(
         AnimatedVisibility(
             visible = visible,
             enter = fadeIn(animationSpec = tween(600, delayMillis = 200)) +
-                    slideInVertically(initialOffsetY = { -20 }, animationSpec = tween(600, delayMillis = 200))
+                slideInVertically(initialOffsetY = { -20 }, animationSpec = tween(600, delayMillis = 200))
         ) {
             Text(
                 text = "Enter your MRZ data from the back of your ID card, then hold it near the device",
@@ -206,7 +270,7 @@ fun IdleScreen(
         AnimatedVisibility(
             visible = visible,
             enter = fadeIn(animationSpec = tween(600, delayMillis = 300)) +
-                    slideInVertically(initialOffsetY = { 20 }, animationSpec = tween(600, delayMillis = 300))
+                slideInVertically(initialOffsetY = { 20 }, animationSpec = tween(600, delayMillis = 300))
         ) {
             MrzInputFields(
                 mrzData = mrzData,
@@ -220,13 +284,14 @@ fun IdleScreen(
         AnimatedVisibility(
             visible = visible,
             enter = fadeIn(animationSpec = tween(600, delayMillis = 400)) +
-                    slideInVertically(initialOffsetY = { 20 }, animationSpec = tween(600, delayMillis = 400))
+                slideInVertically(initialOffsetY = { 20 }, animationSpec = tween(600, delayMillis = 400))
         ) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .semantics {
-                        contentDescription = "Information card. MRZ Data Location: Find the MRZ data on the back of your Turkish ID card. Document Number is the first 9 characters. Date of Birth and Date of Expiry are in YYMMDD format."
+                        contentDescription =
+                            "Information card. MRZ Data Location: Find the MRZ data on the back of your Turkish ID card. Document Number is the first 9 characters. Date of Birth and Date of Expiry are in YYMMDD format."
                     },
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer
@@ -249,9 +314,9 @@ fun IdleScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Find the MRZ data on the back of your Turkish ID card:\n" +
-                                "- Document Number: First 9 characters\n" +
-                                "- Date of Birth: YYMMDD format\n" +
-                                "- Date of Expiry: YYMMDD format",
+                            "- Document Number: First 9 characters\n" +
+                            "- Date of Birth: YYMMDD format\n" +
+                            "- Date of Expiry: YYMMDD format",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
@@ -265,7 +330,7 @@ fun IdleScreen(
         AnimatedVisibility(
             visible = visible,
             enter = fadeIn(animationSpec = tween(600, delayMillis = 500)) +
-                    slideInVertically(initialOffsetY = { 20 }, animationSpec = tween(600, delayMillis = 500))
+                slideInVertically(initialOffsetY = { 20 }, animationSpec = tween(600, delayMillis = 500))
         ) {
             Card(
                 modifier = Modifier
@@ -321,26 +386,81 @@ fun IdleScreen(
 }
 
 /**
- * MRZ input fields for BAC authentication.
+ * MRZ input fields for BAC authentication with improved UX.
+ * Features: Date pickers, visual formatting, auto-advance, and MRZ scanner.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MrzInputFields(
     mrzData: MrzInputData,
     onMrzDataChanged: (MrzInputData) -> Unit
 ) {
     val clipboardManager = LocalClipboardManager.current
+    val focusManager = LocalFocusManager.current
+
     var showCopySnackbar by remember { mutableStateOf(false) }
+    var showMrzScanner by remember { mutableStateOf(false) }
+    var showDobDatePicker by remember { mutableStateOf(false) }
+    var showDoeDatePicker by remember { mutableStateOf(false) }
+
+    // Focus requesters for auto-advance
+    val dobFocusRequester = remember { FocusRequester() }
+    val doeFocusRequester = remember { FocusRequester() }
+
+    // MRZ Scanner Dialog
+    if (showMrzScanner) {
+        MrzScannerScreen(
+            onMrzScanned = { scannedData ->
+                onMrzDataChanged(
+                    MrzInputData(
+                        documentNumber = scannedData.documentNumber,
+                        dateOfBirth = scannedData.dateOfBirth,
+                        dateOfExpiry = scannedData.dateOfExpiry
+                    )
+                )
+            },
+            onDismiss = { showMrzScanner = false }
+        )
+    }
+
+    // Date of Birth Date Picker
+    if (showDobDatePicker) {
+        MrzDatePickerDialog(
+            title = "Select Date of Birth",
+            initialDate = mrzData.dateOfBirth,
+            isBirthDate = true,
+            onDateSelected = { yymmdd ->
+                onMrzDataChanged(mrzData.copy(dateOfBirth = yymmdd))
+            },
+            onDismiss = { showDobDatePicker = false }
+        )
+    }
+
+    // Date of Expiry Date Picker
+    if (showDoeDatePicker) {
+        MrzDatePickerDialog(
+            title = "Select Date of Expiry",
+            initialDate = mrzData.dateOfExpiry,
+            isBirthDate = false,
+            onDateSelected = { yymmdd ->
+                onMrzDataChanged(mrzData.copy(dateOfExpiry = yymmdd))
+            },
+            onDismiss = { showDoeDatePicker = false }
+        )
+    }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .semantics(mergeDescendants = false) {
-                contentDescription = "MRZ Authentication Data input section. Enter document number, date of birth, and date of expiry from your ID card."
+                contentDescription =
+                    "MRZ Authentication Data input section. Enter document number, date of birth, and date of expiry from your ID card."
             }
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
+            // Header with title and action buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -351,81 +471,68 @@ fun MrzInputFields(
                     style = MaterialTheme.typography.titleMedium
                 )
 
-                // Action buttons (Copy and Clear)
-                if (mrzData.isComplete()) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                // Action buttons
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    // Scan MRZ button
+                    FilledTonalIconButton(
+                        onClick = { showMrzScanner = true },
+                        modifier = Modifier.semantics {
+                            contentDescription = "Scan MRZ with camera"
+                        }
                     ) {
+                        Icon(
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    if (mrzData.isComplete()) {
                         // Copy button
-                        TextButton(
+                        IconButton(
                             onClick = {
                                 clipboardManager.setText(AnnotatedString(mrzData.toFormattedString()))
                                 showCopySnackbar = true
-                            },
-                            modifier = Modifier.semantics {
-                                contentDescription = "Copy MRZ data to clipboard button"
                             }
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ContentCopy,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
+                                contentDescription = "Copy MRZ data",
+                                modifier = Modifier.size(20.dp)
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Copy")
                         }
+                    }
 
+                    if (mrzData.documentNumber.isNotEmpty() ||
+                        mrzData.dateOfBirth.isNotEmpty() ||
+                        mrzData.dateOfExpiry.isNotEmpty()
+                    ) {
                         // Clear All button
-                        TextButton(
-                            onClick = {
-                                onMrzDataChanged(MrzInputData())
-                            },
-                            modifier = Modifier.semantics {
-                                contentDescription = "Clear all MRZ fields button"
-                            }
+                        IconButton(
+                            onClick = { onMrzDataChanged(MrzInputData()) }
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Clear,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
+                                contentDescription = "Clear all fields",
+                                modifier = Modifier.size(20.dp)
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Clear")
                         }
-                    }
-                } else if (mrzData.documentNumber.isNotEmpty() ||
-                    mrzData.dateOfBirth.isNotEmpty() ||
-                    mrzData.dateOfExpiry.isNotEmpty()) {
-                    // Show only clear if incomplete
-                    TextButton(
-                        onClick = {
-                            onMrzDataChanged(MrzInputData())
-                        },
-                        modifier = Modifier.semantics {
-                            contentDescription = "Clear all MRZ fields button"
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Clear,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Clear")
                     }
                 }
             }
 
             // Success feedback for copy action
-            if (showCopySnackbar) {
+            AnimatedVisibility(visible = showCopySnackbar) {
                 LaunchedEffect(Unit) {
                     kotlinx.coroutines.delay(2000)
                     showCopySnackbar = false
                 }
-                Spacer(modifier = Modifier.height(8.dp))
                 Surface(
                     color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = MaterialTheme.shapes.small
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.padding(top = 8.dp)
                 ) {
                     Row(
                         modifier = Modifier
@@ -451,138 +558,371 @@ fun MrzInputFields(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Document Number
+            // Document Number with auto-advance
             OutlinedTextField(
                 value = mrzData.documentNumber,
                 onValueChange = { value ->
-                    // Allow alphanumeric characters, max 9 chars
                     if (value.length <= 9 && value.all { it.isLetterOrDigit() }) {
-                        onMrzDataChanged(mrzData.copy(documentNumber = value.uppercase()))
+                        val newValue = value.uppercase()
+                        onMrzDataChanged(mrzData.copy(documentNumber = newValue))
+                        // Auto-advance when max length reached
+                        if (newValue.length == 9) {
+                            dobFocusRequester.requestFocus()
+                        }
                     }
                 },
                 label = { Text("Document Number") },
-                placeholder = { Text("e.g., A12345678") },
+                placeholder = { Text("A12345678") },
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { dobFocusRequester.requestFocus() }
+                ),
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Badge,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                },
                 trailingIcon = {
                     if (mrzData.documentNumber.isNotEmpty()) {
-                        IconButton(
-                            onClick = {
-                                onMrzDataChanged(mrzData.copy(documentNumber = ""))
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Clear,
-                                contentDescription = "Clear document number"
-                            )
+                        IconButton(onClick = { onMrzDataChanged(mrzData.copy(documentNumber = "")) }) {
+                            Icon(Icons.Default.Clear, "Clear document number")
                         }
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .semantics {
-                        contentDescription = "Document number input field. Enter 1 to 9 alphanumeric characters from your ID card."
+                        contentDescription = "Document number. Enter 9 alphanumeric characters from your ID card."
                     },
                 supportingText = {
-                    Text("${mrzData.documentNumber.length}/9 characters")
+                    Text(
+                        "${mrzData.documentNumber.length}/9 characters",
+                        color = if (mrzData.documentNumber.length == 9)
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 },
                 isError = mrzData.documentNumber.isNotEmpty() && mrzData.documentNumber.length < 1
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Date of Birth
+            // Date of Birth with visual formatting and date picker
             OutlinedTextField(
                 value = mrzData.dateOfBirth,
                 onValueChange = { value ->
-                    // Only digits, max 6
-                    if (value.length <= 6 && value.all { it.isDigit() }) {
-                        onMrzDataChanged(mrzData.copy(dateOfBirth = value))
+                    val digitsOnly = value.filter { it.isDigit() }
+                    if (digitsOnly.length <= 6) {
+                        onMrzDataChanged(mrzData.copy(dateOfBirth = digitsOnly))
+                        // Auto-advance when complete
+                        if (digitsOnly.length == 6 && isValidDate(digitsOnly)) {
+                            doeFocusRequester.requestFocus()
+                        }
                     }
                 },
                 label = { Text("Date of Birth") },
-                placeholder = { Text("YYMMDD (e.g., 900115)") },
+                placeholder = { Text("YY/MM/DD") },
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                visualTransformation = DateVisualTransformation(),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { doeFocusRequester.requestFocus() }
+                ),
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Cake,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                },
                 trailingIcon = {
-                    if (mrzData.dateOfBirth.isNotEmpty()) {
-                        IconButton(
-                            onClick = {
-                                onMrzDataChanged(mrzData.copy(dateOfBirth = ""))
-                            }
-                        ) {
+                    Row {
+                        // Date picker button
+                        IconButton(onClick = { showDobDatePicker = true }) {
                             Icon(
-                                imageVector = Icons.Default.Clear,
-                                contentDescription = "Clear date of birth"
+                                Icons.Default.CalendarMonth,
+                                contentDescription = "Open date picker"
                             )
+                        }
+                        if (mrzData.dateOfBirth.isNotEmpty()) {
+                            IconButton(onClick = { onMrzDataChanged(mrzData.copy(dateOfBirth = "")) }) {
+                                Icon(Icons.Default.Clear, "Clear date of birth")
+                            }
                         }
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
+                    .focusRequester(dobFocusRequester)
                     .semantics {
-                        contentDescription = "Date of birth input field. Enter 6 digits in YYMMDD format."
+                        contentDescription = "Date of birth. Enter 6 digits or tap calendar to select."
                     },
                 supportingText = {
                     val formatted = formatDatePreview(mrzData.dateOfBirth)
                     when {
-                        formatted != null -> Text("Preview: $formatted", color = MaterialTheme.colorScheme.primary)
+                        formatted != null -> Text(
+                            formatted,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
                         mrzData.dateOfBirth.length == 6 && !isValidDate(mrzData.dateOfBirth) ->
-                            Text("Invalid date. Check month (01-12) and day (01-31)", color = MaterialTheme.colorScheme.error)
+                            Text(
+                                "Invalid date",
+                                color = MaterialTheme.colorScheme.error
+                            )
+
                         else -> Text("${mrzData.dateOfBirth.length}/6 digits")
                     }
                 },
                 isError = mrzData.dateOfBirth.isNotEmpty() &&
-                         (mrzData.dateOfBirth.length != 6 || !isValidDate(mrzData.dateOfBirth))
+                    mrzData.dateOfBirth.length == 6 && !isValidDate(mrzData.dateOfBirth)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Date of Expiry
+            // Date of Expiry with visual formatting and date picker
             OutlinedTextField(
                 value = mrzData.dateOfExpiry,
                 onValueChange = { value ->
-                    // Only digits, max 6
-                    if (value.length <= 6 && value.all { it.isDigit() }) {
-                        onMrzDataChanged(mrzData.copy(dateOfExpiry = value))
+                    val digitsOnly = value.filter { it.isDigit() }
+                    if (digitsOnly.length <= 6) {
+                        onMrzDataChanged(mrzData.copy(dateOfExpiry = digitsOnly))
+                        // Hide keyboard when complete
+                        if (digitsOnly.length == 6 && isValidDate(digitsOnly)) {
+                            focusManager.clearFocus()
+                        }
                     }
                 },
                 label = { Text("Date of Expiry") },
-                placeholder = { Text("YYMMDD (e.g., 301231)") },
+                placeholder = { Text("YY/MM/DD") },
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                visualTransformation = DateVisualTransformation(),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() }
+                ),
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Event,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                },
                 trailingIcon = {
-                    if (mrzData.dateOfExpiry.isNotEmpty()) {
-                        IconButton(
-                            onClick = {
-                                onMrzDataChanged(mrzData.copy(dateOfExpiry = ""))
-                            }
-                        ) {
+                    Row {
+                        // Date picker button
+                        IconButton(onClick = { showDoeDatePicker = true }) {
                             Icon(
-                                imageVector = Icons.Default.Clear,
-                                contentDescription = "Clear date of expiry"
+                                Icons.Default.CalendarMonth,
+                                contentDescription = "Open date picker"
                             )
+                        }
+                        if (mrzData.dateOfExpiry.isNotEmpty()) {
+                            IconButton(onClick = { onMrzDataChanged(mrzData.copy(dateOfExpiry = "")) }) {
+                                Icon(Icons.Default.Clear, "Clear date of expiry")
+                            }
                         }
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
+                    .focusRequester(doeFocusRequester)
                     .semantics {
-                        contentDescription = "Date of expiry input field. Enter 6 digits in YYMMDD format."
+                        contentDescription = "Date of expiry. Enter 6 digits or tap calendar to select."
                     },
                 supportingText = {
                     val formatted = formatDatePreview(mrzData.dateOfExpiry)
                     when {
-                        formatted != null -> Text("Preview: $formatted", color = MaterialTheme.colorScheme.primary)
+                        formatted != null -> Text(
+                            formatted,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
                         mrzData.dateOfExpiry.length == 6 && !isValidDate(mrzData.dateOfExpiry) ->
-                            Text("Invalid date. Check month (01-12) and day (01-31)", color = MaterialTheme.colorScheme.error)
+                            Text(
+                                "Invalid date",
+                                color = MaterialTheme.colorScheme.error
+                            )
+
                         else -> Text("${mrzData.dateOfExpiry.length}/6 digits")
                     }
                 },
                 isError = mrzData.dateOfExpiry.isNotEmpty() &&
-                         (mrzData.dateOfExpiry.length != 6 || !isValidDate(mrzData.dateOfExpiry))
+                    mrzData.dateOfExpiry.length == 6 && !isValidDate(mrzData.dateOfExpiry)
             )
+
+            // Quick scan tip
+            if (mrzData.documentNumber.isEmpty() &&
+                mrzData.dateOfBirth.isEmpty() &&
+                mrzData.dateOfExpiry.isEmpty()
+            ) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Surface(
+                    onClick = { showMrzScanner = true },
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                "Quick Entry: Scan MRZ",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                            Text(
+                                "Use camera to auto-fill all fields",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                }
+            }
         }
+    }
+}
+
+/**
+ * Visual transformation that formats YYMMDD as YY/MM/DD.
+ */
+private class DateVisualTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val trimmed = text.text.take(6)
+        val formatted = buildString {
+            for (i in trimmed.indices) {
+                append(trimmed[i])
+                if (i == 1 || i == 3) {
+                    if (i < trimmed.length - 1) append("/")
+                }
+            }
+        }
+
+        val offsetMapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int {
+                return when {
+                    offset <= 2 -> offset
+                    offset <= 4 -> offset + 1
+                    offset <= 6 -> offset + 2
+                    else -> formatted.length
+                }
+            }
+
+            override fun transformedToOriginal(offset: Int): Int {
+                return when {
+                    offset <= 2 -> offset
+                    offset <= 5 -> offset - 1
+                    offset <= 8 -> offset - 2
+                    else -> trimmed.length
+                }
+            }
+        }
+
+        return TransformedText(AnnotatedString(formatted), offsetMapping)
+    }
+}
+
+/**
+ * Date picker dialog for MRZ date selection.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MrzDatePickerDialog(
+    title: String,
+    initialDate: String,
+    isBirthDate: Boolean,
+    onDateSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val calendar = Calendar.getInstance()
+
+    // Parse initial date if valid
+    if (initialDate.length == 6) {
+        try {
+            val yy = initialDate.substring(0, 2).toInt()
+            val mm = initialDate.substring(2, 4).toInt()
+            val dd = initialDate.substring(4, 6).toInt()
+            val year = if (yy > 50) 1900 + yy else 2000 + yy
+            calendar.set(year, mm - 1, dd)
+        } catch (e: Exception) {
+            // Use current date as fallback
+        }
+    }
+
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = calendar.timeInMillis,
+        yearRange = if (isBirthDate) {
+            1920..Calendar.getInstance().get(Calendar.YEAR)
+        } else {
+            Calendar.getInstance().get(Calendar.YEAR)..2099
+        }
+    )
+
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val selectedCal = Calendar.getInstance().apply {
+                            timeInMillis = millis
+                        }
+                        val yy = String.format("%02d", selectedCal.get(Calendar.YEAR) % 100)
+                        val mm = String.format("%02d", selectedCal.get(Calendar.MONTH) + 1)
+                        val dd = String.format("%02d", selectedCal.get(Calendar.DAY_OF_MONTH))
+                        onDateSelected("$yy$mm$dd")
+                    }
+                    onDismiss()
+                }
+            ) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    ) {
+        DatePicker(
+            state = datePickerState,
+            title = {
+                Text(
+                    text = title,
+                    modifier = Modifier.padding(start = 24.dp, top = 16.dp)
+                )
+            },
+            headline = {
+                Text(
+                    text = if (isBirthDate) "Select your birth date" else "Select expiry date",
+                    modifier = Modifier.padding(start = 24.dp)
+                )
+            }
+        )
     }
 }
 
@@ -742,7 +1082,7 @@ fun SuccessScreen(
         AnimatedVisibility(
             visible = visible,
             enter = fadeIn(animationSpec = tween(400)) +
-                    slideInVertically(initialOffsetY = { -40 }, animationSpec = tween(400))
+                slideInVertically(initialOffsetY = { -40 }, animationSpec = tween(400))
         ) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -777,7 +1117,7 @@ fun SuccessScreen(
             AnimatedVisibility(
                 visible = visible,
                 enter = fadeIn(animationSpec = tween(400, delayMillis = 150)) +
-                        scaleIn(initialScale = 0.9f, animationSpec = tween(400, delayMillis = 150))
+                    scaleIn(initialScale = 0.9f, animationSpec = tween(400, delayMillis = 150))
             ) {
                 Column {
                     PhotoCard(photo)
@@ -791,7 +1131,7 @@ fun SuccessScreen(
             AnimatedVisibility(
                 visible = visible,
                 enter = fadeIn(animationSpec = tween(400, delayMillis = 250)) +
-                        slideInVertically(initialOffsetY = { 40 }, animationSpec = tween(400, delayMillis = 250))
+                    slideInVertically(initialOffsetY = { 40 }, animationSpec = tween(400, delayMillis = 250))
             ) {
                 Column {
                     PersonalDataCard(personalData)
@@ -804,7 +1144,7 @@ fun SuccessScreen(
         AnimatedVisibility(
             visible = visible,
             enter = fadeIn(animationSpec = tween(400, delayMillis = 350)) +
-                    slideInVertically(initialOffsetY = { 20 }, animationSpec = tween(400, delayMillis = 350))
+                slideInVertically(initialOffsetY = { 20 }, animationSpec = tween(400, delayMillis = 350))
         ) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -838,7 +1178,7 @@ fun SuccessScreen(
         AnimatedVisibility(
             visible = visible,
             enter = fadeIn(animationSpec = tween(400, delayMillis = 400)) +
-                    slideInVertically(initialOffsetY = { 20 }, animationSpec = tween(400, delayMillis = 400))
+                slideInVertically(initialOffsetY = { 20 }, animationSpec = tween(400, delayMillis = 400))
         ) {
             Button(
                 onClick = onResetClick,
@@ -980,7 +1320,7 @@ fun ErrorScreen(
         AnimatedVisibility(
             visible = visible,
             enter = fadeIn(animationSpec = tween(400)) +
-                    scaleIn(initialScale = 0.7f, animationSpec = tween(400, easing = FastOutSlowInEasing))
+                scaleIn(initialScale = 0.7f, animationSpec = tween(400, easing = FastOutSlowInEasing))
         ) {
             Icon(
                 imageVector = Icons.Default.Error,
@@ -996,7 +1336,7 @@ fun ErrorScreen(
         AnimatedVisibility(
             visible = visible,
             enter = fadeIn(animationSpec = tween(400, delayMillis = 150)) +
-                    slideInVertically(initialOffsetY = { -20 }, animationSpec = tween(400, delayMillis = 150))
+                slideInVertically(initialOffsetY = { -20 }, animationSpec = tween(400, delayMillis = 150))
         ) {
             Text(
                 text = "Error Reading Card",
@@ -1011,7 +1351,7 @@ fun ErrorScreen(
         AnimatedVisibility(
             visible = visible,
             enter = fadeIn(animationSpec = tween(400, delayMillis = 250)) +
-                    expandVertically(animationSpec = tween(400, delayMillis = 250))
+                expandVertically(animationSpec = tween(400, delayMillis = 250))
         ) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -1035,7 +1375,7 @@ fun ErrorScreen(
         AnimatedVisibility(
             visible = visible,
             enter = fadeIn(animationSpec = tween(400, delayMillis = 350)) +
-                    slideInVertically(initialOffsetY = { 40 }, animationSpec = tween(400, delayMillis = 350))
+                slideInVertically(initialOffsetY = { 40 }, animationSpec = tween(400, delayMillis = 350))
         ) {
             Button(
                 onClick = onResetClick,

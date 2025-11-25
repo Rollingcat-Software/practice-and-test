@@ -1,8 +1,5 @@
 package com.turkey.eidnfc.util
 
-import org.bouncycastle.asn1.ASN1InputStream
-import org.bouncycastle.asn1.cms.ContentInfo
-import org.bouncycastle.asn1.cms.SignedData
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cms.CMSSignedData
 import org.bouncycastle.cms.SignerInformation
@@ -10,10 +7,10 @@ import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoVerifierBuilder
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.util.Store
 import timber.log.Timber
+import java.io.ByteArrayInputStream
 import java.security.MessageDigest
 import java.security.Security
 import java.security.cert.X509Certificate
-import java.io.ByteArrayInputStream
 
 /**
  * Validator for SOD (Security Object Document) from Turkish eID card.

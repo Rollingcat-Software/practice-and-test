@@ -3,7 +3,6 @@ package com.turkey.eidnfc.data.nfc
 import timber.log.Timber
 import java.security.MessageDigest
 import javax.crypto.Cipher
-import javax.crypto.Mac
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
@@ -64,8 +63,8 @@ class BacAuthentication {
             if (javaClass != other?.javaClass) return false
             other as SessionKeys
             return encryptionKey.contentEquals(other.encryptionKey) &&
-                    macKey.contentEquals(other.macKey) &&
-                    sendSequenceCounter.contentEquals(other.sendSequenceCounter)
+                macKey.contentEquals(other.macKey) &&
+                sendSequenceCounter.contentEquals(other.sendSequenceCounter)
         }
 
         override fun hashCode(): Int {
@@ -84,7 +83,8 @@ class BacAuthentication {
      */
     fun deriveKeys(mrzData: MrzData): Pair<ByteArray, ByteArray> {
         // Build MRZ_information string: docNo + checkDigit + dob + checkDigit + doe + checkDigit
-        val docNoWithCheck = mrzData.documentNumber.padEnd(9, '<') + calculateCheckDigit(mrzData.documentNumber.padEnd(9, '<'))
+        val docNoWithCheck =
+            mrzData.documentNumber.padEnd(9, '<') + calculateCheckDigit(mrzData.documentNumber.padEnd(9, '<'))
         val dobWithCheck = mrzData.dateOfBirth + calculateCheckDigit(mrzData.dateOfBirth)
         val doeWithCheck = mrzData.dateOfExpiry + calculateCheckDigit(mrzData.dateOfExpiry)
 

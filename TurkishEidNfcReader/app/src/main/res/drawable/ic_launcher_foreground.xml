@@ -4,28 +4,30 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     <!-- NFC icon representing ID card reader -->
-    <group android:translateX="22" android:translateY="22">
+    <group
+        android:translateX="22"
+        android:translateY="22">
         <!-- Card shape -->
         <path
             android:fillColor="#FFFFFF"
-            android:pathData="M8,4h48c4.4,0 8,3.6 8,8v40c0,4.4 -3.6,8 -8,8H8c-4.4,0 -8,-3.6 -8,-8V12C0,7.6 3.6,4 8,4z"/>
+            android:pathData="M8,4h48c4.4,0 8,3.6 8,8v40c0,4.4 -3.6,8 -8,8H8c-4.4,0 -8,-3.6 -8,-8V12C0,7.6 3.6,4 8,4z" />
         <!-- NFC waves -->
         <path
             android:fillColor="#1565C0"
-            android:pathData="M44,28c0,-6.6 -5.4,-12 -12,-12s-12,5.4 -12,12s5.4,12 12,12S44,34.6 44,28z M32,36c-4.4,0 -8,-3.6 -8,-8s3.6,-8 8,-8s8,3.6 8,8S36.4,36 32,36z"/>
+            android:pathData="M44,28c0,-6.6 -5.4,-12 -12,-12s-12,5.4 -12,12s5.4,12 12,12S44,34.6 44,28z M32,36c-4.4,0 -8,-3.6 -8,-8s3.6,-8 8,-8s8,3.6 8,8S36.4,36 32,36z" />
         <path
             android:fillColor="#1565C0"
-            android:pathData="M32,24c-2.2,0 -4,1.8 -4,4s1.8,4 4,4s4,-1.8 4,-4S34.2,24 32,24z"/>
+            android:pathData="M32,24c-2.2,0 -4,1.8 -4,4s1.8,4 4,4s4,-1.8 4,-4S34.2,24 32,24z" />
         <!-- Signal waves -->
         <path
-            android:strokeColor="#1565C0"
-            android:strokeWidth="2"
             android:fillColor="#00000000"
-            android:pathData="M48,20c2.8,2.8 4.5,6.6 4.5,10.8s-1.7,8 -4.5,10.8"/>
+            android:pathData="M48,20c2.8,2.8 4.5,6.6 4.5,10.8s-1.7,8 -4.5,10.8"
+            android:strokeWidth="2"
+            android:strokeColor="#1565C0" />
         <path
-            android:strokeColor="#1565C0"
-            android:strokeWidth="2"
             android:fillColor="#00000000"
-            android:pathData="M52,16c4.2,4.2 6.8,10 6.8,16.4s-2.6,12.2 -6.8,16.4"/>
+            android:pathData="M52,16c4.2,4.2 6.8,10 6.8,16.4s-2.6,12.2 -6.8,16.4"
+            android:strokeWidth="2"
+            android:strokeColor="#1565C0" />
     </group>
 </vector>

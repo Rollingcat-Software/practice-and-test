@@ -129,12 +129,12 @@ class ValidatePinUseCase @Inject constructor() : UseCase<String, Boolean>(
             val (docNo, dob, doe) = parts
 
             return docNo.isNotEmpty() &&
-                    docNo.length <= 9 &&
-                    docNo.all { it.isLetterOrDigit() } &&
-                    dob.length == 6 &&
-                    dob.all { it.isDigit() } &&
-                    doe.length == 6 &&
-                    doe.all { it.isDigit() }
+                docNo.length <= 9 &&
+                docNo.all { it.isLetterOrDigit() } &&
+                dob.length == 6 &&
+                dob.all { it.isDigit() } &&
+                doe.length == 6 &&
+                doe.all { it.isDigit() }
         }
     }
 }

@@ -2,7 +2,9 @@ package com.turkey.eidnfc.domain.usecase
 
 import com.turkey.eidnfc.domain.model.Result
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 

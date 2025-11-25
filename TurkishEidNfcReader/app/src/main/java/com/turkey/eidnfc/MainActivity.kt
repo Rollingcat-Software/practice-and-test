@@ -208,6 +208,7 @@ class MainActivity : ComponentActivity() {
                     Timber.w("Tag is null in intent")
                 }
             }
+
             else -> {
                 Timber.d("Intent action not related to NFC: $action")
             }

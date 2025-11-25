@@ -11,9 +11,16 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+
+// Type aliases for clearer any() usage
+private typealias AnyTag = Tag
+private typealias AnyString = String
 
 /**
  * Unit tests for EidRepositoryImpl.
@@ -112,7 +119,7 @@ class EidRepositoryImplTest {
         assertEquals("PIN must be exactly 6 digits", exception.message)
 
         // Card reader should not be called
-        coVerify(exactly = 0) { cardReader.readCard(any(), any()) }
+        coVerify(exactly = 0) { cardReader.readCard(any<AnyTag>(), any<AnyString>()) }
     }
 
     @Test
@@ -366,7 +373,7 @@ class EidRepositoryImplTest {
         }
 
         // Card reader should never be called
-        coVerify(exactly = 0) { cardReader.readCard(any(), any()) }
+        coVerify(exactly = 0) { cardReader.readCard(any<AnyTag>(), any<AnyString>()) }
     }
 
     @Test

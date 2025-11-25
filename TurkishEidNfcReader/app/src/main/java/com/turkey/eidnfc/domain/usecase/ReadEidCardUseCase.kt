@@ -40,9 +40,11 @@ class ReadEidCardUseCase @Inject constructor(
                 Timber.e("PIN validation failed: ${validationResult.exception.message}")
                 return Result.Error(validationResult.exception)
             }
+
             is Result.Success -> {
                 Timber.d("PIN validation successful")
             }
+
             Result.Loading -> {
                 // Should not happen, but handle it
                 return Result.Error(IllegalStateException("Unexpected loading state"))

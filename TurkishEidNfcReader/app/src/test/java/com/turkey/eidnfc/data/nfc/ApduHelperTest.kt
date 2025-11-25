@@ -1,6 +1,11 @@
 package com.turkey.eidnfc.data.nfc
 
-import org.junit.Assert.*
+import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -53,7 +58,7 @@ class ApduHelperTest {
     }
 
     @Test
-    fun `selectEidAid creates correct Turkish eID AID command`() {
+    fun `selectEidAid creates correct ICAO MRTD AID command`() {
         // When
         val command = ApduHelper.selectEidAid()
 
@@ -62,10 +67,10 @@ class ApduHelperTest {
         assertEquals(0xA4.toByte(), command[1]) // INS
         assertEquals(0x04, command[2]) // P1 for AID
         assertEquals(0x0C, command[3]) // P2
-        assertEquals(0x09, command[4]) // Lc (AID is 9 bytes)
+        assertEquals(0x07, command[4]) // Lc (MRTD AID is 7 bytes)
 
-        // Check Turkish eID AID is embedded
-        val expectedAid = ApduHelper.TURKISH_EID_AID
+        // Check ICAO MRTD AID is embedded
+        val expectedAid = ApduHelper.MRTD_AID
         for (i in expectedAid.indices) {
             assertEquals(expectedAid[i], command[5 + i])
         }
@@ -358,11 +363,19 @@ class ApduHelperTest {
     }
 
     @Test
-    fun `TURKISH_EID_AID is correct`() {
+    fun `MRTD_AID is correct`() {
+        val expectedAid = byteArrayOf(
+            0xA0.toByte(), 0x00, 0x00, 0x02, 0x47, 0x10, 0x01
+        )
+        assertArrayEquals(expectedAid, ApduHelper.MRTD_AID)
+    }
+
+    @Test
+    fun `TURKISH_EID_AID_LEGACY is correct`() {
         val expectedAid = byteArrayOf(
             0xA0.toByte(), 0x00, 0x00, 0x01, 0x67,
             0x45, 0x53, 0x49, 0x44
         )
-        assertArrayEquals(expectedAid, ApduHelper.TURKISH_EID_AID)
+        assertArrayEquals(expectedAid, ApduHelper.TURKISH_EID_AID_LEGACY)
     }
 }

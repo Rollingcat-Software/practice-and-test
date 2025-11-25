@@ -9,7 +9,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -109,7 +110,7 @@ class ReadEidCardUseCaseTest {
         val errorMessage = "Card reading failed"
 
         coEvery { repository.readCard(mockTag, validPin) } returns
-                Result.Error(Exception(errorMessage))
+            Result.Error(Exception(errorMessage))
 
         // When
         val result = useCase(params)
@@ -151,7 +152,7 @@ class ReadEidCardUseCaseTest {
         )
 
         coEvery { repository.readCard(mockTag, validPin) } returns
-                Result.Success(cardDataWithoutPersonal)
+            Result.Success(cardDataWithoutPersonal)
 
         // When
         val result = useCase(params)
@@ -172,7 +173,7 @@ class ReadEidCardUseCaseTest {
         val invalidCardData = createCardDataWithEmptyTckn()
 
         coEvery { repository.readCard(mockTag, validPin) } returns
-                Result.Success(invalidCardData)
+            Result.Success(invalidCardData)
 
         // When
         val result = useCase(params)
@@ -191,7 +192,7 @@ class ReadEidCardUseCaseTest {
         val invalidCardData = createCardDataWithEmptyNames()
 
         coEvery { repository.readCard(mockTag, validPin) } returns
-                Result.Success(invalidCardData)
+            Result.Success(invalidCardData)
 
         // When
         val result = useCase(params)

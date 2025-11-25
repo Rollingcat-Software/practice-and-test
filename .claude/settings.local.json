@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(./gradlew assembleDebug:*)",
+      "Bash(./gradlew test:*)",
+      "Bash(./gradlew:*)",
+      "Bash(adb install:*)",
+      "Bash(\"C:/Users/ahabg/AppData/Local/Android/Sdk/platform-tools/adb.exe\" install -r \"C:/Users/ahabg/OneDrive/Belgeler/GitHub/FIVUCSAS/practice-and-test/UniversalNfcReader/app/build/outputs/apk/debug/app-debug.apk\")",
+      "Bash(dir:*)",
+      "Bash(find:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

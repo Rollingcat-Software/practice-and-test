@@ -115,6 +115,7 @@ object Dg2Parser {
                             }
                         }
                     }
+
                     else -> {
                         // For container tags, continue recursively
                         if (length > 0 && length < stream.available()) {

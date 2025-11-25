@@ -95,24 +95,34 @@ fun NfcError.toUserMessage(): String {
     return when (this) {
         is NfcError.WrongPin ->
             "Wrong PIN. $attemptsRemaining attempt(s) remaining."
+
         NfcError.CardLocked ->
             "Card is locked. Contact authorities to unlock."
+
         NfcError.SecurityNotSatisfied ->
             "Security condition not satisfied. Please verify PIN."
+
         NfcError.FileNotFound ->
             "Required file not found on card."
+
         NfcError.InvalidCard ->
             "This is not a valid Turkish eID card."
+
         NfcError.NfcNotAvailable ->
             "NFC is not available on this device."
+
         NfcError.NfcDisabled ->
             "Please enable NFC in device settings."
+
         NfcError.ConnectionLost ->
             "Connection to card lost. Please try again."
+
         NfcError.Timeout ->
             "Operation timed out. Please try again."
+
         NfcError.ParseError ->
             "Failed to parse card data."
+
         is NfcError.UnknownError ->
             "Error: $message ${statusCode?.let { "(0x${String.format("%04X", it)})" } ?: ""}"
     }

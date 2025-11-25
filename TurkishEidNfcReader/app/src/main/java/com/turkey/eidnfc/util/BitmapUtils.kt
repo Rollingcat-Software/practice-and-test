@@ -74,8 +74,10 @@ object BitmapUtils {
             val bitmap = BitmapFactory.decodeByteArray(data, 0, data.size, decodeOptions)
 
             if (bitmap != null) {
-                Timber.d("Decoded bitmap size: ${bitmap.width}x${bitmap.height}, " +
-                        "bytes: ${bitmap.byteCount}")
+                Timber.d(
+                    "Decoded bitmap size: ${bitmap.width}x${bitmap.height}, " +
+                        "bytes: ${bitmap.byteCount}"
+                )
             }
 
             bitmap

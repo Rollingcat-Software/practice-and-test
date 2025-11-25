@@ -207,20 +207,28 @@ object ApduHelper {
         return when {
             statusWord == StatusWord.SUCCESS ->
                 "Success"
+
             remainingAttempts >= 0 ->
                 "Wrong PIN. $remainingAttempts attempt(s) remaining"
+
             statusWord == StatusWord.SECURITY_NOT_SATISFIED ->
                 "Security condition not satisfied. PIN required"
+
             statusWord == StatusWord.AUTH_METHOD_BLOCKED ->
                 "Authentication method blocked. Card is locked"
+
             statusWord == StatusWord.FILE_NOT_FOUND ->
                 "File or application not found"
+
             statusWord == StatusWord.WRONG_PARAMETERS ->
                 "Wrong parameters P1 or P2"
+
             statusWord == StatusWord.WRONG_LENGTH ->
                 "Wrong length Lc"
+
             statusWord == StatusWord.CONDITIONS_NOT_SATISFIED ->
                 "Conditions of use not satisfied"
+
             else ->
                 String.format("Unknown status: 0x%04X", statusWord)
         }

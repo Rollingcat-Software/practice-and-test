@@ -5,6 +5,9 @@
     <!-- NFC permission -->
     <uses-permission android:name="android.permission.NFC" />
 
+    <!-- Camera permission for MRZ scanning -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
     <!-- Require NFC feature (optional - removes app from Play Store for non-NFC devices) -->
     <!-- Uncomment if you want to make NFC mandatory -->
     <!-- <uses-feature android:name="android.hardware.nfc" android:required="true" /> -->
@@ -12,6 +15,14 @@
     <!-- Make NFC optional - app can still be installed on non-NFC devices -->
     <uses-feature
         android:name="android.hardware.nfc"
+        android:required="false" />
+
+    <!-- Camera feature for MRZ scanning (optional) -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
         android:required="false" />
 
     <application

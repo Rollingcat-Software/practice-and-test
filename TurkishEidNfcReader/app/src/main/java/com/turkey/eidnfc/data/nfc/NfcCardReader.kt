@@ -95,9 +95,11 @@ class NfcCardReader {
             }
         } else {
             Timber.e("PIN format not supported. Use MRZ format: documentNumber|YYMMDD|YYMMDD")
-            NfcResult.Error(NfcError.UnknownError(
-                "Invalid format. Please enter MRZ data as: documentNumber|dateOfBirth|dateOfExpiry (e.g., A12345678|900101|301231)"
-            ))
+            NfcResult.Error(
+                NfcError.UnknownError(
+                    "Invalid format. Please enter MRZ data as: documentNumber|dateOfBirth|dateOfExpiry (e.g., A12345678|900101|301231)"
+                )
+            )
         }
     }
 

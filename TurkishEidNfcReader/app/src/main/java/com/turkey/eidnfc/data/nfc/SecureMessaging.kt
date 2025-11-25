@@ -167,6 +167,7 @@ class SecureMessaging(
                         encryptedData = value.copyOfRange(1, value.size)
                     }
                 }
+
                 0x99 -> responseSw = value
                 0x8E -> responseMac = value
             }
@@ -199,7 +200,7 @@ class SecureMessaging(
             } else if (lengthByte == 0x82) {
                 macOffset += 3
                 val len = ((responseData[macOffset - 2].toInt() and 0xFF) shl 8) or
-                        (responseData[macOffset - 1].toInt() and 0xFF)
+                    (responseData[macOffset - 1].toInt() and 0xFF)
                 macOffset += len
             } else {
                 macOffset++

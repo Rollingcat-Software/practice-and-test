@@ -1,6 +1,7 @@
 package com.turkey.eidnfc.util
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -241,10 +242,14 @@ class BitmapUtilsTest {
         val resultHeight = height / sampleSize
 
         // Resulting dimensions should be close to maxDim but not exceed it by much
-        assertTrue("Result width $resultWidth should be reasonable",
-            resultWidth <= maxDim * 2)
-        assertTrue("Result height $resultHeight should be reasonable",
-            resultHeight <= maxDim * 2)
+        assertTrue(
+            "Result width $resultWidth should be reasonable",
+            resultWidth <= maxDim * 2
+        )
+        assertTrue(
+            "Result height $resultHeight should be reasonable",
+            resultHeight <= maxDim * 2
+        )
     }
 
     @Test

@@ -2,7 +2,6 @@ package com.turkey.eidnfc.util
 
 import android.content.Context
 import android.nfc.NfcAdapter
-import com.turkey.eidnfc.util.Constants.Nfc.PIN_LENGTH
 import com.turkey.eidnfc.util.Constants.TurkishEid.TCKN_LENGTH
 
 /**
@@ -50,12 +49,12 @@ fun String.isValidPin(): Boolean {
     val (docNo, dob, doe) = parts
 
     return docNo.isNotEmpty() &&
-            docNo.length <= 9 &&
-            docNo.all { it.isLetterOrDigit() } &&
-            dob.length == 6 &&
-            dob.all { it.isDigit() } &&
-            doe.length == 6 &&
-            doe.all { it.isDigit() }
+        docNo.length <= 9 &&
+        docNo.all { it.isLetterOrDigit() } &&
+        dob.length == 6 &&
+        dob.all { it.isDigit() } &&
+        doe.length == 6 &&
+        doe.all { it.isDigit() }
 }
 
 /**

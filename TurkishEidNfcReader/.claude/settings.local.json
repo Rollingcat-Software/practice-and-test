@@ -13,7 +13,21 @@
       "Bash(git reset:*)",
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nImplement BAC Authentication for Turkish eID Card Reading\n\nReplace PIN-based authentication with ICAO Doc 9303 compliant BAC\n(Basic Access Control) protocol for Turkish eID cards.\n\nChanges:\n- Add BacAuthentication.kt: MRZ key derivation, 3DES encryption,\n  mutual authentication with GET CHALLENGE/EXTERNAL AUTHENTICATE\n- Add SecureMessaging.kt: Encrypted APDU wrapping/unwrapping with\n  ISO 9797-1 MAC Algorithm 3\n- Update ApduHelper.kt: Use correct ICAO MRTD AID (A0 00 00 02 47 10 01)\n- Rewrite NfcCardReader.kt: Full BAC authentication flow with secure\n  messaging for DG1/DG2 file reads\n- Update UI: MRZ input fields (document number, DOB, expiry date)\n- Fix Dg1Parser.kt: Handle single-line MRZ (90 chars without breaks)\n- Fix Dg2Parser.kt: Support JPEG2000 codestream and JPEG formats\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(./gradlew compileDebugUnitTestKotlin:*)",
+      "Bash(powershell.exe -NoProfile -Command \"cd ''C:\\Users\\ahabg\\OneDrive\\Belgeler\\GitHub\\FIVUCSAS\\practice-and-test\\TurkishEidNfcReader''; .\\gradlew.bat compileDebugUnitTestKotlin --console=plain 2>&1\")",
+      "Bash(powershell.exe -NoProfile -Command \"cd ''C:\\Users\\ahabg\\OneDrive\\Belgeler\\GitHub\\FIVUCSAS\\practice-and-test\\TurkishEidNfcReader''; gradle wrapper --gradle-version 8.13 2>&1\")",
+      "Bash(powershell.exe -NoProfile -Command \"Invoke-WebRequest -Uri ''https://services.gradle.org/distributions/gradle-8.13-bin.zip'' -OutFile ''C:\\Users\\ahabg\\OneDrive\\Belgeler\\GitHub\\FIVUCSAS\\practice-and-test\\TurkishEidNfcReader\\gradle-8.13-bin.zip'' -UseBasicParsing; Expand-Archive -Path ''C:\\Users\\ahabg\\OneDrive\\Belgeler\\GitHub\\FIVUCSAS\\practice-and-test\\TurkishEidNfcReader\\gradle-8.13-bin.zip'' -DestinationPath ''C:\\Users\\ahabg\\OneDrive\\Belgeler\\GitHub\\FIVUCSAS\\practice-and-test\\TurkishEidNfcReader\\gradle-temp'' -Force\")",
+      "Bash(.gradlew.bat compileDebugKotlin:*)",
+      "Bash(powershell.exe -NoProfile -Command \"cd ''C:\\Users\\ahabg\\OneDrive\\Belgeler\\GitHub\\FIVUCSAS\\practice-and-test\\TurkishEidNfcReader''; .\\gradlew.bat compileDebugKotlin --console=plain 2>&1\")",
+      "Bash(powershell.exe -NoProfile -Command \"Test-Path ''C:\\Users\\ahabg\\OneDrive\\Belgeler\\GitHub\\FIVUCSAS\\practice-and-test\\TurkishEidNfcReader\\gradle\\wrapper\\gradle-wrapper.jar''\")",
+      "WebFetch(domain:www.doubango.org)",
+      "WebFetch(domain:en.wikipedia.org)",
+      "WebFetch(domain:docs.uqudo.com)",
+      "WebFetch(domain:www.dynamsoft.com)",
+      "WebFetch(domain:www.researchgate.net)",
+      "WebFetch(domain:regulaforensics.com)",
+      "Bash(powershell.exe -NoProfile -Command:*)"
     ],
     "deny": [],
     "ask": []

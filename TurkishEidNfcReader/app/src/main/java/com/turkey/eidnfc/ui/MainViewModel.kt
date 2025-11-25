@@ -9,7 +9,6 @@ import com.turkey.eidnfc.domain.model.onError
 import com.turkey.eidnfc.domain.model.onSuccess
 import com.turkey.eidnfc.domain.usecase.ReadEidCardUseCase
 import com.turkey.eidnfc.domain.usecase.ValidatePinUseCase
-import com.turkey.eidnfc.util.Constants
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -61,9 +60,9 @@ class MainViewModel @Inject constructor(
         if (!ValidatePinUseCase.validateQuick(currentMrzData)) {
             _uiState.value = UiState.Error(
                 "Please enter valid MRZ data:\n" +
-                "- Document Number (1-9 characters)\n" +
-                "- Date of Birth (YYMMDD)\n" +
-                "- Date of Expiry (YYMMDD)"
+                    "- Document Number (1-9 characters)\n" +
+                    "- Date of Birth (YYMMDD)\n" +
+                    "- Date of Expiry (YYMMDD)"
             )
             return
         }
@@ -115,17 +114,17 @@ class MainViewModel @Inject constructor(
         return when (exception) {
             is TagLostException -> {
                 "Card connection lost.\n\n" +
-                "✓ Hold your card steady against the device\n" +
-                "✓ Don't move the card until reading completes\n" +
-                "✓ Try again"
+                    "✓ Hold your card steady against the device\n" +
+                    "✓ Don't move the card until reading completes\n" +
+                    "✓ Try again"
             }
 
             is IOException -> {
                 "Communication error with card.\n\n" +
-                "✓ Ensure your card is touching the NFC area\n" +
-                "✓ Remove any metal cases or thick covers\n" +
-                "✓ Try cleaning the card surface\n" +
-                "✓ Try again"
+                    "✓ Ensure your card is touching the NFC area\n" +
+                    "✓ Remove any metal cases or thick covers\n" +
+                    "✓ Try cleaning the card surface\n" +
+                    "✓ Try again"
             }
 
             is IllegalArgumentException -> {
@@ -135,9 +134,9 @@ class MainViewModel @Inject constructor(
 
             is SecurityException -> {
                 "Security error.\n\n" +
-                "✓ Verify your MRZ data is correct\n" +
-                "✓ Check document number, birth date, and expiry date\n" +
-                "✓ Ensure dates match your ID card exactly"
+                    "✓ Verify your MRZ data is correct\n" +
+                    "✓ Check document number, birth date, and expiry date\n" +
+                    "✓ Ensure dates match your ID card exactly"
             }
 
             else -> {
@@ -145,49 +144,49 @@ class MainViewModel @Inject constructor(
                 val message = exception.message ?: ""
                 when {
                     message.contains("MRZ", ignoreCase = true) ||
-                    message.contains("BAC", ignoreCase = true) -> {
+                        message.contains("BAC", ignoreCase = true) -> {
                         "Authentication failed.\n\n" +
-                        "✓ Double-check your MRZ data from the card\n" +
-                        "✓ Verify document number (9 characters)\n" +
-                        "✓ Verify birth date and expiry date (YYMMDD)\n" +
-                        "✓ Make sure dates are entered correctly"
+                            "✓ Double-check your MRZ data from the card\n" +
+                            "✓ Verify document number (9 characters)\n" +
+                            "✓ Verify birth date and expiry date (YYMMDD)\n" +
+                            "✓ Make sure dates are entered correctly"
                     }
 
                     message.contains("connection", ignoreCase = true) ||
-                    message.contains("lost", ignoreCase = true) -> {
+                        message.contains("lost", ignoreCase = true) -> {
                         "Card connection interrupted.\n\n" +
-                        "✓ Keep the card steady on the device\n" +
-                        "✓ Don't move until reading completes\n" +
-                        "✓ Try again"
+                            "✓ Keep the card steady on the device\n" +
+                            "✓ Don't move until reading completes\n" +
+                            "✓ Try again"
                     }
 
                     message.contains("timeout", ignoreCase = true) -> {
                         "Reading timed out.\n\n" +
-                        "✓ Keep the card on the device longer\n" +
-                        "✓ Ensure good contact with NFC area\n" +
-                        "✓ Try again"
+                            "✓ Keep the card on the device longer\n" +
+                            "✓ Ensure good contact with NFC area\n" +
+                            "✓ Try again"
                     }
 
                     message.contains("NFC", ignoreCase = true) -> {
                         "NFC error.\n\n" +
-                        "✓ Ensure NFC is enabled in Settings\n" +
-                        "✓ Check if your device supports NFC\n" +
-                        "✓ Try restarting NFC in device settings"
+                            "✓ Ensure NFC is enabled in Settings\n" +
+                            "✓ Check if your device supports NFC\n" +
+                            "✓ Try restarting NFC in device settings"
                     }
 
                     message.isNotEmpty() -> {
                         // Use the original message if it's descriptive enough
                         "$message\n\n" +
-                        "✓ Verify your MRZ data is correct\n" +
-                        "✓ Try again with the card held steady"
+                            "✓ Verify your MRZ data is correct\n" +
+                            "✓ Try again with the card held steady"
                     }
 
                     else -> {
                         "Unable to read card.\n\n" +
-                        "✓ Check that your MRZ data is correct\n" +
-                        "✓ Ensure NFC is enabled\n" +
-                        "✓ Hold the card steady on the device\n" +
-                        "✓ Try again"
+                            "✓ Check that your MRZ data is correct\n" +
+                            "✓ Ensure NFC is enabled\n" +
+                            "✓ Hold the card steady on the device\n" +
+                            "✓ Try again"
                     }
                 }
             }
