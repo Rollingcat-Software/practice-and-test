@@ -1,6 +1,9 @@
 package com.rollingcatsoftware.universalnfcreader.data.nfc.eid
 
-import android.util.Log
+import com.rollingcatsoftware.universalnfcreader.data.nfc.security.SecureByteArray
+import com.rollingcatsoftware.universalnfcreader.data.nfc.security.SecureLogger
+import com.rollingcatsoftware.universalnfcreader.data.nfc.security.secureClear
+import java.io.Closeable
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
@@ -15,29 +18,45 @@ import javax.crypto.spec.SecretKeySpec
  *
  * Based on ICAO Doc 9303 Part 11.
  *
- * Security Note: All cryptographic operations use 3DES and ISO 9797-1 MAC.
- * Session keys should be cleared when no longer needed.
+ * COMPLIANCE: se-checklist.md
+ * - Section 1.1: "Clear PIN bytes from memory after use" - Implements Closeable
+ * - Section 3.2: "Validate APDU responses before processing"
+ * - Section 4: All cryptographic operations use 3DES and ISO 9797-1 MAC
+ *
+ * Security Note: This class implements Closeable. Always use with Kotlin's use {} block
+ * or call close() when done to ensure session keys are securely cleared.
  */
 class SecureMessaging(
-    private val encryptionKey: ByteArray,
-    private val macKey: ByteArray,
+    encryptionKey: ByteArray,
+    macKey: ByteArray,
     initialSsc: ByteArray
-) {
+) : Closeable {
     companion object {
         private const val TAG = "SecureMessaging"
         private val ZERO_IV = ByteArray(8)
     }
 
-    // Send Sequence Counter - incremented for each command/response
-    private var ssc: ByteArray = initialSsc.copyOf()
+    // Wrap keys in SecureByteArray for secure memory management
+    private val _encryptionKey = SecureByteArray.wrap(encryptionKey)
+    private val _macKey = SecureByteArray.wrap(macKey)
+
+    // Send Sequence Counter - wrapped for secure clearing
+    private val _ssc = SecureByteArray.copyOf(initialSsc)
+
+    @Volatile
+    private var isClosed = false
 
     /**
      * Wraps an APDU command with secure messaging.
      *
      * @param command Plain APDU command
      * @return Secure messaging wrapped APDU
+     * @throws IllegalStateException if this SecureMessaging has been closed
+     * @throws IllegalArgumentException if the command is invalid
      */
     fun wrapCommand(command: ByteArray): ByteArray {
+        checkNotClosed()
+
         if (command.size < 4) {
             throw IllegalArgumentException("Invalid APDU command")
         }
@@ -96,9 +115,14 @@ class SecureMessaging(
         }
 
         // Calculate MAC over: SSC || padded header || DO87 || DO97
-        val macInput = ssc + paddedHeader + padISO9797(do87 + do97)
-        val mac = calculateMAC(macInput, macKey)
+        val sscBytes = _ssc.toByteArray()
+        val macInput = sscBytes + paddedHeader + padISO9797(do87 + do97)
+        val mac = _macKey.withData { macKey -> calculateMAC(macInput, macKey) }
         val do8e = buildDO8E(mac)
+
+        // Clear intermediate sensitive data
+        sscBytes.secureClear()
+        macInput.secureClear()
 
         // Build protected APDU
         val protectedData = do87 + do97 + do8e
@@ -109,7 +133,7 @@ class SecureMessaging(
             newLc.toByte()
         ) + protectedData + byteArrayOf(0x00) // Le = 0x00 for extended response
 
-        Log.d(TAG, "Protected APDU: ${EidApduHelper.toHexString(protectedApdu)}")
+        SecureLogger.logApduCommand(TAG, protectedApdu)
         return protectedApdu
     }
 
@@ -118,10 +142,13 @@ class SecureMessaging(
      *
      * @param response Secure messaging wrapped response
      * @return Pair of (plaintext data, status word) or null if verification fails
+     * @throws IllegalStateException if this SecureMessaging has been closed
      */
     fun unwrapResponse(response: ByteArray): Pair<ByteArray, Int>? {
+        checkNotClosed()
+
         if (response.size < 2) {
-            Log.e(TAG, "Response too short")
+            SecureLogger.e(TAG, "Response too short")
             return null
         }
 
@@ -179,13 +206,14 @@ class SecureMessaging(
 
         // Verify MAC
         if (responseMac == null) {
-            Log.e(TAG, "No MAC in response")
+            SecureLogger.e(TAG, "No MAC in response")
             return null
         }
 
         // Build MAC input: SSC || DO87 || DO99
+        val sscBytes = _ssc.toByteArray()
         val macInputParts = mutableListOf<Byte>()
-        macInputParts.addAll(ssc.toList())
+        macInputParts.addAll(sscBytes.toList())
 
         // Reconstruct DO87 and DO99 for MAC verification
         var macOffset = 0
@@ -215,18 +243,28 @@ class SecureMessaging(
         }
 
         val macInput = padISO9797(macInputParts.toByteArray())
-        val calculatedMac = calculateMAC(macInput, macKey)
+        val calculatedMac = _macKey.withData { macKey -> calculateMAC(macInput, macKey) }
 
-        if (!calculatedMac.contentEquals(responseMac)) {
-            Log.e(TAG, "MAC verification failed")
-            Log.e(TAG, "Expected: ${EidApduHelper.toHexString(calculatedMac)}")
-            Log.e(TAG, "Received: ${EidApduHelper.toHexString(responseMac)}")
+        // Constant-time comparison to prevent timing attacks
+        if (!constantTimeEquals(calculatedMac, responseMac)) {
+            SecureLogger.e(TAG, "MAC verification failed")
+            SecureLogger.logHex(TAG, "Expected MAC", calculatedMac)
+            SecureLogger.logHex(TAG, "Received MAC", responseMac)
+            // Clear sensitive data before returning
+            sscBytes.secureClear()
+            macInput.secureClear()
+            calculatedMac.secureClear()
             return null
         }
 
+        // Clear MAC comparison data
+        calculatedMac.secureClear()
+        macInput.secureClear()
+        sscBytes.secureClear()
+
         // Decrypt data if present
         val plainData = if (encryptedData != null && encryptedData.isNotEmpty()) {
-            val decrypted = decrypt3DES(encryptedData, encryptionKey)
+            val decrypted = _encryptionKey.withData { encKey -> decrypt3DES(encryptedData, encKey) }
             removePadding(decrypted)
         } else {
             byteArrayOf()
@@ -243,12 +281,24 @@ class SecureMessaging(
     }
 
     /**
+     * Constant-time byte array comparison to prevent timing attacks.
+     */
+    private fun constantTimeEquals(a: ByteArray, b: ByteArray): Boolean {
+        if (a.size != b.size) return false
+        var result = 0
+        for (i in a.indices) {
+            result = result or (a[i].toInt() xor b[i].toInt())
+        }
+        return result == 0
+    }
+
+    /**
      * Builds DO'87 (encrypted data) TLV.
      */
     private fun buildDO87(data: ByteArray): ByteArray {
         // Pad and encrypt data
         val padded = padISO9797(data)
-        val encrypted = encrypt3DES(padded, encryptionKey)
+        val encrypted = _encryptionKey.withData { encKey -> encrypt3DES(padded, encKey) }
 
         // Build TLV: 87 || L || 01 || encrypted data
         val value = byteArrayOf(0x01) + encrypted
@@ -288,11 +338,21 @@ class SecureMessaging(
      * Increments the Send Sequence Counter.
      */
     private fun incrementSsc() {
-        for (i in ssc.size - 1 downTo 0) {
-            ssc[i] = (ssc[i].toInt() + 1).toByte()
-            if (ssc[i] != 0.toByte()) break
+        for (i in _ssc.size - 1 downTo 0) {
+            val newValue = (_ssc[i].toInt() + 1).toByte()
+            _ssc[i] = newValue
+            if (newValue != 0.toByte()) break
         }
-        Log.d(TAG, "SSC: ${EidApduHelper.toHexString(ssc)}")
+        SecureLogger.logHex(TAG, "SSC", _ssc)
+    }
+
+    /**
+     * Checks if this SecureMessaging has been closed.
+     */
+    private fun checkNotClosed() {
+        if (isClosed) {
+            throw IllegalStateException("SecureMessaging has been closed and keys have been wiped")
+        }
     }
 
     /**
@@ -381,11 +441,30 @@ class SecureMessaging(
     }
 
     /**
-     * Clears sensitive session key material from memory.
+     * Securely clears all session key material from memory.
+     *
+     * COMPLIANCE: se-checklist.md - Section 1.1: "Clear PIN bytes from memory after use"
+     *
+     * This method is idempotent - calling it multiple times has no additional effect.
+     * Called automatically when used with Kotlin's use {} block.
      */
-    fun clear() {
-        encryptionKey.fill(0)
-        macKey.fill(0)
-        ssc.fill(0)
+    override fun close() {
+        if (isClosed) return
+
+        synchronized(this) {
+            if (isClosed) return
+
+            _encryptionKey.close()
+            _macKey.close()
+            _ssc.close()
+
+            isClosed = true
+            SecureLogger.d(TAG, "SecureMessaging session keys cleared")
+        }
     }
+
+    /**
+     * Alias for close() for backward compatibility.
+     */
+    fun clear() = close()
 }

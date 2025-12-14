@@ -8,7 +8,9 @@
       "Bash(adb install:*)",
       "Bash(\"C:/Users/ahabg/AppData/Local/Android/Sdk/platform-tools/adb.exe\" install -r \"C:/Users/ahabg/OneDrive/Belgeler/GitHub/FIVUCSAS/practice-and-test/UniversalNfcReader/app/build/outputs/apk/debug/app-debug.apk\")",
       "Bash(dir:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(wc:*)",
+      "Bash(java -version:*)"
     ],
     "deny": [],
     "ask": []

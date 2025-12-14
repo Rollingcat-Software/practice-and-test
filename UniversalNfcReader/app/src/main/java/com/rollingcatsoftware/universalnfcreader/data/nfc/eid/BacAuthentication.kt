@@ -1,6 +1,10 @@
 package com.rollingcatsoftware.universalnfcreader.data.nfc.eid
 
-import android.util.Log
+import com.rollingcatsoftware.universalnfcreader.data.nfc.security.SecureByteArray
+import com.rollingcatsoftware.universalnfcreader.data.nfc.security.SecureLogger
+import com.rollingcatsoftware.universalnfcreader.data.nfc.security.secureClear
+import com.rollingcatsoftware.universalnfcreader.data.nfc.security.secureWipe
+import java.io.Closeable
 import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.Cipher
@@ -17,7 +21,13 @@ import javax.crypto.spec.SecretKeySpec
  *
  * Based on ICAO Doc 9303 Part 11.
  *
- * Security Note: MRZ data is cleared from memory after key derivation.
+ * COMPLIANCE: se-checklist.md
+ * - Section 1.1: "Clear PIN bytes from memory after use" - Uses SecureByteArray
+ * - Section 4.1: "Use SecureRandom for any cryptographic operations"
+ * - Section 4.2: "Never use predictable random sources"
+ *
+ * Security Note: All sensitive key material is wrapped in SecureByteArray
+ * and automatically cleared when no longer needed.
  */
 class BacAuthentication {
 
@@ -63,43 +73,99 @@ class BacAuthentication {
 
     /**
      * Session keys derived from BAC authentication.
+     *
+     * COMPLIANCE: Implements Closeable to ensure secure cleanup.
+     * Use with Kotlin's use {} block for automatic cleanup.
      */
-    data class SessionKeys(
-        val encryptionKey: ByteArray,
-        val macKey: ByteArray,
+    class SessionKeys(
+        encryptionKey: ByteArray,
+        macKey: ByteArray,
+        sendSequenceCounter: ByteArray
+    ) : Closeable {
+        // Wrap keys in SecureByteArray for secure memory management
+        private val _encryptionKey = SecureByteArray.wrap(encryptionKey)
+        private val _macKey = SecureByteArray.wrap(macKey)
+        private val _sendSequenceCounter = SecureByteArray.wrap(sendSequenceCounter)
+
+        /**
+         * Gets a copy of the encryption key.
+         * Caller is responsible for clearing the returned array.
+         */
+        val encryptionKey: ByteArray
+            get() = _encryptionKey.toByteArray()
+
+        /**
+         * Gets a copy of the MAC key.
+         * Caller is responsible for clearing the returned array.
+         */
+        val macKey: ByteArray
+            get() = _macKey.toByteArray()
+
+        /**
+         * Gets a copy of the send sequence counter.
+         * Caller is responsible for clearing the returned array.
+         */
         val sendSequenceCounter: ByteArray
-    ) {
+            get() = _sendSequenceCounter.toByteArray()
+
+        /**
+         * Performs an operation with direct access to the encryption key.
+         * Preferred over [encryptionKey] as it doesn't create copies.
+         */
+        inline fun <R> withEncryptionKey(block: (ByteArray) -> R): R =
+            _encryptionKey.withData(block)
+
+        /**
+         * Performs an operation with direct access to the MAC key.
+         * Preferred over [macKey] as it doesn't create copies.
+         */
+        inline fun <R> withMacKey(block: (ByteArray) -> R): R =
+            _macKey.withData(block)
+
+        /**
+         * Performs an operation with direct access to the SSC.
+         */
+        inline fun <R> withSsc(block: (ByteArray) -> R): R =
+            _sendSequenceCounter.withData(block)
+
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-            other as SessionKeys
-            return encryptionKey.contentEquals(other.encryptionKey) &&
-                    macKey.contentEquals(other.macKey) &&
-                    sendSequenceCounter.contentEquals(other.sendSequenceCounter)
+            if (other !is SessionKeys) return false
+            return _encryptionKey == other._encryptionKey &&
+                    _macKey == other._macKey &&
+                    _sendSequenceCounter == other._sendSequenceCounter
         }
 
         override fun hashCode(): Int {
-            var result = encryptionKey.contentHashCode()
-            result = 31 * result + macKey.contentHashCode()
-            result = 31 * result + sendSequenceCounter.contentHashCode()
+            var result = _encryptionKey.hashCode()
+            result = 31 * result + _macKey.hashCode()
+            result = 31 * result + _sendSequenceCounter.hashCode()
             return result
         }
 
         /**
-         * Clears sensitive key material from memory.
+         * Securely clears all key material from memory.
+         * Called automatically when used with use {} block.
          */
-        fun clear() {
-            encryptionKey.fill(0)
-            macKey.fill(0)
-            sendSequenceCounter.fill(0)
+        override fun close() {
+            _encryptionKey.close()
+            _macKey.close()
+            _sendSequenceCounter.close()
         }
+
+        /**
+         * Alias for close() for backward compatibility.
+         */
+        fun clear() = close()
     }
 
     /**
      * Derives the base encryption and MAC keys from MRZ data.
      *
+     * COMPLIANCE: All intermediate values are securely cleared after use.
+     *
      * @param mrzData MRZ key material
-     * @return Pair of (Kenc, Kmac) base keys
+     * @return Pair of (Kenc, Kmac) base keys - caller must clear these after use
      */
     fun deriveKeys(mrzData: MrzData): Pair<ByteArray, ByteArray> {
         // Build MRZ_information string: docNo + checkDigit + dob + checkDigit + doe + checkDigit
@@ -109,23 +175,27 @@ class BacAuthentication {
         val doeWithCheck = mrzData.dateOfExpiry + calculateCheckDigit(mrzData.dateOfExpiry)
 
         val mrzInfo = docNoWithCheck + dobWithCheck + doeWithCheck
-        Log.d(TAG, "MRZ Info: $mrzInfo")
+        SecureLogger.logMrzData(TAG, mrzData.documentNumber, mrzData.dateOfBirth, mrzData.dateOfExpiry)
 
         // Calculate SHA-1 hash and take first 16 bytes as Kseed
         val sha1 = MessageDigest.getInstance("SHA-1")
-        val hash = sha1.digest(mrzInfo.toByteArray(Charsets.UTF_8))
+        val mrzInfoBytes = mrzInfo.toByteArray(Charsets.UTF_8)
+        val hash = sha1.digest(mrzInfoBytes)
         val kSeed = hash.copyOfRange(0, 16)
-        Log.d(TAG, "Kseed: ${EidApduHelper.toHexString(kSeed)}")
+
+        SecureLogger.logHex(TAG, "Kseed derived", kSeed)
 
         // Derive Kenc and Kmac
         val kEnc = deriveKey(kSeed, KENC_CONSTANT)
         val kMac = deriveKey(kSeed, KMAC_CONSTANT)
 
-        Log.d(TAG, "Kenc: ${EidApduHelper.toHexString(kEnc)}")
-        Log.d(TAG, "Kmac: ${EidApduHelper.toHexString(kMac)}")
+        SecureLogger.logHex(TAG, "Kenc derived", kEnc)
+        SecureLogger.logHex(TAG, "Kmac derived", kMac)
 
-        // Clear intermediate values
-        kSeed.fill(0)
+        // Securely clear all intermediate values
+        kSeed.secureWipe()
+        hash.secureClear()
+        mrzInfoBytes.secureClear()
 
         return Pair(kEnc, kMac)
     }
@@ -183,6 +253,8 @@ class BacAuthentication {
     /**
      * Performs BAC mutual authentication.
      *
+     * COMPLIANCE: All intermediate cryptographic values are securely cleared.
+     *
      * @param kEnc Encryption key
      * @param kMac MAC key
      * @param rndIcc Random challenge from card (8 bytes)
@@ -195,38 +267,48 @@ class BacAuthentication {
         rndIcc: ByteArray,
         transceive: suspend (ByteArray) -> ByteArray
     ): SessionKeys? {
+        // Declare all intermediate values for cleanup in finally block
+        var rndIfd: ByteArray? = null
+        var kIfd: ByteArray? = null
+        var s: ByteArray? = null
+        var eIfd: ByteArray? = null
+        var mIfd: ByteArray? = null
+        var r: ByteArray? = null
+        var kIcc: ByteArray? = null
+        var kSeedSession: ByteArray? = null
+
         try {
             // Generate IFD random and key material using SecureRandom
-            val rndIfd = generateSecureRandom(8)
-            val kIfd = generateSecureRandom(16)
+            rndIfd = generateSecureRandom(8)
+            kIfd = generateSecureRandom(16)
 
-            Log.d(TAG, "RND.ICC: ${EidApduHelper.toHexString(rndIcc)}")
-            Log.d(TAG, "RND.IFD: ${EidApduHelper.toHexString(rndIfd)}")
-            Log.d(TAG, "K.IFD: ${EidApduHelper.toHexString(kIfd)}")
+            SecureLogger.logHex(TAG, "RND.ICC", rndIcc)
+            SecureLogger.logHex(TAG, "RND.IFD", rndIfd)
+            SecureLogger.logHex(TAG, "K.IFD", kIfd)
 
             // S = RND.IFD || RND.ICC || K.IFD
-            val s = rndIfd + rndIcc + kIfd
+            s = rndIfd + rndIcc + kIfd
 
             // Encrypt S with 3DES
-            val eIfd = encrypt3DES(s, kEnc)
-            Log.d(TAG, "E.IFD: ${EidApduHelper.toHexString(eIfd)}")
+            eIfd = encrypt3DES(s, kEnc)
+            SecureLogger.logHex(TAG, "E.IFD", eIfd)
 
             // Calculate MAC
-            val mIfd = calculateMAC(eIfd, kMac)
-            Log.d(TAG, "M.IFD: ${EidApduHelper.toHexString(mIfd)}")
+            mIfd = calculateMAC(eIfd, kMac)
+            SecureLogger.logHex(TAG, "M.IFD", mIfd)
 
             // Build EXTERNAL AUTHENTICATE command
             val cmdData = eIfd + mIfd
             val command = EidApduHelper.externalAuthenticateCommand(cmdData)
 
-            EidApduHelper.logCommand(command)
+            SecureLogger.logApduCommand(TAG, command)
             val response = transceive(command)
-            EidApduHelper.logResponse(response)
+            SecureLogger.logApduResponse(TAG, response)
 
             val (data, statusWord) = EidApduHelper.parseResponse(response)
 
             if (!EidApduHelper.isSuccess(statusWord)) {
-                Log.e(
+                SecureLogger.e(
                     TAG,
                     "BAC authentication failed: ${EidApduHelper.getStatusDescription(statusWord)}"
                 )
@@ -234,7 +316,7 @@ class BacAuthentication {
             }
 
             if (data.size != 40) {
-                Log.e(TAG, "Invalid response length: ${data.size}, expected 40")
+                SecureLogger.e(TAG, "Invalid response length: ${data.size}, expected 40")
                 return null
             }
 
@@ -245,56 +327,84 @@ class BacAuthentication {
             // Verify MAC
             val calculatedMac = calculateMAC(eIcc, kMac)
             if (!calculatedMac.contentEquals(mIcc)) {
-                Log.e(TAG, "MAC verification failed")
+                SecureLogger.e(TAG, "MAC verification failed")
+                calculatedMac.secureClear()
                 return null
             }
+            calculatedMac.secureClear()
 
             // Decrypt E.ICC to get R = RND.ICC || RND.IFD || K.ICC
-            val r = decrypt3DES(eIcc, kEnc)
+            r = decrypt3DES(eIcc, kEnc)
             val rndIccResponse = r.copyOfRange(0, 8)
             val rndIfdResponse = r.copyOfRange(8, 16)
-            val kIcc = r.copyOfRange(16, 32)
+            kIcc = r.copyOfRange(16, 32)
 
-            // Verify RND.IFD matches what we sent
-            if (!rndIfdResponse.contentEquals(rndIfd)) {
-                Log.e(TAG, "RND.IFD verification failed")
+            // Verify RND.IFD matches what we sent (constant-time comparison)
+            if (!constantTimeEquals(rndIfdResponse, rndIfd)) {
+                SecureLogger.e(TAG, "RND.IFD verification failed")
+                rndIccResponse.secureClear()
+                rndIfdResponse.secureClear()
                 return null
             }
 
-            // Verify RND.ICC matches challenge
-            if (!rndIccResponse.contentEquals(rndIcc)) {
-                Log.e(TAG, "RND.ICC verification failed")
+            // Verify RND.ICC matches challenge (constant-time comparison)
+            if (!constantTimeEquals(rndIccResponse, rndIcc)) {
+                SecureLogger.e(TAG, "RND.ICC verification failed")
+                rndIccResponse.secureClear()
+                rndIfdResponse.secureClear()
                 return null
             }
+
+            rndIccResponse.secureClear()
+            rndIfdResponse.secureClear()
 
             // Derive session keys: Kseed = K.IFD XOR K.ICC
-            val kSeedSession = ByteArray(16)
+            kSeedSession = ByteArray(16)
             for (i in 0..15) {
-                kSeedSession[i] = (kIfd[i].toInt() xor kIcc[i].toInt()).toByte()
+                kSeedSession!![i] = (kIfd[i].toInt() xor kIcc!![i].toInt()).toByte()
             }
 
-            val ksEnc = deriveKey(kSeedSession, KENC_CONSTANT)
-            val ksMac = deriveKey(kSeedSession, KMAC_CONSTANT)
+            val ksEnc = deriveKey(kSeedSession!!, KENC_CONSTANT)
+            val ksMac = deriveKey(kSeedSession!!, KMAC_CONSTANT)
 
             // Initial SSC = RND.ICC[4:8] || RND.IFD[4:8]
             val ssc = rndIcc.copyOfRange(4, 8) + rndIfd.copyOfRange(4, 8)
 
-            Log.d(TAG, "Session KS.ENC: ${EidApduHelper.toHexString(ksEnc)}")
-            Log.d(TAG, "Session KS.MAC: ${EidApduHelper.toHexString(ksMac)}")
-            Log.d(TAG, "Initial SSC: ${EidApduHelper.toHexString(ssc)}")
+            SecureLogger.logHex(TAG, "Session KS.ENC", ksEnc)
+            SecureLogger.logHex(TAG, "Session KS.MAC", ksMac)
+            SecureLogger.logHex(TAG, "Initial SSC", ssc)
 
-            // Clear intermediate sensitive values
-            kSeedSession.fill(0)
-            rndIfd.fill(0)
-            kIfd.fill(0)
-            s.fill(0)
-
+            SecureLogger.d(TAG, "BAC mutual authentication successful")
             return SessionKeys(ksEnc, ksMac, ssc)
 
         } catch (e: Exception) {
-            Log.e(TAG, "BAC authentication error", e)
+            SecureLogger.e(TAG, "BAC authentication error", e)
             return null
+        } finally {
+            // Securely clear ALL intermediate sensitive values
+            rndIfd?.secureWipe()
+            kIfd?.secureWipe()
+            s?.secureWipe()
+            eIfd?.secureClear()
+            mIfd?.secureClear()
+            r?.secureWipe()
+            kIcc?.secureWipe()
+            kSeedSession?.secureWipe()
         }
+    }
+
+    /**
+     * Constant-time byte array comparison to prevent timing attacks.
+     *
+     * COMPLIANCE: se-checklist.md - Security consideration for cryptographic operations
+     */
+    private fun constantTimeEquals(a: ByteArray, b: ByteArray): Boolean {
+        if (a.size != b.size) return false
+        var result = 0
+        for (i in a.indices) {
+            result = result or (a[i].toInt() xor b[i].toInt())
+        }
+        return result == 0
     }
 
     /**

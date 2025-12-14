@@ -3,12 +3,12 @@ package com.rollingcatsoftware.universalnfcreader.data.nfc.reader
 import android.graphics.Bitmap
 import android.nfc.Tag
 import android.nfc.tech.IsoDep
-import android.util.Log
 import com.rollingcatsoftware.universalnfcreader.data.nfc.eid.BacAuthentication
 import com.rollingcatsoftware.universalnfcreader.data.nfc.eid.Dg1Parser
 import com.rollingcatsoftware.universalnfcreader.data.nfc.eid.Dg2Parser
 import com.rollingcatsoftware.universalnfcreader.data.nfc.eid.EidApduHelper
 import com.rollingcatsoftware.universalnfcreader.data.nfc.eid.SecureMessaging
+import com.rollingcatsoftware.universalnfcreader.data.nfc.security.SecureLogger
 import com.rollingcatsoftware.universalnfcreader.domain.model.AuthenticationData
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardData
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardError
@@ -30,6 +30,11 @@ import java.io.IOException
  * 4. Secure messaging for encrypted communication
  * 5. Reading data groups (DG1, DG2)
  * 6. Parsing personal data and photo
+ *
+ * COMPLIANCE: se-checklist.md
+ * - Section 5.2: "Log errors securely (no PII in logs)" - Uses SecureLogger
+ * - Section 3.1: "Implement timeout handling" - Uses withTimeout()
+ * - Section 1.1: "Clear PIN bytes from memory" - Clears session keys in finally
  *
  * Security Note: BAC authentication requires MRZ data (document number, DOB, DOE)
  * from the physical card. Session keys are cleared after reading.
@@ -86,13 +91,13 @@ class TurkishEidReader : BaseCardReader() {
                 readCardInternal(tag, authData)
             }
         } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-            Log.e(TAG, "Card reading timed out")
+            SecureLogger.e(TAG, "Card reading timed out")
             Result.error(CardError.Timeout())
         } catch (e: IOException) {
-            Log.e(TAG, "IO error during card reading", e)
+            SecureLogger.e(TAG, "IO error during card reading", e)
             Result.error(CardError.ConnectionLost())
         } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error during card reading", e)
+            SecureLogger.e(TAG, "Unexpected error during card reading", e)
             Result.error(CardError.Unknown(message = e.message ?: "Unknown error"))
         }
     }
@@ -113,7 +118,7 @@ class TurkishEidReader : BaseCardReader() {
             // Get IsoDep interface
             isoDep = IsoDep.get(tag)
             if (isoDep == null) {
-                Log.e(TAG, "IsoDep not supported by this tag")
+                SecureLogger.e(TAG, "IsoDep not supported by this tag")
                 return Result.error(
                     CardError.UnsupportedCard(
                         detectedTechnologies = basicInfo.technologies
@@ -122,10 +127,10 @@ class TurkishEidReader : BaseCardReader() {
             }
 
             // Connect to the card
-            Log.d(TAG, "Connecting to card...")
+            SecureLogger.d(TAG, "Connecting to card...")
             isoDep.timeout = CONNECTION_TIMEOUT
             isoDep.connect()
-            Log.d(TAG, "Connected to card")
+            SecureLogger.d(TAG, "Connected to card")
 
             // Select MRTD application
             val selectResult = selectMrtdApplication(isoDep)
@@ -141,7 +146,7 @@ class TurkishEidReader : BaseCardReader() {
                     dateOfExpiry = authData.getDateOfExpiry()
                 )
             } catch (e: IllegalArgumentException) {
-                Log.e(TAG, "Invalid MRZ data: ${e.message}")
+                SecureLogger.e(TAG, "Invalid MRZ data: ${e.message}")
                 return Result.error(
                     CardError.AuthenticationFailed(
                         message = "Invalid MRZ data: ${e.message}"
@@ -152,7 +157,7 @@ class TurkishEidReader : BaseCardReader() {
             // Perform BAC authentication
             secureMessaging = performBacAuthentication(isoDep, mrzData)
             if (secureMessaging == null) {
-                Log.e(TAG, "BAC authentication failed")
+                SecureLogger.e(TAG, "BAC authentication failed")
                 return Result.error(
                     CardError.AuthenticationFailed(
                         message = "BAC authentication failed. Check MRZ data."
@@ -160,7 +165,7 @@ class TurkishEidReader : BaseCardReader() {
                 )
             }
 
-            Log.d(TAG, "BAC authentication successful, reading data with secure messaging...")
+            SecureLogger.d(TAG, "BAC authentication successful, reading data with secure messaging...")
 
             // Read DG1 (personal data) with secure messaging
             val personalData = readDg1Secure(isoDep, secureMessaging)
@@ -187,14 +192,14 @@ class TurkishEidReader : BaseCardReader() {
                 bacSuccessful = true
             )
 
-            Log.d(TAG, "Card reading completed successfully")
+            SecureLogger.d(TAG, "Card reading completed successfully")
             Result.success(cardData)
 
         } catch (e: IOException) {
-            Log.e(TAG, "Connection lost during card reading", e)
+            SecureLogger.e(TAG, "Connection lost during card reading", e)
             Result.error(CardError.ConnectionLost())
         } catch (e: Exception) {
-            Log.e(TAG, "Error during card reading", e)
+            SecureLogger.e(TAG, "Error during card reading", e)
             Result.error(CardError.Unknown(message = e.message ?: "Unknown error"))
         } finally {
             // Clear sensitive key material
@@ -203,9 +208,9 @@ class TurkishEidReader : BaseCardReader() {
             // Always close the connection
             try {
                 isoDep?.close()
-                Log.d(TAG, "IsoDep connection closed")
+                SecureLogger.d(TAG, "IsoDep connection closed")
             } catch (e: Exception) {
-                Log.e(TAG, "Error closing IsoDep connection", e)
+                SecureLogger.e(TAG, "Error closing IsoDep connection", e)
             }
         }
     }
@@ -224,10 +229,10 @@ class TurkishEidReader : BaseCardReader() {
             val (_, statusWord) = EidApduHelper.parseResponse(response)
 
             if (EidApduHelper.isSuccess(statusWord)) {
-                Log.d(TAG, "MRTD application selected successfully")
+                SecureLogger.d(TAG, "MRTD application selected successfully")
                 null // Success - continue
             } else {
-                Log.e(
+                SecureLogger.e(
                     TAG,
                     "Failed to select MRTD application: ${
                         EidApduHelper.getStatusDescription(statusWord)
@@ -240,7 +245,7 @@ class TurkishEidReader : BaseCardReader() {
                 )
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error selecting MRTD application", e)
+            SecureLogger.e(TAG, "Error selecting MRTD application", e)
             Result.error(CardError.ConnectionLost())
         }
     }
@@ -255,7 +260,7 @@ class TurkishEidReader : BaseCardReader() {
         mrzData: BacAuthentication.MrzData
     ): SecureMessaging? {
         try {
-            Log.d(TAG, "Starting BAC authentication...")
+            SecureLogger.d(TAG, "Starting BAC authentication...")
 
             // Derive keys from MRZ data
             val (kEnc, kMac) = bacAuthentication.deriveKeys(mrzData)
@@ -270,7 +275,7 @@ class TurkishEidReader : BaseCardReader() {
             val (rndIcc, challengeStatus) = EidApduHelper.parseResponse(challengeResponse)
 
             if (!EidApduHelper.isSuccess(challengeStatus) || rndIcc.size != 8) {
-                Log.e(
+                SecureLogger.e(
                     TAG,
                     "Failed to get challenge: ${EidApduHelper.getStatusDescription(challengeStatus)}"
                 )
@@ -289,11 +294,11 @@ class TurkishEidReader : BaseCardReader() {
             kMac.fill(0)
 
             if (sessionKeys == null) {
-                Log.e(TAG, "Mutual authentication failed")
+                SecureLogger.e(TAG, "Mutual authentication failed")
                 return null
             }
 
-            Log.d(TAG, "BAC authentication completed successfully")
+            SecureLogger.d(TAG, "BAC authentication completed successfully")
             return SecureMessaging(
                 sessionKeys.encryptionKey,
                 sessionKeys.macKey,
@@ -301,7 +306,7 @@ class TurkishEidReader : BaseCardReader() {
             )
 
         } catch (e: Exception) {
-            Log.e(TAG, "BAC authentication error", e)
+            SecureLogger.e(TAG, "BAC authentication error", e)
             return null
         }
     }
@@ -315,7 +320,7 @@ class TurkishEidReader : BaseCardReader() {
         shortFileId: Byte
     ): ByteArray? {
         try {
-            Log.d(TAG, "Reading file with SFI: 0x${String.format("%02X", shortFileId)}")
+            SecureLogger.d(TAG, "Reading file with SFI: 0x${String.format("%02X", shortFileId)}")
 
             val allData = mutableListOf<Byte>()
             var offset = 0
@@ -339,7 +344,7 @@ class TurkishEidReader : BaseCardReader() {
                 // Unwrap response
                 val unwrapped = secureMessaging.unwrapResponse(response)
                 if (unwrapped == null) {
-                    Log.e(TAG, "Failed to unwrap response")
+                    SecureLogger.e(TAG, "Failed to unwrap response")
                     if (offset == 0) return null
                     break
                 }
@@ -347,13 +352,13 @@ class TurkishEidReader : BaseCardReader() {
                 val (data, statusWord) = unwrapped
 
                 if (statusWord == 0x6982) {
-                    Log.e(TAG, "Security condition not satisfied")
+                    SecureLogger.e(TAG, "Security condition not satisfied")
                     return null
                 }
 
                 if (statusWord == 0x6A82 || statusWord == 0x6A83) {
                     if (offset == 0) {
-                        Log.w(TAG, "File not found")
+                        SecureLogger.w(TAG, "File not found")
                         return null
                     }
                     break
@@ -361,7 +366,7 @@ class TurkishEidReader : BaseCardReader() {
 
                 if (!EidApduHelper.isSuccess(statusWord) && statusWord != 0x6282) {
                     if (offset == 0) {
-                        Log.e(
+                        SecureLogger.e(
                             TAG,
                             "Failed to read file: ${EidApduHelper.getStatusDescription(statusWord)}"
                         )
@@ -383,11 +388,11 @@ class TurkishEidReader : BaseCardReader() {
                 }
             }
 
-            Log.d(TAG, "Read ${allData.size} bytes from file")
+            SecureLogger.d(TAG, "Read ${allData.size} bytes from file")
             return if (allData.isNotEmpty()) allData.toByteArray() else null
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error reading file with secure messaging", e)
+            SecureLogger.e(TAG, "Error reading file with secure messaging", e)
             return null
         }
     }
@@ -400,17 +405,17 @@ class TurkishEidReader : BaseCardReader() {
         secureMessaging: SecureMessaging
     ): Dg1Parser.PersonalData? {
         return try {
-            Log.d(TAG, "Reading DG1 (personal data) with secure messaging...")
+            SecureLogger.d(TAG, "Reading DG1 (personal data) with secure messaging...")
             val dg1Data = readFileSecure(isoDep, secureMessaging, EidApduHelper.FileIds.DG1)
 
             if (dg1Data != null) {
-                Log.d(TAG, "DG1 data size: ${dg1Data.size} bytes")
+                SecureLogger.d(TAG, "DG1 data size: ${dg1Data.size} bytes")
                 Dg1Parser.parse(dg1Data)
             } else {
                 null
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to read DG1", e)
+            SecureLogger.e(TAG, "Failed to read DG1", e)
             null
         }
     }
@@ -423,17 +428,17 @@ class TurkishEidReader : BaseCardReader() {
         secureMessaging: SecureMessaging
     ): Bitmap? {
         return try {
-            Log.d(TAG, "Reading DG2 (photo) with secure messaging...")
+            SecureLogger.d(TAG, "Reading DG2 (photo) with secure messaging...")
             val dg2Data = readFileSecure(isoDep, secureMessaging, EidApduHelper.FileIds.DG2)
 
             if (dg2Data != null) {
-                Log.d(TAG, "DG2 data size: ${dg2Data.size} bytes")
+                SecureLogger.d(TAG, "DG2 data size: ${dg2Data.size} bytes")
                 Dg2Parser.parse(dg2Data)
             } else {
                 null
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to read DG2", e)
+            SecureLogger.e(TAG, "Failed to read DG2", e)
             null
         }
     }
