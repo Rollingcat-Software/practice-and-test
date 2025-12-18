@@ -1,7 +1,7 @@
 package com.rollingcatsoftware.universalnfcreader.security
 
 import android.content.Context
-import android.util.Log
+import com.rollingcatsoftware.universalnfcreader.data.nfc.security.SecureLogger
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK
@@ -74,27 +74,27 @@ class BiometricAuthManager(private val context: Context) {
     fun checkBiometricCapability(): BiometricCapability {
         return when (biometricManager.canAuthenticate(AUTHENTICATORS)) {
             BiometricManager.BIOMETRIC_SUCCESS -> {
-                Log.d(TAG, "Biometric authentication is available")
+                SecureLogger.d(TAG, "Biometric authentication is available")
                 BiometricCapability.Available
             }
 
             BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> {
-                Log.d(TAG, "No biometric hardware available")
+                SecureLogger.d(TAG, "No biometric hardware available")
                 BiometricCapability.NoHardware
             }
 
             BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> {
-                Log.d(TAG, "Biometric hardware unavailable")
+                SecureLogger.d(TAG, "Biometric hardware unavailable")
                 BiometricCapability.HardwareUnavailable
             }
 
             BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
-                Log.d(TAG, "No biometrics enrolled")
+                SecureLogger.d(TAG, "No biometrics enrolled")
                 BiometricCapability.NoneEnrolled
             }
 
             else -> {
-                Log.d(TAG, "Unknown biometric status")
+                SecureLogger.d(TAG, "Unknown biometric status")
                 BiometricCapability.Unknown
             }
         }
@@ -128,14 +128,14 @@ class BiometricAuthManager(private val context: Context) {
         val callback = object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                 super.onAuthenticationSucceeded(result)
-                Log.d(TAG, "Authentication succeeded")
+                SecureLogger.d(TAG, "Authentication succeeded")
                 _authenticationState.value = AuthenticationState.Authenticated
                 onSuccess()
             }
 
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                 super.onAuthenticationError(errorCode, errString)
-                Log.e(TAG, "Authentication error: $errorCode - $errString")
+                SecureLogger.e(TAG, "Authentication error: $errorCode - $errString")
 
                 when (errorCode) {
                     BiometricPrompt.ERROR_USER_CANCELED,
@@ -162,7 +162,7 @@ class BiometricAuthManager(private val context: Context) {
 
             override fun onAuthenticationFailed() {
                 super.onAuthenticationFailed()
-                Log.w(TAG, "Authentication failed (biometric not recognized)")
+                SecureLogger.w(TAG, "Authentication failed (biometric not recognized)")
                 // Don't update state here - user can try again
             }
         }
@@ -179,7 +179,7 @@ class BiometricAuthManager(private val context: Context) {
         try {
             biometricPrompt.authenticate(promptInfo)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to show biometric prompt", e)
+            SecureLogger.e(TAG, "Failed to show biometric prompt", e)
             _authenticationState.value = AuthenticationState.Failed(e.message ?: "Unknown error")
             onError(e.message ?: "Failed to show authentication prompt")
         }

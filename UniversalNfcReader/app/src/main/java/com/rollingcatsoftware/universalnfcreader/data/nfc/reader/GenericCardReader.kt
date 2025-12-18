@@ -6,7 +6,7 @@ import android.nfc.tech.NfcA
 import android.nfc.tech.NfcB
 import android.nfc.tech.NfcF
 import android.nfc.tech.NfcV
-import android.util.Log
+import com.rollingcatsoftware.universalnfcreader.data.nfc.security.SecureLogger
 import com.rollingcatsoftware.universalnfcreader.domain.model.AuthenticationData
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardData
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardType
@@ -48,7 +48,7 @@ class GenericCardReader : BaseCardReader() {
         val basicInfo = readBasicInfo(tag)
         val techList = tag.techList.toList()
 
-        Log.d(TAG, "Reading generic card. Technologies: ${techList.joinToString()}")
+        SecureLogger.d(TAG, "Reading generic card. Technologies: ${techList.joinToString()}")
 
         try {
             // Try to get more info based on available technologies
@@ -64,7 +64,7 @@ class GenericCardReader : BaseCardReader() {
             Result.success(cardData)
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error reading generic card: ${e.message}", e)
+            SecureLogger.e(TAG, "Error reading generic card: ${e.message}", e)
             // Return at least basic info on error
             Result.success(readBasicOnly(basicInfo))
         }
@@ -107,7 +107,7 @@ class GenericCardReader : BaseCardReader() {
                 blocks = blocks
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Error reading NfcV: ${e.message}")
+            SecureLogger.e(TAG, "Error reading NfcV: ${e.message}")
             Iso15693Data(
                 uid = basicInfo.uid.toHexString(),
                 cardType = CardType.ISO_15693,
@@ -158,7 +158,7 @@ class GenericCardReader : BaseCardReader() {
                 Triple(4, 0, "Unknown")
             }
         } catch (e: Exception) {
-            Log.d(TAG, "GET SYSTEM INFO failed: ${e.message}")
+            SecureLogger.d(TAG, "GET SYSTEM INFO failed: ${e.message}")
             Triple(4, 0, "Unknown")
         }
     }
@@ -244,7 +244,7 @@ class GenericCardReader : BaseCardReader() {
                 historicalBytes = historicalBytes
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Error reading IsoDep: ${e.message}")
+            SecureLogger.e(TAG, "Error reading IsoDep: ${e.message}")
             readBasicOnly(basicInfo)
         } finally {
             try {
@@ -275,7 +275,7 @@ class GenericCardReader : BaseCardReader() {
                 sak = nfcA?.sak
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Error reading NfcA: ${e.message}")
+            SecureLogger.e(TAG, "Error reading NfcA: ${e.message}")
             readBasicOnly(basicInfo)
         }
     }
@@ -299,7 +299,7 @@ class GenericCardReader : BaseCardReader() {
                 }
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Error reading NfcB: ${e.message}")
+            SecureLogger.e(TAG, "Error reading NfcB: ${e.message}")
             readBasicOnly(basicInfo)
         }
     }
@@ -323,7 +323,7 @@ class GenericCardReader : BaseCardReader() {
                 }
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Error reading NfcF: ${e.message}")
+            SecureLogger.e(TAG, "Error reading NfcF: ${e.message}")
             readBasicOnly(basicInfo)
         }
     }

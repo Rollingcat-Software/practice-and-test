@@ -61,6 +61,7 @@ import com.rollingcatsoftware.universalnfcreader.domain.model.MifareClassicData
 import com.rollingcatsoftware.universalnfcreader.domain.model.MifareDesfireData
 import com.rollingcatsoftware.universalnfcreader.domain.model.MifareUltralightData
 import com.rollingcatsoftware.universalnfcreader.domain.model.NdefData
+import com.rollingcatsoftware.universalnfcreader.domain.model.PassportData
 import com.rollingcatsoftware.universalnfcreader.domain.model.SectorData
 import com.rollingcatsoftware.universalnfcreader.domain.model.StudentCardData
 import com.rollingcatsoftware.universalnfcreader.domain.model.TurkishEidData
@@ -201,6 +202,7 @@ private fun CardSpecificContent(cardData: CardData) {
         is StudentCardData -> StudentCardContent(cardData)
         is Iso15693Data -> Iso15693Content(cardData)
         is TurkishEidData -> TurkishEidContent(cardData)
+        is PassportData -> PassportContent(cardData)
         is GenericCardData -> GenericContent(cardData)
     }
 }
@@ -800,6 +802,239 @@ private fun TurkishEidContent(data: TurkishEidData) {
     }
 }
 
+@Composable
+private fun PassportContent(data: PassportData) {
+    val clipboardManager = LocalClipboardManager.current
+    var showPhotoPopup by remember { mutableStateOf(false) }
+
+    // Photo Popup Viewer
+    ImagePopupViewer(
+        bitmap = data.photo,
+        isVisible = showPhotoPopup,
+        onDismiss = { showPhotoPopup = false }
+    )
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (data.bacSuccessful) {
+            // Photo and Name Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+                // Photo - Clickable to open popup
+                data.photo?.let { bitmap ->
+                    Surface(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clickable { showPhotoPopup = true },
+                        shape = RoundedCornerShape(8.dp),
+                        shadowElevation = 2.dp
+                    ) {
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "Passport Photo - Tap to enlarge",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                } ?: run {
+                    // Placeholder if no photo
+                    Surface(
+                        modifier = Modifier.size(100.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Badge,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .padding(24.dp)
+                                .size(52.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                // Name and basic info
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "${data.givenNames} ${data.surname}".trim().ifEmpty { "Unknown" },
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (data.nationality.isNotEmpty()) {
+                        Text(
+                            text = data.nationality,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    if (data.personalNumber.isNotEmpty()) {
+                        AssistChip(
+                            onClick = { clipboardManager.setText(AnnotatedString(data.personalNumber)) },
+                            label = {
+                                Text(
+                                    text = "ID: ${data.personalNumber}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontFamily = FontFamily.Monospace
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Personal Details Section
+            Text(
+                text = "PERSONAL INFORMATION",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            data.surname.takeIf { it.isNotEmpty() }?.let { InfoRow("Surname", it) }
+            data.givenNames.takeIf { it.isNotEmpty() }?.let { InfoRow("Given Names", it) }
+            data.dateOfBirth.takeIf { it.isNotEmpty() }?.let { InfoRow("Date of Birth", it) }
+            data.sex.takeIf { it.isNotEmpty() }
+                ?.let { InfoRow("Sex", if (it == "M") "Male" else if (it == "F") "Female" else it) }
+            data.nationality.takeIf { it.isNotEmpty() }?.let { InfoRow("Nationality", it) }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Document Details Section
+            Text(
+                text = "DOCUMENT INFORMATION",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            data.documentNumber.takeIf { it.isNotEmpty() }?.let { InfoRow("Document Number", it) }
+            data.issuingCountry.takeIf { it.isNotEmpty() }?.let { InfoRow("Issuing Country", it) }
+            data.dateOfExpiry.takeIf { it.isNotEmpty() }?.let { InfoRow("Expiry Date", it) }
+
+            // Authentication Status
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                AssistChip(
+                    onClick = { },
+                    label = { Text("BAC: Success", style = MaterialTheme.typography.labelSmall) }
+                )
+                data.sodValid?.let { valid ->
+                    AssistChip(
+                        onClick = { },
+                        label = {
+                            Text(
+                                "SOD: ${if (valid) "Valid" else "Invalid"}",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    )
+                }
+                data.dg1HashValid?.let { valid ->
+                    AssistChip(
+                        onClick = { },
+                        label = {
+                            Text(
+                                "DG1: ${if (valid) "OK" else "Fail"}",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    )
+                }
+            }
+
+            // Copy All Data Button
+            Spacer(modifier = Modifier.height(8.dp))
+            TextButton(
+                onClick = {
+                    val allData = buildPassportDataString(data)
+                    clipboardManager.setText(AnnotatedString(allData))
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    Icons.Default.ContentCopy,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Copy All Data to Clipboard")
+            }
+
+        } else {
+            // Not authenticated yet
+            OutlinedCard(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Badge,
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "e-Passport Detected",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "BAC authentication required to read personal data.\nScan the MRZ (bottom of passport data page) to authenticate.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun buildPassportDataString(data: PassportData): String {
+    return buildString {
+        appendLine("=== PASSPORT DATA ===")
+        appendLine("UID: ${data.uid}")
+        appendLine("Card Type: ${data.cardType.displayName}")
+        appendLine("Technologies: ${data.technologies.joinToString(", ")}")
+        appendLine()
+        appendLine("=== PERSONAL INFORMATION ===")
+        appendLine("Surname: ${data.surname}")
+        appendLine("Given Names: ${data.givenNames}")
+        appendLine("Date of Birth: ${data.dateOfBirth}")
+        appendLine("Sex: ${data.sex}")
+        appendLine("Nationality: ${data.nationality}")
+        appendLine("Personal Number: ${data.personalNumber}")
+        appendLine()
+        appendLine("=== DOCUMENT INFORMATION ===")
+        appendLine("Document Type: ${data.documentType}")
+        appendLine("Document Number: ${data.documentNumber}")
+        appendLine("Issuing Country: ${data.issuingCountry}")
+        appendLine("Date of Expiry: ${data.dateOfExpiry}")
+        appendLine()
+        appendLine("=== AUTHENTICATION ===")
+        appendLine("BAC: ${if (data.bacSuccessful) "Success" else "Not Performed"}")
+        appendLine("PACE: ${if (data.paceSuccessful) "Success" else "Not Performed"}")
+        data.sodValid?.let { appendLine("SOD Signature: ${if (it) "Valid" else "Invalid"}") }
+        data.dg1HashValid?.let { appendLine("DG1 Hash: ${if (it) "Valid" else "Invalid"}") }
+        data.dg2HashValid?.let { appendLine("DG2 Hash: ${if (it) "Valid" else "Invalid"}") }
+        appendLine("Active Authentication: ${if (data.activeAuthenticationSupported) "Supported" else "Not Supported"}")
+        appendLine("Chip Authentication: ${if (data.chipAuthenticationSupported) "Supported" else "Not Supported"}")
+        appendLine()
+        appendLine("Photo: ${if (data.photo != null) "Available (${data.photo.width}x${data.photo.height})" else "Not Available"}")
+    }
+}
+
 private fun buildTurkishEidDataString(data: TurkishEidData): String {
     return buildString {
         appendLine("=== TURKISH eID DATA ===")
@@ -867,7 +1102,8 @@ private fun getCardIcon(cardType: CardType): ImageVector {
         CardType.MIFARE_ULTRALIGHT,
         CardType.MIFARE_ULTRALIGHT_C -> Icons.Default.Memory
 
-        CardType.TURKISH_EID -> Icons.Default.Badge
+        CardType.TURKISH_EID,
+        CardType.PASSPORT -> Icons.Default.Badge
         CardType.NDEF -> Icons.Default.Nfc
         else -> Icons.Default.Contactless
     }

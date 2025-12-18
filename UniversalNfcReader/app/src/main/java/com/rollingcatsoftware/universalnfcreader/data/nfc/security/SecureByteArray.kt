@@ -32,11 +32,11 @@ import java.util.Arrays
  * @property size The size of the underlying byte array
  */
 class SecureByteArray private constructor(
-    private val data: ByteArray
+    @PublishedApi internal val data: ByteArray
 ) : Closeable {
 
     @Volatile
-    private var isClosed = false
+    @PublishedApi internal var isClosed = false
 
     /**
      * The size of the underlying byte array.
@@ -211,7 +211,7 @@ class SecureByteArray private constructor(
     /**
      * Checks if the array has been closed and throws if so.
      */
-    private fun checkNotClosed() {
+    @PublishedApi internal fun checkNotClosed() {
         if (isClosed) {
             throw IllegalStateException("SecureByteArray has been closed and data has been wiped")
         }

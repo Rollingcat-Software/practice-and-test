@@ -229,6 +229,18 @@ class MainViewModel @Inject constructor(
             )
         }
     }
+
+    /**
+     * Request NFC status refresh.
+     * This is called when user manually wants to check if NFC was enabled.
+     * The actual status update happens through [updateNfcStatus] called from MainActivity.
+     */
+    fun refreshNfcStatus() {
+        // This triggers a recomposition check
+        // The actual status is updated by MainActivity.updateNfcStatus()
+        // which is called from the BroadcastReceiver or onResume
+        _uiState.update { it.copy() }
+    }
 }
 
 /**

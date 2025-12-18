@@ -1,6 +1,6 @@
 package com.rollingcatsoftware.universalnfcreader.data.nfc.eid
 
-import android.util.Log
+import com.rollingcatsoftware.universalnfcreader.data.nfc.security.SecureLogger
 
 /**
  * APDU (Application Protocol Data Unit) Helper for ICAO MRTD (ePassport/eID) commands.
@@ -23,13 +23,27 @@ object EidApduHelper {
         0xA0.toByte(), 0x00, 0x00, 0x02, 0x47, 0x10, 0x01
     )
 
-    // File IDs for Turkish eID (Short File Identifiers)
+    // File IDs (Short File Identifiers) - ICAO Doc 9303 Part 10
     object FileIds {
-        const val EF_CARD_ACCESS: Byte = 0x1C // Public access
+        const val EF_COM: Byte = 0x1E         // Common data (available DGs)
+        const val EF_CARD_ACCESS: Byte = 0x1C // Public access (PACE parameters)
         const val EF_SOD: Byte = 0x1D         // Security Object Document
-        const val DG1: Byte = 0x01            // Personal data (requires BAC)
+        const val DG1: Byte = 0x01            // MRZ data (requires BAC)
         const val DG2: Byte = 0x02            // Facial image (requires BAC)
-        const val DG3: Byte = 0x03            // Fingerprints (restricted)
+        const val DG3: Byte = 0x03            // Fingerprints (restricted EAC)
+        const val DG4: Byte = 0x04            // Iris (restricted EAC)
+        const val DG5: Byte = 0x05            // Displayed portrait
+        const val DG6: Byte = 0x06            // Reserved
+        const val DG7: Byte = 0x07            // Displayed signature
+        const val DG8: Byte = 0x08            // Data features
+        const val DG9: Byte = 0x09            // Structure features
+        const val DG10: Byte = 0x0A           // Substance features
+        const val DG11: Byte = 0x0B           // Additional personal details
+        const val DG12: Byte = 0x0C           // Document details
+        const val DG13: Byte = 0x0D           // Optional details
+        const val DG14: Byte = 0x0E           // Security options (Chip Authentication)
+        const val DG15: Byte = 0x0F           // Active Authentication public key
+        const val DG16: Byte = 0x10           // Persons to notify
     }
 
     // APDU Status Words
@@ -133,7 +147,7 @@ object EidApduHelper {
      */
     fun parseResponse(response: ByteArray): Pair<ByteArray, Int> {
         if (response.size < 2) {
-            Log.e(TAG, "Invalid APDU response: too short")
+            SecureLogger.e(TAG, "Invalid APDU response: too short")
             return Pair(byteArrayOf(), 0x6F00)
         }
 
@@ -197,7 +211,7 @@ object EidApduHelper {
      * Logs APDU command for debugging.
      */
     fun logCommand(command: ByteArray) {
-        Log.d(TAG, "→ APDU: ${toHexString(command)}")
+        SecureLogger.d(TAG, "→ APDU: ${toHexString(command)}")
     }
 
     /**
@@ -205,13 +219,13 @@ object EidApduHelper {
      */
     fun logResponse(response: ByteArray) {
         val (data, statusWord) = parseResponse(response)
-        Log.d(TAG, "← APDU: ${toHexString(response)}")
-        Log.d(
+        SecureLogger.d(TAG, "← APDU: ${toHexString(response)}")
+        SecureLogger.d(
             TAG,
             "  Status: ${getStatusDescription(statusWord)} (0x${String.format("%04X", statusWord)})"
         )
         if (data.isNotEmpty()) {
-            Log.d(TAG, "  Data length: ${data.size} bytes")
+            SecureLogger.d(TAG, "  Data length: ${data.size} bytes")
         }
     }
 }

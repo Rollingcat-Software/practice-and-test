@@ -4,7 +4,7 @@ import android.nfc.Tag
 import android.nfc.TagLostException
 import android.nfc.tech.MifareClassic
 import android.nfc.tech.NfcA
-import android.util.Log
+import com.rollingcatsoftware.universalnfcreader.data.nfc.security.SecureLogger
 import com.rollingcatsoftware.universalnfcreader.domain.model.AuthenticationData
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardData
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardError
@@ -91,7 +91,7 @@ class MifareClassicReader : BaseCardReader() {
         val mifare = MifareClassic.get(tag)
 
         if (mifare == null) {
-            Log.e(TAG, "Failed to get MifareClassic from tag")
+            SecureLogger.e(TAG, "Failed to get MifareClassic from tag")
             return@withContext Result.error(
                 CardError.UnsupportedCard(
                     detectedTechnologies = basicInfo.technologies
@@ -117,7 +117,7 @@ class MifareClassicReader : BaseCardReader() {
                 else -> CardType.MIFARE_CLASSIC_1K
             }
 
-            Log.d(TAG, "Reading MIFARE Classic: $sectorCount sectors, $blockCount blocks, ${size}B")
+            SecureLogger.d(TAG, "Reading MIFARE Classic: $sectorCount sectors, $blockCount blocks, ${size}B")
 
             // Read all accessible sectors
             val sectorsRead = mutableListOf<SectorData>()
@@ -131,7 +131,7 @@ class MifareClassicReader : BaseCardReader() {
                 }
             }
 
-            Log.d(TAG, "Read $accessibleSectors of $sectorCount sectors")
+            SecureLogger.d(TAG, "Read $accessibleSectors of $sectorCount sectors")
 
             // Check for student card patterns
             val isStudentCard = detectStudentCard(sectorsRead)
@@ -158,19 +158,19 @@ class MifareClassicReader : BaseCardReader() {
             Result.success(cardData)
 
         } catch (e: TagLostException) {
-            Log.e(TAG, "Tag lost: ${e.message}")
+            SecureLogger.e(TAG, "Tag lost: ${e.message}")
             Result.error(CardError.ConnectionLost())
         } catch (e: IOException) {
-            Log.e(TAG, "IO error: ${e.message}")
+            SecureLogger.e(TAG, "IO error: ${e.message}")
             Result.error(CardError.IoError())
         } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error: ${e.message}", e)
+            SecureLogger.e(TAG, "Unexpected error: ${e.message}", e)
             Result.error(CardError.Unknown())
         } finally {
             try {
                 if (mifare.isConnected) mifare.close()
             } catch (e: IOException) {
-                Log.w(TAG, "Error closing MifareClassic: ${e.message}")
+                SecureLogger.w(TAG, "Error closing MifareClassic: ${e.message}")
             }
         }
     }
@@ -208,7 +208,7 @@ class MifareClassicReader : BaseCardReader() {
         }
 
         if (successKeyType == SectorData.KeyType.NONE) {
-            Log.d(TAG, "Sector $sectorIndex: No default key worked")
+            SecureLogger.d(TAG, "Sector $sectorIndex: No default key worked")
             return null
         }
 
@@ -230,7 +230,7 @@ class MifareClassicReader : BaseCardReader() {
                     val c = b.toInt() and 0xFF
                     if (c in 0x20..0x7E) c.toChar() else '.'
                 }.joinToString("")
-                Log.d(
+                SecureLogger.d(
                     TAG,
                     "Sector $sectorIndex Block $blockIndex: $hexString | ASCII: $asciiString"
                 )
@@ -249,7 +249,7 @@ class MifareClassicReader : BaseCardReader() {
             )
 
         } catch (e: IOException) {
-            Log.e(TAG, "Error reading sector $sectorIndex: ${e.message}")
+            SecureLogger.e(TAG, "Error reading sector $sectorIndex: ${e.message}")
             return null
         }
     }
@@ -417,7 +417,7 @@ class MifareClassicReader : BaseCardReader() {
             )
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error with custom key: ${e.message}")
+            SecureLogger.e(TAG, "Error with custom key: ${e.message}")
             Result.error(CardError.AuthenticationFailed())
         } finally {
             keyData.clear()

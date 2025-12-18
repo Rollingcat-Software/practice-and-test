@@ -38,6 +38,70 @@ sealed class CardData {
 }
 
 /**
+ * e-Passport data (ICAO 9303 TD3 format).
+ *
+ * Contains personal information read from DG1, photo from DG2, and optional
+ * additional data groups. Requires MRZ-based BAC or PACE authentication.
+ *
+ * TD3 MRZ Format (2 lines × 44 characters):
+ * Line 1: Type(2) + Country(3) + Surname<<GivenNames (39)
+ * Line 2: DocNo(9) + Check(1) + Nationality(3) + DOB(6) + Check(1) + Sex(1) + DOE(6) + Check(1) + Personal(14) + Check(1) + Composite(1)
+ */
+data class PassportData(
+    override val uid: String,
+    override val cardType: CardType = CardType.PASSPORT,
+    override val readTimestamp: Long = System.currentTimeMillis(),
+    override val technologies: List<String> = emptyList(),
+    override val rawData: Map<String, Any> = emptyMap(),
+
+    // Document Info
+    val documentType: String = "P",          // P = Passport
+    val issuingCountry: String = "",         // 3-letter country code
+    val documentNumber: String = "",         // Up to 9 alphanumeric
+
+    // Personal Data (DG1 - MRZ)
+    val surname: String = "",
+    val givenNames: String = "",
+    val nationality: String = "",
+    val dateOfBirth: String = "",            // DD/MM/YYYY
+    val sex: String = "",                    // M/F/<
+    val dateOfExpiry: String = "",           // DD/MM/YYYY
+    val personalNumber: String = "",         // Optional data field
+
+    // Biometric Data (DG2)
+    val photo: Bitmap? = null,
+
+    // Additional Data Groups (optional)
+    val dg11Data: Map<String, String>? = null,  // Additional personal details
+    val dg12Data: Map<String, String>? = null,  // Document details
+
+    // Security & Validation
+    val bacSuccessful: Boolean = false,
+    val paceSuccessful: Boolean = false,
+    val sodValid: Boolean? = null,
+    val dg1HashValid: Boolean? = null,
+    val dg2HashValid: Boolean? = null,
+    val activeAuthenticationSupported: Boolean = false,
+    val chipAuthenticationSupported: Boolean = false
+) : CardData() {
+    /**
+     * Full name combining surname and given names.
+     */
+    val fullName: String
+        get() = if (givenNames.isNotEmpty()) "$givenNames $surname" else surname
+
+    /**
+     * Check if passport data is fully read and validated.
+     */
+    val isFullyValidated: Boolean
+        get() = bacSuccessful && sodValid == true && dg1HashValid == true
+
+    override fun clearSensitiveData() {
+        photo?.recycle()
+    }
+}
+
+/**
  * Turkish eID card data (MRTD format).
  *
  * Contains personal information read from DG1 and optional photo from DG2.

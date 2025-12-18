@@ -4,7 +4,7 @@ import android.nfc.NdefMessage
 import android.nfc.Tag
 import android.nfc.TagLostException
 import android.nfc.tech.Ndef
-import android.util.Log
+import com.rollingcatsoftware.universalnfcreader.data.nfc.security.SecureLogger
 import com.rollingcatsoftware.universalnfcreader.domain.model.AuthenticationData
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardData
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardError
@@ -90,7 +90,7 @@ class NdefReader : BaseCardReader() {
         val ndef = Ndef.get(tag)
 
         if (ndef == null) {
-            Log.e(TAG, "Failed to get Ndef from tag")
+            SecureLogger.e(TAG, "Failed to get Ndef from tag")
             return@withContext Result.error(
                 CardError.UnsupportedCard(
                     detectedTechnologies = basicInfo.technologies
@@ -106,12 +106,12 @@ class NdefReader : BaseCardReader() {
             val maxSize = ndef.maxSize
             val ndefType = ndef.type
 
-            Log.d(TAG, "Reading NDEF tag: type=$ndefType, maxSize=$maxSize, writable=$isWritable")
+            SecureLogger.d(TAG, "Reading NDEF tag: type=$ndefType, maxSize=$maxSize, writable=$isWritable")
 
             val records = if (ndefMessage != null) {
                 parseNdefMessage(ndefMessage)
             } else {
-                Log.d(TAG, "No NDEF message on tag")
+                SecureLogger.d(TAG, "No NDEF message on tag")
                 emptyList()
             }
 
@@ -129,23 +129,23 @@ class NdefReader : BaseCardReader() {
                 usedSize = usedSize
             )
 
-            Log.d(TAG, "Successfully read ${records.size} NDEF records")
+            SecureLogger.d(TAG, "Successfully read ${records.size} NDEF records")
             Result.success(cardData)
 
         } catch (e: TagLostException) {
-            Log.e(TAG, "Tag lost: ${e.message}")
+            SecureLogger.e(TAG, "Tag lost: ${e.message}")
             Result.error(CardError.ConnectionLost())
         } catch (e: IOException) {
-            Log.e(TAG, "IO error: ${e.message}")
+            SecureLogger.e(TAG, "IO error: ${e.message}")
             Result.error(CardError.IoError())
         } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error: ${e.message}", e)
+            SecureLogger.e(TAG, "Unexpected error: ${e.message}", e)
             Result.error(CardError.Unknown())
         } finally {
             try {
                 if (ndef.isConnected) ndef.close()
             } catch (e: IOException) {
-                Log.w(TAG, "Error closing Ndef: ${e.message}")
+                SecureLogger.w(TAG, "Error closing Ndef: ${e.message}")
             }
         }
     }
@@ -212,7 +212,7 @@ class NdefReader : BaseCardReader() {
             return String(payload, textStart, payload.size - textStart, charset)
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error parsing text record: ${e.message}")
+            SecureLogger.e(TAG, "Error parsing text record: ${e.message}")
             return null
         }
     }
@@ -231,7 +231,7 @@ class NdefReader : BaseCardReader() {
             return prefix + suffix
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error parsing URI record: ${e.message}")
+            SecureLogger.e(TAG, "Error parsing URI record: ${e.message}")
             return null
         }
     }
@@ -252,7 +252,7 @@ class NdefReader : BaseCardReader() {
             texts.joinToString(" | ")
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error parsing smart poster: ${e.message}")
+            SecureLogger.e(TAG, "Error parsing smart poster: ${e.message}")
             null
         }
     }

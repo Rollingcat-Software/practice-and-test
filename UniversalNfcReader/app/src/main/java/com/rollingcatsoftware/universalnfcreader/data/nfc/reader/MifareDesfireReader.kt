@@ -3,7 +3,7 @@ package com.rollingcatsoftware.universalnfcreader.data.nfc.reader
 import android.nfc.Tag
 import android.nfc.TagLostException
 import android.nfc.tech.IsoDep
-import android.util.Log
+import com.rollingcatsoftware.universalnfcreader.data.nfc.security.SecureLogger
 import com.rollingcatsoftware.universalnfcreader.domain.model.AuthenticationData
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardData
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardError
@@ -48,7 +48,7 @@ class MifareDesfireReader : BaseCardReader() {
         val isoDep = IsoDep.get(tag)
 
         if (isoDep == null) {
-            Log.e(TAG, "Failed to get IsoDep from tag")
+            SecureLogger.e(TAG, "Failed to get IsoDep from tag")
             return@withContext Result.error(
                 CardError.UnsupportedCard(
                     detectedTechnologies = basicInfo.technologies
@@ -97,23 +97,23 @@ class MifareDesfireReader : BaseCardReader() {
                 )
             }
 
-            Log.d(TAG, "Successfully read DESFire card: ${cardData.uid}")
+            SecureLogger.d(TAG, "Successfully read DESFire card: ${cardData.uid}")
             Result.success(cardData)
 
         } catch (e: TagLostException) {
-            Log.e(TAG, "Tag lost: ${e.message}")
+            SecureLogger.e(TAG, "Tag lost: ${e.message}")
             Result.error(CardError.ConnectionLost())
         } catch (e: IOException) {
-            Log.e(TAG, "IO error: ${e.message}")
+            SecureLogger.e(TAG, "IO error: ${e.message}")
             Result.error(CardError.IoError())
         } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error: ${e.message}", e)
+            SecureLogger.e(TAG, "Unexpected error: ${e.message}", e)
             Result.error(CardError.Unknown())
         } finally {
             try {
                 if (isoDep.isConnected) isoDep.close()
             } catch (e: IOException) {
-                Log.w(TAG, "Error closing IsoDep: ${e.message}")
+                SecureLogger.w(TAG, "Error closing IsoDep: ${e.message}")
             }
         }
     }
@@ -128,7 +128,7 @@ class MifareDesfireReader : BaseCardReader() {
             val cmd1 = wrapNativeCommand(Constants.DESFire.CMD_GET_VERSION)
             val response1 = isoDep.transceive(cmd1)
             if (!isDesfireSuccess(response1)) {
-                Log.d(TAG, "GET_VERSION failed: ${response1.toHexString()}")
+                SecureLogger.d(TAG, "GET_VERSION failed: ${response1.toHexString()}")
                 return null
             }
 
@@ -148,7 +148,7 @@ class MifareDesfireReader : BaseCardReader() {
             val data3 = response3.dropLast(2).toByteArray()
 
             if (data1.size < 7 || data2.size < 7 || data3.size < 14) {
-                Log.w(TAG, "Incomplete version data")
+                SecureLogger.w(TAG, "Incomplete version data")
                 return null
             }
 
@@ -174,8 +174,8 @@ class MifareDesfireReader : BaseCardReader() {
             )
 
             // Log detailed version info
-            Log.d(TAG, "═══ DESFIRE VERSION DETAILS ═══")
-            Log.d(
+            SecureLogger.d(TAG, "═══ DESFIRE VERSION DETAILS ═══")
+            SecureLogger.d(
                 TAG,
                 "Hardware: Vendor=0x${
                     String.format(
@@ -184,7 +184,7 @@ class MifareDesfireReader : BaseCardReader() {
                     )
                 } (${if (version.hardwareVendorId == 0x04) "NXP" else "Unknown"})"
             )
-            Log.d(
+            SecureLogger.d(
                 TAG,
                 "Hardware: Type=0x${
                     String.format(
@@ -193,11 +193,11 @@ class MifareDesfireReader : BaseCardReader() {
                     )
                 } SubType=0x${String.format("%02X", version.hardwareSubType)}"
             )
-            Log.d(
+            SecureLogger.d(
                 TAG,
                 "Hardware: Version=${version.hardwareMajorVersion}.${version.hardwareMinorVersion}"
             )
-            Log.d(
+            SecureLogger.d(
                 TAG,
                 "Hardware: Storage=0x${
                     String.format(
@@ -206,9 +206,9 @@ class MifareDesfireReader : BaseCardReader() {
                     )
                 } (${version.storageSizeBytes} bytes)"
             )
-            Log.d(TAG, "Hardware: Protocol=0x${String.format("%02X", version.hardwareProtocol)}")
-            Log.d(TAG, "Software: Vendor=0x${String.format("%02X", version.softwareVendorId)}")
-            Log.d(
+            SecureLogger.d(TAG, "Hardware: Protocol=0x${String.format("%02X", version.hardwareProtocol)}")
+            SecureLogger.d(TAG, "Software: Vendor=0x${String.format("%02X", version.softwareVendorId)}")
+            SecureLogger.d(
                 TAG,
                 "Software: Type=0x${
                     String.format(
@@ -217,17 +217,17 @@ class MifareDesfireReader : BaseCardReader() {
                     )
                 } SubType=0x${String.format("%02X", version.softwareSubType)}"
             )
-            Log.d(
+            SecureLogger.d(
                 TAG,
                 "Software: Version=${version.softwareMajorVersion}.${version.softwareMinorVersion}"
             )
-            Log.d(TAG, "Software: Protocol=0x${String.format("%02X", version.softwareProtocol)}")
-            Log.d(TAG, "Card UID: ${version.uid.joinToString("") { "%02X".format(it) }}")
-            Log.d(
+            SecureLogger.d(TAG, "Software: Protocol=0x${String.format("%02X", version.softwareProtocol)}")
+            SecureLogger.d(TAG, "Card UID: ${version.uid.joinToString("") { "%02X".format(it) }}")
+            SecureLogger.d(
                 TAG,
                 "Batch Number: ${version.batchNumber.joinToString("") { "%02X".format(it) }}"
             )
-            Log.d(
+            SecureLogger.d(
                 TAG,
                 "Production: Week ${version.productionWeek}, Year 20${
                     String.format(
@@ -236,12 +236,12 @@ class MifareDesfireReader : BaseCardReader() {
                     )
                 }"
             )
-            Log.d(TAG, "═══════════════════════════════")
+            SecureLogger.d(TAG, "═══════════════════════════════")
 
             return version
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error reading version: ${e.message}")
+            SecureLogger.e(TAG, "Error reading version: ${e.message}")
             return null
         }
     }
@@ -258,7 +258,7 @@ class MifareDesfireReader : BaseCardReader() {
             )
             val selectResponse = isoDep.transceive(selectPicc)
             if (!isDesfireFinalSuccess(selectResponse)) {
-                Log.d(TAG, "Failed to select PICC application")
+                SecureLogger.d(TAG, "Failed to select PICC application")
             }
 
             // Get application IDs
@@ -266,7 +266,7 @@ class MifareDesfireReader : BaseCardReader() {
             val response = isoDep.transceive(cmd)
 
             if (!isDesfireFinalSuccess(response)) {
-                Log.d(TAG, "GET_APPLICATION_IDS failed")
+                SecureLogger.d(TAG, "GET_APPLICATION_IDS failed")
                 return emptyList()
             }
 
@@ -281,11 +281,11 @@ class MifareDesfireReader : BaseCardReader() {
                 }
             }
 
-            Log.d(TAG, "Found ${appIds.size} applications: $appIds")
+            SecureLogger.d(TAG, "Found ${appIds.size} applications: $appIds")
             return appIds
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error reading application IDs: ${e.message}")
+            SecureLogger.e(TAG, "Error reading application IDs: ${e.message}")
             return emptyList()
         }
     }
@@ -299,7 +299,7 @@ class MifareDesfireReader : BaseCardReader() {
             val response = isoDep.transceive(cmd)
 
             if (!isDesfireFinalSuccess(response)) {
-                Log.d(TAG, "GET_FREE_MEMORY not supported or failed")
+                SecureLogger.d(TAG, "GET_FREE_MEMORY not supported or failed")
                 return null
             }
 
@@ -313,7 +313,7 @@ class MifareDesfireReader : BaseCardReader() {
             return null
 
         } catch (e: Exception) {
-            Log.d(TAG, "Error reading free memory: ${e.message}")
+            SecureLogger.d(TAG, "Error reading free memory: ${e.message}")
             return null
         }
     }

@@ -36,6 +36,7 @@ import com.rollingcatsoftware.universalnfcreader.ui.navigation.bottomNavItems
 fun AppScreen(
     viewModel: MainViewModel,
     onOpenNfcSettings: () -> Unit,
+    onRefreshNfcStatus: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -99,7 +100,9 @@ fun AppScreen(
                         ScanScreen(
                             uiState = uiState,
                             onCardDismissed = viewModel::onCardDismissed,
-                            onPendingAuthCancelled = viewModel::onPendingAuthCancelled
+                            onPendingAuthCancelled = viewModel::onPendingAuthCancelled,
+                            onRefreshNfcStatus = onRefreshNfcStatus,
+                            onOpenNfcSettings = onOpenNfcSettings
                         )
                     }
                 }

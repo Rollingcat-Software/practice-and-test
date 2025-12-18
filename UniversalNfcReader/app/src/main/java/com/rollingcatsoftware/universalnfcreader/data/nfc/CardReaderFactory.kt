@@ -6,6 +6,7 @@ import com.rollingcatsoftware.universalnfcreader.data.nfc.reader.MifareClassicRe
 import com.rollingcatsoftware.universalnfcreader.data.nfc.reader.MifareDesfireReader
 import com.rollingcatsoftware.universalnfcreader.data.nfc.reader.MifareUltralightReader
 import com.rollingcatsoftware.universalnfcreader.data.nfc.reader.NdefReader
+import com.rollingcatsoftware.universalnfcreader.data.nfc.reader.PassportNfcReader
 import com.rollingcatsoftware.universalnfcreader.data.nfc.reader.TurkishEidReader
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardType
 import javax.inject.Inject
@@ -28,6 +29,7 @@ import javax.inject.Singleton
 class CardReaderFactory @Inject constructor() {
 
     // Lazy initialization of readers (they are stateless, so can be reused)
+    private val passportReader by lazy { PassportNfcReader() }
     private val turkishEidReader by lazy { TurkishEidReader() }
     private val desfireReader by lazy { MifareDesfireReader() }
     private val classicReader by lazy { MifareClassicReader() }
@@ -43,6 +45,9 @@ class CardReaderFactory @Inject constructor() {
      */
     fun createReader(cardType: CardType): CardReader? {
         return when (cardType) {
+            // e-Passport - requires BAC authentication with TD3 MRZ data
+            CardType.PASSPORT -> passportReader
+
             // Turkish eID - requires BAC authentication with MRZ data
             CardType.TURKISH_EID -> turkishEidReader
 
@@ -77,6 +82,7 @@ class CardReaderFactory @Inject constructor() {
      */
     fun getAllReaders(): List<CardReader> {
         return listOf(
+            passportReader,
             turkishEidReader,
             desfireReader,
             classicReader,

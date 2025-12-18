@@ -3,7 +3,7 @@ package com.rollingcatsoftware.universalnfcreader.ui.scanner
 import android.Manifest
 import android.app.Activity
 import android.content.Context
-import android.util.Log
+import com.rollingcatsoftware.universalnfcreader.data.nfc.security.SecureLogger
 import android.view.ViewGroup
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -460,7 +460,7 @@ private fun CameraPreview(
                     )
                     onCameraReady(camera)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Camera binding failed", e)
+                    SecureLogger.e(TAG, "Camera binding failed", e)
                     onError("Failed to start camera: ${e.message}")
                 }
             }, ContextCompat.getMainExecutor(ctx))

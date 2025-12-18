@@ -1,7 +1,7 @@
 package com.rollingcatsoftware.universalnfcreader.data.nfc
 
 import android.nfc.Tag
-import android.util.Log
+import com.rollingcatsoftware.universalnfcreader.data.nfc.security.SecureLogger
 import com.rollingcatsoftware.universalnfcreader.data.nfc.detector.CardDetector
 import com.rollingcatsoftware.universalnfcreader.data.nfc.detector.UniversalCardDetector
 import com.rollingcatsoftware.universalnfcreader.domain.model.AuthenticationData
@@ -59,18 +59,18 @@ class NfcCardReadingService @Inject constructor(
      * @return [CardReadResult] containing card data or error
      */
     suspend fun readCard(tag: Tag): CardReadResult = withContext(Dispatchers.IO) {
-        Log.d(TAG, "Starting card read operation")
+        SecureLogger.d(TAG, "Starting card read operation")
 
         try {
             // Step 1: Detect card type
             val cardType = detector.detectCardType(tag)
             val technologies = detector.getSupportedTechnologies(tag)
-            Log.d(TAG, "Detected card type: $cardType")
+            SecureLogger.d(TAG, "Detected card type: $cardType")
 
             // Step 2: Get appropriate reader
             val reader = factory.createReader(cardType)
             if (reader == null) {
-                Log.w(TAG, "No reader available for card type: $cardType")
+                SecureLogger.w(TAG, "No reader available for card type: $cardType")
                 return@withContext CardReadResult.UnsupportedCard(
                     cardType = cardType,
                     technologies = technologies.map { it.substringAfterLast('.') }
@@ -79,7 +79,7 @@ class NfcCardReadingService @Inject constructor(
 
             // Step 3: Check if authentication is required
             if (reader.requiresAuthentication()) {
-                Log.d(TAG, "Card requires authentication")
+                SecureLogger.d(TAG, "Card requires authentication")
                 return@withContext CardReadResult.AuthenticationRequired(
                     cardType = cardType,
                     authType = getAuthType(cardType)
@@ -89,18 +89,18 @@ class NfcCardReadingService @Inject constructor(
             // Step 4: Read card
             return@withContext when (val result = reader.readCard(tag)) {
                 is Result.Success -> {
-                    Log.d(TAG, "Card read successful: ${result.data.uid}")
+                    SecureLogger.d(TAG, "Card read successful: ${result.data.uid}")
                     CardReadResult.Success(result.data)
                 }
 
                 is Result.Error -> {
-                    Log.e(TAG, "Card read failed: ${result.error.message}")
+                    SecureLogger.e(TAG, "Card read failed: ${result.error.message}")
                     CardReadResult.Failure(cardType, result.error)
                 }
             }
 
         } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error during card read: ${e.message}", e)
+            SecureLogger.e(TAG, "Unexpected error during card read: ${e.message}", e)
             CardReadResult.Exception(e)
         }
     }
@@ -116,17 +116,17 @@ class NfcCardReadingService @Inject constructor(
         tag: Tag,
         authData: AuthenticationData
     ): CardReadResult = withContext(Dispatchers.IO) {
-        Log.d(TAG, "Starting authenticated card read")
+        SecureLogger.d(TAG, "Starting authenticated card read")
 
         try {
             // Step 1: Detect card type
             val cardType = detector.detectCardType(tag)
-            Log.d(TAG, "Detected card type: $cardType")
+            SecureLogger.d(TAG, "Detected card type: $cardType")
 
             // Step 2: Get appropriate reader
             val reader = factory.createReader(cardType)
             if (reader == null) {
-                Log.w(TAG, "No reader available for card type: $cardType")
+                SecureLogger.w(TAG, "No reader available for card type: $cardType")
                 return@withContext CardReadResult.UnsupportedCard(
                     cardType = cardType,
                     technologies = detector.getTechnologyNames(tag)
@@ -136,18 +136,18 @@ class NfcCardReadingService @Inject constructor(
             // Step 3: Read with authentication
             return@withContext when (val result = reader.readCardWithAuth(tag, authData)) {
                 is Result.Success -> {
-                    Log.d(TAG, "Authenticated read successful: ${result.data.uid}")
+                    SecureLogger.d(TAG, "Authenticated read successful: ${result.data.uid}")
                     CardReadResult.Success(result.data)
                 }
 
                 is Result.Error -> {
-                    Log.e(TAG, "Authenticated read failed: ${result.error.message}")
+                    SecureLogger.e(TAG, "Authenticated read failed: ${result.error.message}")
                     CardReadResult.Failure(cardType, result.error)
                 }
             }
 
         } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error during authenticated read: ${e.message}", e)
+            SecureLogger.e(TAG, "Unexpected error during authenticated read: ${e.message}", e)
             CardReadResult.Exception(e)
         } finally {
             // Clear sensitive data from authentication object
@@ -186,6 +186,7 @@ class NfcCardReadingService @Inject constructor(
      */
     private fun getAuthType(cardType: CardType): AuthenticationType {
         return when (cardType) {
+            CardType.PASSPORT,
             CardType.TURKISH_EID -> AuthenticationType.MRZ_BAC
             CardType.MIFARE_CLASSIC_1K,
             CardType.MIFARE_CLASSIC_4K,

@@ -245,6 +245,7 @@ private fun IdleContent(
 @Composable
 private fun SupportedCardsList() {
     val cards = listOf(
+        "Passport" to "ICAO 9303 TD3",
         "Turkish eID" to "BAC authentication",
         "Istanbulkart" to "Transport card",
         "MIFARE Classic" to "1K/4K cards",

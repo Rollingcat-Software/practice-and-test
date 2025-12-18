@@ -3,7 +3,7 @@ package com.rollingcatsoftware.universalnfcreader.data.nfc.reader
 import android.nfc.Tag
 import android.nfc.TagLostException
 import android.nfc.tech.MifareUltralight
-import android.util.Log
+import com.rollingcatsoftware.universalnfcreader.data.nfc.security.SecureLogger
 import com.rollingcatsoftware.universalnfcreader.domain.model.AuthenticationData
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardData
 import com.rollingcatsoftware.universalnfcreader.domain.model.CardError
@@ -45,7 +45,7 @@ class MifareUltralightReader : BaseCardReader() {
         val ultralight = MifareUltralight.get(tag)
 
         if (ultralight == null) {
-            Log.e(TAG, "Failed to get MifareUltralight from tag")
+            SecureLogger.e(TAG, "Failed to get MifareUltralight from tag")
             return@withContext Result.error(
                 CardError.UnsupportedCard(
                     detectedTechnologies = basicInfo.technologies
@@ -60,7 +60,7 @@ class MifareUltralightReader : BaseCardReader() {
             val ultralightType = determineUltralightType(ultralight)
             val pageCount = getPageCount(ultralightType)
 
-            Log.d(TAG, "Reading MIFARE Ultralight type: $ultralightType, $pageCount pages")
+            SecureLogger.d(TAG, "Reading MIFARE Ultralight type: $ultralightType, $pageCount pages")
 
             // Read all pages
             val pages = mutableListOf<ByteArray>()
@@ -80,12 +80,12 @@ class MifareUltralightReader : BaseCardReader() {
                     }
                     pageIndex += 4
                 } catch (e: IOException) {
-                    Log.w(TAG, "Error reading page $pageIndex: ${e.message}")
+                    SecureLogger.w(TAG, "Error reading page $pageIndex: ${e.message}")
                     readError = true
                 }
             }
 
-            Log.d(TAG, "Read ${pages.size} of $pageCount pages")
+            SecureLogger.d(TAG, "Read ${pages.size} of $pageCount pages")
 
             // Try to extract NDEF message
             val ndefMessage = extractNdefMessage(pages)
@@ -110,19 +110,19 @@ class MifareUltralightReader : BaseCardReader() {
             Result.success(cardData)
 
         } catch (e: TagLostException) {
-            Log.e(TAG, "Tag lost: ${e.message}")
+            SecureLogger.e(TAG, "Tag lost: ${e.message}")
             Result.error(CardError.ConnectionLost())
         } catch (e: IOException) {
-            Log.e(TAG, "IO error: ${e.message}")
+            SecureLogger.e(TAG, "IO error: ${e.message}")
             Result.error(CardError.IoError())
         } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error: ${e.message}", e)
+            SecureLogger.e(TAG, "Unexpected error: ${e.message}", e)
             Result.error(CardError.Unknown())
         } finally {
             try {
                 if (ultralight.isConnected) ultralight.close()
             } catch (e: IOException) {
-                Log.w(TAG, "Error closing MifareUltralight: ${e.message}")
+                SecureLogger.w(TAG, "Error closing MifareUltralight: ${e.message}")
             }
         }
     }
@@ -169,7 +169,7 @@ class MifareUltralightReader : BaseCardReader() {
                 }
             }
         } catch (e: IOException) {
-            Log.d(TAG, "GET_VERSION not supported: ${e.message}")
+            SecureLogger.d(TAG, "GET_VERSION not supported: ${e.message}")
         }
         return null
     }
@@ -224,7 +224,7 @@ class MifareUltralightReader : BaseCardReader() {
             return parseNdefTextRecord(ndefData)
 
         } catch (e: Exception) {
-            Log.d(TAG, "Error extracting NDEF: ${e.message}")
+            SecureLogger.d(TAG, "Error extracting NDEF: ${e.message}")
             return null
         }
     }
@@ -259,7 +259,7 @@ class MifareUltralightReader : BaseCardReader() {
             return String(data, textStart, data.size - textStart, Charsets.UTF_8)
 
         } catch (e: Exception) {
-            Log.d(TAG, "Error parsing NDEF text: ${e.message}")
+            SecureLogger.d(TAG, "Error parsing NDEF text: ${e.message}")
             return null
         }
     }

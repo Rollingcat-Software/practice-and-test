@@ -286,6 +286,44 @@ object SecureLogger {
     }
 
     /**
+     * Masks an MRZ line for logging.
+     *
+     * In debug builds: Shows document type, country code, and structure
+     * In release builds: Shows only line length and format type
+     *
+     * @param mrzLine A single MRZ line (TD1: 30 chars, TD3: 44 chars)
+     * @return Masked MRZ string safe for logging
+     */
+    fun maskMrz(mrzLine: String): String {
+        if (mrzLine.isEmpty()) return "[empty]"
+
+        return if (showSensitiveData) {
+            // Debug: show structure with masked personal data
+            when {
+                mrzLine.length >= 44 -> {
+                    // TD3 line - show doc type and country, mask rest
+                    val docType = mrzLine.take(2)
+                    val country = mrzLine.substring(2, 5)
+                    "$docType$country${"*".repeat(mrzLine.length - 5)}[${mrzLine.length}]"
+                }
+                mrzLine.length >= 30 -> {
+                    // TD1 line - show doc type and country, mask rest
+                    val docType = mrzLine.take(2)
+                    val country = if (mrzLine.length > 5) mrzLine.substring(2, 5) else "***"
+                    "$docType$country${"*".repeat(mrzLine.length - 5)}[${mrzLine.length}]"
+                }
+                else -> {
+                    // Short or partial MRZ
+                    "${mrzLine.take(2)}${"*".repeat((mrzLine.length - 2).coerceAtLeast(0))}[${mrzLine.length}]"
+                }
+            }
+        } else {
+            // Release: show only format indicator
+            "[MRZ:${mrzLine.length} chars]"
+        }
+    }
+
+    /**
      * Creates a safe exception message without sensitive data.
      *
      * @param operation The operation that failed

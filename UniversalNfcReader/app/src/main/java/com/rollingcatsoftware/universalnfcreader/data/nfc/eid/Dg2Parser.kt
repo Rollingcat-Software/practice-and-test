@@ -2,7 +2,7 @@ package com.rollingcatsoftware.universalnfcreader.data.nfc.eid
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.util.Log
+import com.rollingcatsoftware.universalnfcreader.data.nfc.security.SecureLogger
 import java.io.ByteArrayInputStream
 import kotlin.math.max
 
@@ -49,18 +49,18 @@ object Dg2Parser {
      */
     fun parse(dg2Data: ByteArray): Bitmap? {
         return try {
-            Log.d(TAG, "Parsing DG2 data (${dg2Data.size} bytes)")
-            Log.d(TAG, "DG2 first 32 bytes: ${toHexString(dg2Data.take(32).toByteArray())}")
+            SecureLogger.d(TAG, "Parsing DG2 data (${dg2Data.size} bytes)")
+            SecureLogger.d(TAG, "DG2 first 32 bytes: ${toHexString(dg2Data.take(32).toByteArray())}")
 
             // Extract image data from ASN.1 structure
             val imageData = extractImageData(dg2Data)
             if (imageData == null) {
-                Log.e(TAG, "Failed to extract image data from DG2")
+                SecureLogger.e(TAG, "Failed to extract image data from DG2")
                 return null
             }
 
-            Log.d(TAG, "Extracted image data (${imageData.size} bytes)")
-            Log.d(
+            SecureLogger.d(TAG, "Extracted image data (${imageData.size} bytes)")
+            SecureLogger.d(
                 TAG,
                 "Image data first 16 bytes: ${toHexString(imageData.take(16).toByteArray())}"
             )
@@ -69,7 +69,7 @@ object Dg2Parser {
             decodeImage(imageData)
 
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to parse DG2 data", e)
+            SecureLogger.e(TAG, "Failed to parse DG2 data", e)
             null
         }
     }
@@ -84,19 +84,19 @@ object Dg2Parser {
             // Read outer tag (should be 0x75 for DG2)
             val outerTag = readTag(stream)
             if (outerTag != TAG_DG2) {
-                Log.w(TAG, "Unexpected DG2 tag: 0x${outerTag.toString(16)}, expected 0x75")
+                SecureLogger.w(TAG, "Unexpected DG2 tag: 0x${outerTag.toString(16)}, expected 0x75")
             }
 
             // Read length
             val outerLength = readLength(stream)
-            Log.d(TAG, "DG2 content length: $outerLength bytes")
+            SecureLogger.d(TAG, "DG2 content length: $outerLength bytes")
 
             // Navigate through the ASN.1 structure to find image data
             while (stream.available() > 0) {
                 val tag = readTag(stream)
                 val length = readLength(stream)
 
-                Log.d(TAG, "Found tag: 0x${tag.toString(16)}, length: $length")
+                SecureLogger.d(TAG, "Found tag: 0x${tag.toString(16)}, length: $length")
 
                 when (tag) {
                     TAG_BIOMETRIC_DATA_BLOCK, TAG_IMAGE_DATA -> {
@@ -107,10 +107,10 @@ object Dg2Parser {
                         // Check if it's a supported image format
                         val imageType = detectImageType(imageBytes)
                         if (imageType != null) {
-                            Log.d(TAG, "Found $imageType image data")
+                            SecureLogger.d(TAG, "Found $imageType image data")
                             return imageBytes
                         } else {
-                            Log.w(TAG, "Data block is not a recognized image format, searching...")
+                            SecureLogger.w(TAG, "Data block is not a recognized image format, searching...")
                             // Try to find image within this block
                             val innerImage = findImageInRawData(imageBytes)
                             if (innerImage != null) {
@@ -140,11 +140,11 @@ object Dg2Parser {
             }
 
             // If we haven't found it in the structure, search for image magic bytes
-            Log.d(TAG, "Searching for image magic bytes in raw data...")
+            SecureLogger.d(TAG, "Searching for image magic bytes in raw data...")
             return findImageInRawData(data)
 
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to extract image data", e)
+            SecureLogger.e(TAG, "Failed to extract image data", e)
             return null
         }
     }
@@ -162,7 +162,7 @@ object Dg2Parser {
         // Search for regular JPEG
         findMagicBytes(data, JPEG_MAGIC, "JPEG")?.let { return it }
 
-        Log.w(TAG, "No recognized image format found in data")
+        SecureLogger.w(TAG, "No recognized image format found in data")
         return null
     }
 
@@ -179,7 +179,7 @@ object Dg2Parser {
                 }
             }
             if (match) {
-                Log.d(TAG, "Found $formatName magic bytes at offset $i")
+                SecureLogger.d(TAG, "Found $formatName magic bytes at offset $i")
                 return data.copyOfRange(i, data.size)
             }
         }
@@ -215,23 +215,23 @@ object Dg2Parser {
      */
     private fun decodeImage(imageData: ByteArray): Bitmap? {
         return try {
-            Log.d(TAG, "Attempting to decode image (${imageData.size} bytes)...")
+            SecureLogger.d(TAG, "Attempting to decode image (${imageData.size} bytes)...")
 
             // First try direct decode
             val bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.size)
             if (bitmap != null) {
-                Log.d(TAG, "Successfully decoded image: ${bitmap.width}x${bitmap.height}")
+                SecureLogger.d(TAG, "Successfully decoded image: ${bitmap.width}x${bitmap.height}")
                 return bitmap
             }
 
-            Log.w(TAG, "BitmapFactory.decodeByteArray returned null, trying optimized decode")
+            SecureLogger.w(TAG, "BitmapFactory.decodeByteArray returned null, trying optimized decode")
             decodeOptimized(imageData)
 
         } catch (e: OutOfMemoryError) {
-            Log.e(TAG, "Out of memory while decoding image", e)
+            SecureLogger.e(TAG, "Out of memory while decoding image", e)
             tryAggressiveDownsampling(imageData)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to decode image", e)
+            SecureLogger.e(TAG, "Failed to decode image", e)
             null
         }
     }
@@ -251,15 +251,15 @@ object Dg2Parser {
             val originalHeight = options.outHeight
 
             if (originalWidth <= 0 || originalHeight <= 0) {
-                Log.e(TAG, "Invalid bitmap dimensions: ${originalWidth}x${originalHeight}")
+                SecureLogger.e(TAG, "Invalid bitmap dimensions: ${originalWidth}x${originalHeight}")
                 return null
             }
 
-            Log.d(TAG, "Original bitmap size: ${originalWidth}x${originalHeight}")
+            SecureLogger.d(TAG, "Original bitmap size: ${originalWidth}x${originalHeight}")
 
             // Calculate sample size for downsampling
             val sampleSize = calculateSampleSize(originalWidth, originalHeight, MAX_DIMENSION)
-            Log.d(TAG, "Using sample size: $sampleSize")
+            SecureLogger.d(TAG, "Using sample size: $sampleSize")
 
             // Decode with sample size
             val decodeOptions = BitmapFactory.Options().apply {
@@ -271,7 +271,7 @@ object Dg2Parser {
             val bitmap = BitmapFactory.decodeByteArray(data, 0, data.size, decodeOptions)
 
             if (bitmap != null) {
-                Log.d(
+                SecureLogger.d(
                     TAG,
                     "Decoded bitmap size: ${bitmap.width}x${bitmap.height}, bytes: ${bitmap.byteCount}"
                 )
@@ -280,10 +280,10 @@ object Dg2Parser {
             bitmap
 
         } catch (e: OutOfMemoryError) {
-            Log.e(TAG, "Out of memory in optimized decode", e)
+            SecureLogger.e(TAG, "Out of memory in optimized decode", e)
             tryAggressiveDownsampling(data)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed optimized decode", e)
+            SecureLogger.e(TAG, "Failed optimized decode", e)
             null
         }
     }
@@ -313,7 +313,7 @@ object Dg2Parser {
      */
     private fun tryAggressiveDownsampling(data: ByteArray): Bitmap? {
         return try {
-            Log.d(TAG, "Attempting aggressive downsampling")
+            SecureLogger.d(TAG, "Attempting aggressive downsampling")
 
             val options = BitmapFactory.Options().apply {
                 inSampleSize = 4
@@ -324,7 +324,7 @@ object Dg2Parser {
             BitmapFactory.decodeByteArray(data, 0, data.size, options)
 
         } catch (e: Exception) {
-            Log.e(TAG, "Aggressive downsampling also failed", e)
+            SecureLogger.e(TAG, "Aggressive downsampling also failed", e)
             null
         }
     }

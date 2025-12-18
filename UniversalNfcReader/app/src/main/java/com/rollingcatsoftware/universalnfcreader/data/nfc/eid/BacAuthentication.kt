@@ -83,9 +83,9 @@ class BacAuthentication {
         sendSequenceCounter: ByteArray
     ) : Closeable {
         // Wrap keys in SecureByteArray for secure memory management
-        private val _encryptionKey = SecureByteArray.wrap(encryptionKey)
-        private val _macKey = SecureByteArray.wrap(macKey)
-        private val _sendSequenceCounter = SecureByteArray.wrap(sendSequenceCounter)
+        @PublishedApi internal val _encryptionKey = SecureByteArray.wrap(encryptionKey)
+        @PublishedApi internal val _macKey = SecureByteArray.wrap(macKey)
+        @PublishedApi internal val _sendSequenceCounter = SecureByteArray.wrap(sendSequenceCounter)
 
         /**
          * Gets a copy of the encryption key.

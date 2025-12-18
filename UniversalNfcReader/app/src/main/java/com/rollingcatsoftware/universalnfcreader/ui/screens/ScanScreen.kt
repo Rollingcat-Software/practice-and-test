@@ -3,6 +3,13 @@ package com.rollingcatsoftware.universalnfcreader.ui.screens
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -45,6 +52,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -77,6 +87,8 @@ fun ScanScreen(
     uiState: MainUiState,
     onCardDismissed: () -> Unit,
     onPendingAuthCancelled: () -> Unit,
+    onRefreshNfcStatus: () -> Unit,
+    onOpenNfcSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val scanState = when {
@@ -108,7 +120,10 @@ fun ScanScreen(
 
             is ScanState.Error -> ErrorContent(error = state.error, onRetry = onCardDismissed)
             is ScanState.NfcUnavailable -> NfcUnavailableContent()
-            is ScanState.NfcDisabled -> NfcDisabledContent()
+            is ScanState.NfcDisabled -> NfcDisabledContent(
+                onRefresh = onRefreshNfcStatus,
+                onOpenSettings = onOpenNfcSettings
+            )
         }
     }
 }
@@ -242,6 +257,7 @@ private fun IdleContent(
 @Composable
 private fun SupportedCardsList() {
     val cards = listOf(
+        "Passport" to "National ID",
         "Turkish eID" to "BAC authentication",
         "Istanbulkart" to "Transport card",
         "MIFARE Classic" to "1K/4K cards",
@@ -805,42 +821,204 @@ private fun NfcUnavailableContent(
 
 @Composable
 private fun NfcDisabledContent(
+    onRefresh: () -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var visible by remember { mutableStateOf(false) }
+    var isRefreshing by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) { visible = true }
+
+    // Infinite rotation animation for refresh icon when refreshing
+    val infiniteTransition = rememberInfiniteTransition(label = "refresh_rotation")
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "rotation"
+    )
+
+    // Scale animation for button press effect
+    val buttonScale by animateFloatAsState(
+        targetValue = if (isRefreshing) 0.95f else 1f,
+        animationSpec = spring(dampingRatio = 0.6f),
+        label = "button_scale"
+    )
+
+    // Pulse animation for the icon
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse"
+    )
 
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        AnimatedVisibility(
-            visible = visible,
-            enter = fadeIn(tween(400)) + scaleIn(tween(400))
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(32.dp)
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(32.dp)
+            // Animated NFC off icon with pulse effect
+            AnimatedVisibility(
+                visible = visible,
+                enter = fadeIn(tween(400)) + scaleIn(
+                    initialScale = 0.5f,
+                    animationSpec = tween(500, easing = FastOutSlowInEasing)
+                )
             ) {
                 Icon(
                     imageVector = Icons.Default.PortableWifiOff,
                     contentDescription = null,
-                    modifier = Modifier.size(80.dp),
+                    modifier = Modifier
+                        .size(80.dp)
+                        .scale(pulseScale),
                     tint = MaterialTheme.colorScheme.error
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Title with slide animation
+            AnimatedVisibility(
+                visible = visible,
+                enter = fadeIn(tween(400, delayMillis = 100)) +
+                        slideInVertically(tween(400, delayMillis = 100)) { -30 }
+            ) {
                 Text(
                     text = "NFC Disabled",
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.error
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Description
+            AnimatedVisibility(
+                visible = visible,
+                enter = fadeIn(tween(400, delayMillis = 200))
+            ) {
                 Text(
-                    text = "Please enable NFC in your device settings",
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center
+                    text = "Enable NFC in your device settings to scan cards",
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // Fancy animated Refresh button
+            AnimatedVisibility(
+                visible = visible,
+                enter = fadeIn(tween(500, delayMillis = 300)) +
+                        scaleIn(initialScale = 0.8f, animationSpec = tween(500, delayMillis = 300))
+            ) {
+                Button(
+                    onClick = {
+                        isRefreshing = true
+                        onRefresh()
+                        // Reset refreshing state after a short delay
+                        // The actual state will update from the broadcast receiver
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            scaleX = buttonScale
+                            scaleY = buttonScale
+                        },
+                    enabled = !isRefreshing
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .rotate(if (isRefreshing) rotation else 0f)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = if (isRefreshing) "Checking..." else "Refresh NFC Status",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Open Settings button
+            AnimatedVisibility(
+                visible = visible,
+                enter = fadeIn(tween(400, delayMillis = 400)) +
+                        slideInVertically(tween(400, delayMillis = 400)) { 20 }
+            ) {
+                OutlinedButton(
+                    onClick = onOpenSettings,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Open NFC Settings")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Helpful tip card
+            AnimatedVisibility(
+                visible = visible,
+                enter = fadeIn(tween(500, delayMillis = 500)) +
+                        expandVertically(tween(500, delayMillis = 500))
+            ) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "Quick Tip",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "You can also enable NFC from the quick settings panel by swiping down from the top of your screen.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Reset refreshing state when NFC status changes
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            kotlinx.coroutines.delay(1500)
+            isRefreshing = false
         }
     }
 }

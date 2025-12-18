@@ -98,6 +98,10 @@ dependencies {
     // Accompanist Permissions
     implementation(libs.accompanist.permissions)
 
+    // BouncyCastle for cryptographic operations (SOD validation, ASN.1 parsing)
+    implementation(libs.bouncycastle.bcprov)
+    implementation(libs.bouncycastle.bcpkix)
+
     // Unit Testing
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

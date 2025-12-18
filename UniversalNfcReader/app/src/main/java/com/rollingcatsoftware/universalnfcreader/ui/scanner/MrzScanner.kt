@@ -1,6 +1,6 @@
 package com.rollingcatsoftware.universalnfcreader.ui.scanner
 
-import android.util.Log
+import com.rollingcatsoftware.universalnfcreader.data.nfc.security.SecureLogger
 import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
@@ -10,6 +10,15 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 
 /**
+ * MRZ document format type.
+ */
+enum class MrzFormat {
+    TD1,  // ID cards: 3 lines × 30 characters
+    TD3,  // Passports: 2 lines × 44 characters
+    UNKNOWN
+}
+
+/**
  * Parsed MRZ data from OCR scan.
  *
  * @param documentNumber The document/card number (up to 9 alphanumeric characters)
@@ -17,24 +26,38 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
  * @param dateOfExpiry Date of expiry in YYMMDD format
  * @param confidence OCR confidence (0.0 to 1.0)
  * @param checksumValid True if all MRZ check digits validated correctly
+ * @param format The detected MRZ format (TD1 or TD3)
+ * @param surname Holder's surname (optional, parsed from TD3)
+ * @param givenNames Holder's given names (optional, parsed from TD3)
+ * @param nationality Holder's nationality code (optional)
+ * @param sex Holder's sex (M/F/<)
  */
 data class ScannedMrzData(
     val documentNumber: String,
     val dateOfBirth: String,
     val dateOfExpiry: String,
     val confidence: Float = 0f,
-    val checksumValid: Boolean = false
+    val checksumValid: Boolean = false,
+    val format: MrzFormat = MrzFormat.UNKNOWN,
+    val surname: String = "",
+    val givenNames: String = "",
+    val nationality: String = "",
+    val sex: String = ""
 )
 
 /**
  * MRZ Scanner using ML Kit Text Recognition.
  *
- * Scans TD1 format (Turkish ID cards) which has 3 lines of 30 characters each.
+ * Supports both TD1 (ID cards) and TD3 (Passports) formats per ICAO Doc 9303.
  *
- * TD1 Format (ID Cards) - ICAO Doc 9303:
- * Line 1 (30 chars): Type (2) + Country (3) + Document Number (9) + Check (1) + Optional (15)
- * Line 2 (30 chars): DOB (6) + Check (1) + Sex (1) + DOE (6) + Check (1) + Nationality (3) + Optional (11) + Check (1)
- * Line 3 (30 chars): Name (Surname<<GivenNames)
+ * TD1 Format (ID Cards) - 3 lines × 30 characters:
+ * Line 1: Type (2) + Country (3) + Document Number (9) + Check (1) + Optional (15)
+ * Line 2: DOB (6) + Check (1) + Sex (1) + DOE (6) + Check (1) + Nationality (3) + Optional (11) + Check (1)
+ * Line 3: Name (Surname<<GivenNames)
+ *
+ * TD3 Format (Passports) - 2 lines × 44 characters:
+ * Line 1: Type (2) + Country (3) + Name (Surname<<GivenNames) (39)
+ * Line 2: DocNumber (9) + Check (1) + Nationality (3) + DOB (6) + Check (1) + Sex (1) + DOE (6) + Check (1) + Optional (14) + Check (1) + Composite (1)
  */
 class MrzAnalyzer(
     private val onMrzDetected: (ScannedMrzData) -> Unit,
@@ -75,7 +98,7 @@ class MrzAnalyzer(
         recognizer.process(image)
             .addOnSuccessListener { visionText ->
                 val fullText = visionText.text
-                Log.d(TAG, "OCR Text: $fullText")
+                SecureLogger.d(TAG, "OCR Text: $fullText")
 
                 val mrzLikeText = extractMrzLikeText(fullText)
                 if (mrzLikeText.isNotEmpty()) {
@@ -89,7 +112,7 @@ class MrzAnalyzer(
                 }
             }
             .addOnFailureListener { e ->
-                Log.e(TAG, "MRZ OCR failed", e)
+                SecureLogger.e(TAG, "MRZ OCR failed", e)
                 onError("OCR failed: ${e.message}")
             }
             .addOnCompleteListener {
@@ -118,7 +141,7 @@ class MrzAnalyzer(
             .map { line -> line.replace(" ", "").trim() }
             .filter { it.length >= 20 }
 
-        Log.d(TAG, "MRZ lines found: $lines")
+        SecureLogger.d(TAG, "MRZ lines found: $lines")
 
         val td1Result = parseTd1(lines)
         if (td1Result != null) return td1Result
@@ -138,37 +161,47 @@ class MrzAnalyzer(
             line.length >= 28 && mrzCharRegex.matches(line)
         }
 
-        Log.d(TAG, "TD1 candidate lines after strict filter: $mrzLines")
+        SecureLogger.d(TAG, "TD1 candidate lines after strict filter: $mrzLines")
 
         if (mrzLines.size < 2) return null
 
         val line1Candidates = mrzLines.filter { isTd1Line1(it) }
         val line2Candidates = mrzLines.filter { isTd1Line2(it) }
 
-        Log.d(TAG, "TD1 Line1 candidates: $line1Candidates")
-        Log.d(TAG, "TD1 Line2 candidates: $line2Candidates")
+        SecureLogger.d(TAG, "TD1 Line1 candidates: $line1Candidates")
+        SecureLogger.d(TAG, "TD1 Line2 candidates: $line2Candidates")
 
         for (line1 in line1Candidates) {
             for (line2 in line2Candidates) {
-                Log.d(TAG, "Trying TD1 pair - Line1: $line1, Line2: $line2")
+                SecureLogger.d(TAG, "Trying TD1 pair - Line1: $line1, Line2: $line2")
 
                 val docNum = extractTd1DocumentNumber(line1)
                 val dob = extractTd1DateOfBirth(line2)
                 val doe = extractTd1DateOfExpiry(line2)
 
-                Log.d(TAG, "Extracted - DocNum: $docNum, DOB: $dob, DOE: $doe")
+                SecureLogger.d(TAG, "Extracted - DocNum: $docNum, DOB: $dob, DOE: $doe")
 
                 if (docNum != null && dob != null && doe != null) {
                     val checksumValid = validateTd1CheckDigits(line1, line2)
-                    Log.d(TAG, "Checksum validation result: $checksumValid")
+                    SecureLogger.d(TAG, "Checksum validation result: $checksumValid")
 
                     if (checksumValid) {
+                        // Extract nationality from line2 (positions 15-18)
+                        val nationality = if (line2.length >= 18) {
+                            line2.substring(15, 18).replace("<", "")
+                        } else ""
+                        // Extract sex from line2 (position 7)
+                        val sex = if (line2.length > 7) line2[7].toString() else ""
+
                         return ScannedMrzData(
                             documentNumber = docNum,
                             dateOfBirth = dob,
                             dateOfExpiry = doe,
                             confidence = 0.98f,
-                            checksumValid = true
+                            checksumValid = true,
+                            format = MrzFormat.TD1,
+                            nationality = nationality,
+                            sex = sex
                         )
                     }
                 }
@@ -182,13 +215,23 @@ class MrzAnalyzer(
                 val doe = extractTd1DateOfExpiry(line2)
 
                 if (docNum != null && dob != null && doe != null) {
-                    Log.d(TAG, "Returning result without valid checksum - data may have OCR errors")
+                    SecureLogger.d(TAG, "Returning result without valid checksum - data may have OCR errors")
+                    // Extract nationality from line2 (positions 15-18)
+                    val nationality = if (line2.length >= 18) {
+                        line2.substring(15, 18).replace("<", "")
+                    } else ""
+                    // Extract sex from line2 (position 7)
+                    val sex = if (line2.length > 7) line2[7].toString() else ""
+
                     return ScannedMrzData(
                         documentNumber = docNum,
                         dateOfBirth = dob,
                         dateOfExpiry = doe,
                         confidence = 0.7f,
-                        checksumValid = false
+                        checksumValid = false,
+                        format = MrzFormat.TD1,
+                        nationality = nationality,
+                        sex = sex
                     )
                 }
             }
@@ -245,7 +288,7 @@ class MrzAnalyzer(
             natPart.all { it.isLetter() || it == '<' }
         } else false
 
-        Log.d(
+        SecureLogger.d(
             TAG,
             "Line2 check - DOB: $potentialDob, DOE: $potentialDoe, Sex: $sexChar, Nat: $hasNationality"
         )
@@ -263,7 +306,7 @@ class MrzAnalyzer(
 
         if (docNum.isEmpty()) return null
 
-        Log.d(TAG, "TD1 DocNum raw: '$docNumRaw' -> cleaned: '$docNum'")
+        SecureLogger.d(TAG, "TD1 DocNum raw: '$docNumRaw' -> cleaned: '$docNum'")
 
         return if (docNum.length in 1..9 && docNum.all { it.isLetterOrDigit() }) {
             docNum
@@ -280,30 +323,187 @@ class MrzAnalyzer(
         return extractDateWithOcrCorrection(line, 8, 14)
     }
 
+    /**
+     * Parse TD3 MRZ format (Passports - 2 lines × 44 characters).
+     *
+     * Line 1: P<ISSSUERNAME<<GIVENNAMES<<<<<<<<<<<<<<<<<<<
+     * Line 2: DOCNUMBER#NAT YYYMMDD#SYYYMMDD#OPTIONALDATA###C
+     *
+     * # = check digit, C = composite check digit
+     */
     private fun parseTd3(lines: List<String>): ScannedMrzData? {
-        val mrzLines = lines.filter { it.length >= 40 }
+        // Find potential TD3 lines (40+ characters after normalization)
+        val mrzLines = lines.mapNotNull { line ->
+            normalizeMrzLine(line)
+        }.filter { line ->
+            line.length >= 40 && mrzCharRegex.matches(line)
+        }
 
+        SecureLogger.d(TAG, "TD3 candidate lines: $mrzLines")
+
+        // Find line 1 candidates (starts with P<, P0, or similar passport type indicators)
+        val line1Candidates = mrzLines.filter { isTd3Line1(it) }
+        // Find line 2 candidates (starts with document number pattern)
+        val line2Candidates = mrzLines.filter { isTd3Line2(it) }
+
+        SecureLogger.d(TAG, "TD3 Line1 candidates: $line1Candidates")
+        SecureLogger.d(TAG, "TD3 Line2 candidates: $line2Candidates")
+
+        // Try to match line1 and line2 with checksum validation
+        for (line1 in line1Candidates) {
+            for (line2 in line2Candidates) {
+                SecureLogger.d(TAG, "Trying TD3 pair - Line1: ${SecureLogger.maskMrz(line1)}, Line2: ${SecureLogger.maskMrz(line2)}")
+
+                val result = extractTd3Data(line1, line2, validateChecksum = true)
+                if (result != null) {
+                    SecureLogger.d(TAG, "TD3 MRZ parsed successfully with valid checksums")
+                    return result
+                }
+            }
+        }
+
+        // Fallback: try without strict checksum validation (OCR errors may affect check digits)
+        for (line1 in line1Candidates) {
+            for (line2 in line2Candidates) {
+                val result = extractTd3Data(line1, line2, validateChecksum = false)
+                if (result != null) {
+                    SecureLogger.d(TAG, "TD3 MRZ parsed without checksum validation (possible OCR errors)")
+                    return result
+                }
+            }
+        }
+
+        // Try to detect TD3 from a single long line (lines might be concatenated)
         for (line in mrzLines) {
-            if (line.length >= 28) {
-                val docNumRaw = line.take(9).trimEnd('<').replace("<", "")
-                val docNum =
-                    if (docNumRaw.isNotEmpty() && docNumRaw.length <= 9) docNumRaw else null
-
-                val dob = extractDateWithOcrCorrection(line, 13, 19)
-                val doe = extractDateWithOcrCorrection(line, 21, 27)
-
-                if (docNum != null && dob != null && doe != null) {
-                    return ScannedMrzData(
-                        documentNumber = docNum,
-                        dateOfBirth = dob,
-                        dateOfExpiry = doe,
-                        confidence = 0.7f
-                    )
+            if (line.length >= 88) {
+                val line1 = line.substring(0, 44)
+                val line2 = line.substring(44, 88)
+                val result = extractTd3Data(line1, line2, validateChecksum = false)
+                if (result != null) {
+                    SecureLogger.d(TAG, "TD3 MRZ parsed from concatenated line")
+                    return result
                 }
             }
         }
 
         return null
+    }
+
+    /**
+     * Check if a line looks like TD3 line 1 (name line starting with passport type).
+     */
+    private fun isTd3Line1(line: String): Boolean {
+        if (line.length < 40) return false
+
+        // TD3 line 1 starts with document type (P, PA, PD, etc.) followed by country code
+        val startsWithPassportType = line.matches(Regex("^P[<A-Z0][A-Z]{3}.*"))
+
+        // Line 1 should contain the name separator "<<"
+        val hasNameSeparator = line.contains("<<")
+
+        // Line 1 shouldn't start with digits (that would be line 2)
+        val notStartWithDigits = !line[0].isDigit()
+
+        return startsWithPassportType && hasNameSeparator && notStartWithDigits
+    }
+
+    /**
+     * Check if a line looks like TD3 line 2 (data line with document number, dates, etc.).
+     */
+    private fun isTd3Line2(line: String): Boolean {
+        if (line.length < 40) return false
+
+        // Line 2 should have document number at positions 0-8
+        val hasDocNumPattern = line.substring(0, 9).any { it.isLetterOrDigit() && it != '<' }
+
+        // Check for dates at expected positions
+        val potentialDob = extractDateWithOcrCorrection(line, 13, 19)
+        val potentialDoe = extractDateWithOcrCorrection(line, 21, 27)
+
+        // Sex character at position 20
+        val sexChar = if (line.length > 20) line[20] else ' '
+        val validSex = sexChar in listOf('M', 'F', '<', 'X', 'H', 'W')
+
+        SecureLogger.d(TAG, "TD3 Line2 check - HasDocNum: $hasDocNumPattern, DOB: $potentialDob, DOE: $potentialDoe, Sex: $sexChar")
+
+        return hasDocNumPattern && potentialDob != null && potentialDoe != null
+    }
+
+    /**
+     * Extract TD3 data from parsed lines.
+     */
+    private fun extractTd3Data(line1: String, line2: String, validateChecksum: Boolean): ScannedMrzData? {
+        if (line1.length < 44 || line2.length < 44) return null
+
+        // Line 1: Extract names
+        // Format: P<ISSSUERNAME<<GIVENNAMES
+        val namesField = line1.substring(5, 44)
+        val nameParts = namesField.split("<<")
+        val surname = nameParts.getOrNull(0)?.replace("<", " ")?.trim() ?: ""
+        val givenNames = nameParts.getOrNull(1)?.replace("<", " ")?.trim() ?: ""
+
+        // Line 2: Extract document data
+        // Positions: DocNum(0-8), Check(9), Nationality(10-12), DOB(13-18), Check(19), Sex(20), DOE(21-26), Check(27), Personal(28-41), Check(42), Composite(43)
+
+        val docNumRaw = line2.substring(0, 9).trimEnd('<').replace("<", "")
+        val docNum = if (docNumRaw.isNotEmpty() && docNumRaw.length <= 9) docNumRaw else return null
+
+        val docNumCheck = line2[9]
+        val nationality = line2.substring(10, 13).replace("<", "")
+        val dob = extractDateWithOcrCorrection(line2, 13, 19) ?: return null
+        val dobCheck = line2[19]
+        val sex = when (line2[20]) {
+            'M', 'm' -> "M"
+            'F', 'f' -> "F"
+            else -> "<"
+        }
+        val doe = extractDateWithOcrCorrection(line2, 21, 27) ?: return null
+        val doeCheck = line2[27]
+
+        SecureLogger.d(TAG, "TD3 extracted - DocNum: $docNum, DOB: $dob, DOE: $doe, Nationality: $nationality, Sex: $sex")
+
+        // Validate checksums if required
+        if (validateChecksum) {
+            val checksumValid = validateTd3CheckDigits(line2.substring(0, 9), docNumCheck, dob, dobCheck, doe, doeCheck)
+            if (!checksumValid) {
+                SecureLogger.d(TAG, "TD3 checksum validation failed")
+                return null
+            }
+        }
+
+        return ScannedMrzData(
+            documentNumber = docNum,
+            dateOfBirth = dob,
+            dateOfExpiry = doe,
+            confidence = if (validateChecksum) 0.95f else 0.75f,
+            checksumValid = validateChecksum,
+            format = MrzFormat.TD3,
+            surname = surname,
+            givenNames = givenNames,
+            nationality = nationality,
+            sex = sex
+        )
+    }
+
+    /**
+     * Validate TD3 check digits.
+     */
+    private fun validateTd3CheckDigits(
+        docNum: String,
+        docNumCheck: Char,
+        dob: String,
+        dobCheck: Char,
+        doe: String,
+        doeCheck: Char
+    ): Boolean {
+        val docNumPadded = docNum.padEnd(9, '<')
+        val docNumValid = verifyCheckDigit(docNumPadded, docNumCheck)
+        val dobValid = verifyCheckDigit(dob, dobCheck)
+        val doeValid = verifyCheckDigit(doe, doeCheck)
+
+        SecureLogger.d(TAG, "TD3 checksum validation - DocNum: $docNumValid, DOB: $dobValid, DOE: $doeValid")
+
+        return docNumValid && dobValid && doeValid
     }
 
     private fun findMrzPatterns(text: String): ScannedMrzData? {
@@ -315,7 +515,7 @@ class MrzAnalyzer(
                 line.length >= 25 && line.contains("<") && line.count { it == '<' } >= 3
             }
 
-        Log.d(TAG, "Pattern search - MRZ-like lines: $mrzLikeLines")
+        SecureLogger.d(TAG, "Pattern search - MRZ-like lines: $mrzLikeLines")
 
         for (line in mrzLikeLines) {
             val typeMatch = Regex("^[IAC]<[A-Z]{3}").find(line)
@@ -325,7 +525,7 @@ class MrzAnalyzer(
                     if (docNum.isNotEmpty() && docNum.length <= 9) {
                         val dates = findDatesInText(cleanText)
                         if (dates.size >= 2) {
-                            Log.d(TAG, "Pattern fallback found - DocNum: $docNum, Dates: $dates")
+                            SecureLogger.d(TAG, "Pattern fallback found - DocNum: $docNum, Dates: $dates")
                             return ScannedMrzData(
                                 documentNumber = docNum,
                                 dateOfBirth = dates[0],
@@ -338,7 +538,7 @@ class MrzAnalyzer(
             }
         }
 
-        Log.d(TAG, "Pattern search - No valid MRZ patterns found")
+        SecureLogger.d(TAG, "Pattern search - No valid MRZ patterns found")
         return null
     }
 
@@ -382,7 +582,7 @@ class MrzAnalyzer(
         }.joinToString("")
 
         val dateStr = corrected.filter { it.isDigit() }.take(6)
-        Log.d(TAG, "Date extraction: raw='$rawDate' -> corrected='$corrected' -> digits='$dateStr'")
+        SecureLogger.d(TAG, "Date extraction: raw='$rawDate' -> corrected='$corrected' -> digits='$dateStr'")
 
         return if (dateStr.length == 6 && isValidMrzDate(dateStr)) dateStr else null
     }
@@ -424,7 +624,7 @@ class MrzAnalyzer(
         val expected = calculateCheckDigit(data)
         val actual = checkDigit.digitToInt()
         val isValid = expected == actual
-        Log.d(
+        SecureLogger.d(
             TAG,
             "Check digit verification: data='$data', expected=$expected, actual=$actual, valid=$isValid"
         )
@@ -446,7 +646,7 @@ class MrzAnalyzer(
         val doeCheck = line2[14]
         val doeValid = verifyCheckDigit(doe, doeCheck)
 
-        Log.d(TAG, "TD1 checksum validation - DocNum: $docNumValid, DOB: $dobValid, DOE: $doeValid")
+        SecureLogger.d(TAG, "TD1 checksum validation - DocNum: $docNumValid, DOB: $dobValid, DOE: $doeValid")
 
         return docNumValid && dobValid && doeValid
     }

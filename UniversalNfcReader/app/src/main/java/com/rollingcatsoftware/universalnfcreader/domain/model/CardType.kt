@@ -15,6 +15,13 @@ enum class CardType(
     val description: String,
     val requiresAuthentication: Boolean
 ) {
+    // Passport - ICAO 9303 TD3 format with BAC/PACE authentication
+    PASSPORT(
+        displayName = "Passport",
+        description = "e-Passport (ICAO 9303 MRTD)",
+        requiresAuthentication = true
+    ),
+
     // Turkish eID - ISO 7816-4 with BAC authentication
     TURKISH_EID(
         displayName = "Turkish eID",

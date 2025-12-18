@@ -1,6 +1,6 @@
 package com.rollingcatsoftware.universalnfcreader.data.nfc.eid
 
-import android.util.Log
+import com.rollingcatsoftware.universalnfcreader.data.nfc.security.SecureLogger
 import java.io.ByteArrayInputStream
 import java.nio.charset.Charset
 
@@ -46,20 +46,20 @@ object Dg1Parser {
      */
     fun parse(dg1Data: ByteArray): PersonalData? {
         return try {
-            Log.d(TAG, "Parsing DG1 data (${dg1Data.size} bytes)")
-            Log.d(TAG, "DG1 hex: ${toHexString(dg1Data.take(50).toByteArray())}...")
+            SecureLogger.d(TAG, "Parsing DG1 data (${dg1Data.size} bytes)")
+            SecureLogger.d(TAG, "DG1 hex: ${toHexString(dg1Data.take(50).toByteArray())}...")
 
             val stream = ByteArrayInputStream(dg1Data)
 
             // Read outer tag (should be 0x61 for DG1)
             val tag = readTag(stream)
             if (tag != TAG_DG1) {
-                Log.w(TAG, "Unexpected DG1 tag: 0x${tag.toString(16)}, expected 0x61")
+                SecureLogger.w(TAG, "Unexpected DG1 tag: 0x${tag.toString(16)}, expected 0x61")
             }
 
             // Read length
             val length = readLength(stream)
-            Log.d(TAG, "DG1 content length: $length bytes")
+            SecureLogger.d(TAG, "DG1 content length: $length bytes")
 
             // Read the remaining data
             val contentData = ByteArray(stream.available())
@@ -71,11 +71,11 @@ object Dg1Parser {
                 return parseMrz(mrzData)
             }
 
-            Log.e(TAG, "Failed to extract MRZ data")
+            SecureLogger.e(TAG, "Failed to extract MRZ data")
             null
 
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to parse DG1 data", e)
+            SecureLogger.e(TAG, "Failed to parse DG1 data", e)
             null
         }
     }
@@ -96,7 +96,7 @@ object Dg1Parser {
                     val mrzBytes = ByteArray(length)
                     stream.read(mrzBytes)
                     val mrz = String(mrzBytes, Charset.forName("UTF-8"))
-                    Log.d(TAG, "Found MRZ data: $mrz")
+                    SecureLogger.d(TAG, "Found MRZ data: $mrz")
                     return mrz
                 } else {
                     // Skip this field
@@ -104,7 +104,7 @@ object Dg1Parser {
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to extract MRZ data", e)
+            SecureLogger.e(TAG, "Failed to extract MRZ data", e)
         }
 
         return null
@@ -119,13 +119,13 @@ object Dg1Parser {
             val cleanMrz = mrz.replace(" ", "").replace("\r", "")
             var lines = cleanMrz.split("\n").filter { it.isNotEmpty() }
 
-            Log.d(TAG, "MRZ raw length: ${cleanMrz.length}")
-            Log.d(TAG, "MRZ lines from split: ${lines.size}")
+            SecureLogger.d(TAG, "MRZ raw length: ${cleanMrz.length}")
+            SecureLogger.d(TAG, "MRZ lines from split: ${lines.size}")
 
             // If we got a single line of 90 chars, it's TD1 format without line breaks
             if (lines.size == 1 && lines[0].length >= 90) {
                 val singleLine = lines[0]
-                Log.d(
+                SecureLogger.d(
                     TAG,
                     "Single line MRZ detected (${singleLine.length} chars), splitting into 3 lines of 30"
                 )
@@ -137,11 +137,11 @@ object Dg1Parser {
             }
 
             lines.forEachIndexed { index, line ->
-                Log.d(TAG, "Line $index: $line (${line.length} chars)")
+                SecureLogger.d(TAG, "Line $index: $line (${line.length} chars)")
             }
 
             if (lines.size < 3) {
-                Log.e(TAG, "Invalid MRZ: expected 3 lines, got ${lines.size}")
+                SecureLogger.e(TAG, "Invalid MRZ: expected 3 lines, got ${lines.size}")
                 return null
             }
 
@@ -187,7 +187,7 @@ object Dg1Parser {
             )
 
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to parse MRZ", e)
+            SecureLogger.e(TAG, "Failed to parse MRZ", e)
             return null
         }
     }

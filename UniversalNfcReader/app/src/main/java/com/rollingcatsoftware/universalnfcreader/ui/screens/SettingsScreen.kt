@@ -189,6 +189,7 @@ fun SettingsScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         val cards = listOf(
+                            "Passport (ICAO 9303 TD3)",
                             "Turkish eID (BAC Authentication)",
                             "Istanbulkart (DESFire)",
                             "MIFARE Classic 1K/4K",
