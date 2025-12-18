@@ -10,7 +10,19 @@
       "Bash(dir:*)",
       "Bash(find:*)",
       "Bash(wc:*)",
-      "Bash(java -version:*)"
+      "Bash(java -version:*)",
+      "Bash(where:*)",
+      "Bash(winget install:*)",
+      "Bash(curl:*)",
+      "Bash(export JAVA_HOME=\"C:/Users/hp/jdk17/jdk-17.0.13+11\":*)",
+      "Bash(cat:*)",
+      "Bash(\"C:/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe\" devices)",
+      "Bash(cmd //c \"dir /s /b \"\"C:\\\\Program Files\\\\Android\\\\*java.exe\"\"\")",
+      "Bash(\"C:/Program Files/JetBrains/WebStorm 2025.2.2/jbr/bin/java.exe\" -version)",
+      "Bash(JAVA_HOME=\"C:/Program Files/JetBrains/WebStorm 2025.2.2/jbr\" ./gradlew:*)",
+      "Bash(\"C:/Program Files/Java/jdk-25/bin/jlink.exe\" --version)",
+      "Bash(winget search:*)",
+      "Bash(JAVA_HOME=\"C:/Program Files/Eclipse Adoptium/jdk-17.0.17.10-hotspot\" ./gradlew assembleDebug:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"C:\\\\Users\\\\hp\\\\Documents\\\\GitHub\\\\Rollingcat-Software\\\\practice-and-test\\\\UniversalNfcReader\" /s /b)",
+      "Bash(./gradlew compileDebugKotlin:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)"
+    ]
+  }
+}
