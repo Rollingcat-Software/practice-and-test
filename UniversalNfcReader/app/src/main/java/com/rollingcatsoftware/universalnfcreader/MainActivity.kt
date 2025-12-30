@@ -115,7 +115,9 @@ class MainActivity : FragmentActivity() {
                         AppScreen(
                             viewModel = viewModel,
                             onOpenNfcSettings = { openNfcSettings() },
-                            onRefreshNfcStatus = { updateNfcStatus() }
+                            onRefreshNfcStatus = { updateNfcStatus() },
+                            onResetNfcForRetap = { resetNfcDispatchForRetap() },
+                            onRestoreNormalNfc = { restoreNormalNfcMode() }
                         )
                     }
 
@@ -290,6 +292,46 @@ class MainActivity : FragmentActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * Reset NFC dispatch for re-tap scenario (after MRZ scanning).
+     *
+     * Forces Foreground Dispatch Mode which is more reliable for detecting
+     * the same card again across all devices.
+     */
+    fun resetNfcDispatchForRetap() {
+        SecureLogger.d(TAG, "Resetting NFC dispatch for re-tap (forcing foreground dispatch mode)")
+        disableForegroundDispatch()
+
+        // Longer delay to ensure camera resources are fully released
+        // and NFC hardware is ready
+        window.decorView.postDelayed({
+            nfcAdapter?.let { adapter ->
+                if (adapter.isEnabled) {
+                    // Force foreground dispatch mode for re-tap - it's more reliable
+                    // than Reader Mode for detecting the same card again
+                    enableForegroundDispatchMode()
+                    SecureLogger.d(TAG, "NFC reset complete - using foreground dispatch for re-tap")
+                }
+            }
+        }, 500)
+    }
+
+    /**
+     * Restore normal NFC dispatch mode after authenticated read completes.
+     *
+     * Returns to the device-appropriate mode (Reader Mode for non-Samsung,
+     * Foreground Dispatch for Samsung).
+     */
+    fun restoreNormalNfcMode() {
+        SecureLogger.d(TAG, "Restoring normal NFC dispatch mode")
+        disableForegroundDispatch()
+
+        window.decorView.postDelayed({
+            enableForegroundDispatch()
+            SecureLogger.d(TAG, "Normal NFC mode restored")
+        }, 100)
     }
 
     /**

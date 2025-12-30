@@ -407,10 +407,20 @@ private fun CameraPreview(
 ) {
     val previewView = remember { PreviewView(context) }
     var analyzer: MrzAnalyzer? by remember { mutableStateOf(null) }
+    var cameraProvider: ProcessCameraProvider? by remember { mutableStateOf(null) }
 
+    // Cleanup camera resources when the composable is disposed
+    // This is critical to free up NFC hardware on some devices
     DisposableEffect(Unit) {
         onDispose {
+            SecureLogger.d(TAG, "Disposing camera resources")
             analyzer?.close()
+            try {
+                cameraProvider?.unbindAll()
+                SecureLogger.d(TAG, "Camera unbound successfully")
+            } catch (e: Exception) {
+                SecureLogger.w(TAG, "Error unbinding camera: ${e.message}")
+            }
         }
     }
 
@@ -426,7 +436,8 @@ private fun CameraPreview(
 
             val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
             cameraProviderFuture.addListener({
-                val cameraProvider = cameraProviderFuture.get()
+                val provider = cameraProviderFuture.get()
+                cameraProvider = provider  // Store for cleanup on dispose
 
                 val preview = Preview.Builder()
                     .build()
@@ -451,8 +462,8 @@ private fun CameraPreview(
                 val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
                 try {
-                    cameraProvider.unbindAll()
-                    val camera = cameraProvider.bindToLifecycle(
+                    provider.unbindAll()
+                    val camera = provider.bindToLifecycle(
                         lifecycleOwner,
                         cameraSelector,
                         preview,
