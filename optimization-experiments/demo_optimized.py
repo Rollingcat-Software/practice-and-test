@@ -317,9 +317,16 @@ class FaceDB:
     def __init__(self, path="face_db.pkl"):
         self.path = path
         self.faces = {}
+        # Vectorized search cache
+        self._matrix = None
+        self._names = []
+        self._threshold = 0.45
+        self._dirty = True  # Flag to rebuild matrix
+        
         if os.path.exists(path):
             try:
                 with open(path, 'rb') as f: self.faces = pickle.load(f)
+                self._dirty = True
             except: pass
 
     def save(self):
@@ -327,6 +334,7 @@ class FaceDB:
 
     def enroll(self, name, embedding, thumb):
         self.faces[name] = {'embeddings': [embedding], 'thumbnail': thumb}
+        self._dirty = True
         self.save()
 
     def add_embedding(self, name, emb):
@@ -335,18 +343,66 @@ class FaceDB:
             if len(embs) >= 5: embs.pop(0)
             embs.append(emb)
             self.faces[name]['embeddings'] = embs
+            self._dirty = True
             self.save()
 
-    def search(self, emb, threshold=0.45):
-        best_name, best_sim = None, 0
-        emb = np.array(emb).flatten()
+    def _rebuild_matrix(self):
+        """Rebuilds the numpy matrix for vectorized search."""
+        if not self.faces:
+            self._matrix = None
+            self._names = []
+            self._dirty = False
+            return
+
+        embeddings = []
+        names = []
+        
         for name, data in self.faces.items():
-            for stored in data.get('embeddings', []):
-                stored = np.array(stored).flatten()
-                sim = np.dot(emb, stored) / (np.linalg.norm(emb) * np.linalg.norm(stored))
-                if sim > best_sim and sim >= threshold:
-                    best_sim, best_name = sim, name
-        return (best_name, best_sim) if best_name else None
+            for emb in data.get('embeddings', []):
+                # Normalize embedding for cosine similarity
+                emb = np.array(emb).flatten()
+                norm = np.linalg.norm(emb)
+                if norm > 0:
+                    embeddings.append(emb / norm)
+                    names.append(name)
+        
+        if embeddings:
+            self._matrix = np.array(embeddings) # Shape: (N_samples, 512)
+            self._names = names
+        else:
+            self._matrix = None
+            self._names = []
+            
+        self._dirty = False
+        logger.info(f"FaceDB Matrix Rebuilt: {len(names)} vectors")
+
+    def search(self, emb, threshold=0.45):
+        """
+        Vectorized search using BLAS/SIMD via Numpy.
+        Much faster than looping for large N.
+        """
+        if self._dirty or self._matrix is None:
+            self._rebuild_matrix()
+            
+        if self._matrix is None:
+            return None
+
+        # Prepare query vector
+        query = np.array(emb).flatten()
+        query_norm = np.linalg.norm(query)
+        if query_norm == 0: return None
+        query = query / query_norm
+
+        # Vectorized Cosine Similarity: matrix @ vector
+        # (N, 512) @ (512,) -> (N,)
+        scores = np.dot(self._matrix, query)
+        
+        best_idx = np.argmax(scores)
+        best_score = scores[best_idx]
+
+        if best_score >= threshold:
+            return (self._names[best_idx], float(best_score))
+        return None
 
 class FaceTracker:
     def __init__(self, max_gone=15):
@@ -402,6 +458,49 @@ class FaceTracker:
                 res[self.next_id] = d
                 self.next_id += 1
         return res
+
+# =============================================================================
+# THREADED CAMERA (Non-Blocking I/O)
+# =============================================================================
+
+class ThreadedCamera:
+    """Polles camera in separate thread to prevent I/O blocking."""
+    def __init__(self, src=0):
+        self.stream = cv2.VideoCapture(src)
+        self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        
+        self.grabbed, self.frame = self.stream.read()
+        self.stopped = False
+        self.lock = threading.Lock()
+        
+        if not self.grabbed:
+            logger.error("Failed to open camera!")
+            
+    def start(self):
+        t = threading.Thread(target=self.update, args=(), daemon=True)
+        t.start()
+        return self
+
+    def update(self):
+        while not self.stopped:
+            grabbed, frame = self.stream.read()
+            if not grabbed:
+                self.stop()
+                break
+            
+            with self.lock:
+                self.grabbed = grabbed
+                self.frame = frame
+            time.sleep(0.001) # Yield slightly
+
+    def read(self):
+        with self.lock:
+            return self.grabbed, self.frame.copy() if self.frame is not None else None
+
+    def stop(self):
+        self.stopped = True
+        self.stream.release()
 
 # =============================================================================
 # MAIN APP
@@ -576,16 +675,17 @@ class OptimizedBiometricDemo:
                 logger.info(f"Enrolled {name}")
 
     def run(self):
-        cap = cv2.VideoCapture(self.camera)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-        
+        # Initialize Threaded Camera
+        camera = ThreadedCamera(self.camera).start()
         print(" Controls: 'q' quit, 'e' enroll")
         
         try:
             while True:
-                ret, frame = cap.read()
-                if not ret: break
+                ret, frame = camera.read()
+                
+                if not ret or frame is None:
+                    time.sleep(0.01)
+                    continue
                 
                 frame = cv2.flip(frame, 1)
                 frame = self.process_frame(frame)
@@ -601,7 +701,7 @@ class OptimizedBiometricDemo:
                     
         finally:
             self.worker.stop()
-            cap.release()
+            camera.stop()
             cv2.destroyAllWindows()
 
 if __name__ == "__main__":
