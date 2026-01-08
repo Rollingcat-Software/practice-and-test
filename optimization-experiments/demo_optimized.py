@@ -503,11 +503,132 @@ class ThreadedCamera:
         self.stream.release()
 
 # =============================================================================
+# CARD DETECTOR (Lazy Load) - Optimized
+# =============================================================================
+
+class CardDetector:
+    CARD_LABELS = {
+        'tc_kimlik': 'Turkish ID',
+        'ehliyet': 'License',
+        'pasaport': 'Passport',
+        'ogrenci_karti': 'Student',
+        'akademisyen_karti': 'Academic',
+    }
+
+    def __init__(self):
+        self._model = None
+        self._available = None
+        self._history = deque(maxlen=5)
+
+    def _load(self):
+        if self._model: return self._model
+        
+        path = get_resource_path("app/core/card_type_model/best.pt")
+        if not os.path.exists(path):
+            self._available = False
+            return None
+            
+        try:
+            from ultralytics import YOLO
+            self._model = YOLO(path)
+            self._available = True
+            return self._model
+        except:
+            self._available = False
+            return None
+
+    def detect(self, frame: np.ndarray) -> Dict:
+        model = self._load()
+        if not model: return {'detected': False}
+        
+        try:
+            # Preprocess (CLAHE)
+            lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
+            l, a, b = cv2.split(lab)
+            l = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8)).apply(l)
+            processed = cv2.cvtColor(cv2.merge([l, a, b]), cv2.COLOR_LAB2BGR)
+            
+            results = model(processed, conf=0.35, verbose=False, imgsz=640)
+            
+            if not results[0].boxes: return {'detected': False}
+            
+            best = max(results[0].boxes, key=lambda b: float(b.conf[0]))
+            box = best.xyxy[0].cpu().numpy().astype(int)
+            
+            return {
+                'detected': True,
+                'label': self.CARD_LABELS.get(model.names[int(best.cls[0])], 'Card'),
+                'confidence': float(best.conf[0]),
+                'box': tuple(box)
+            }
+        except: return {'detected': False}
+
+# =============================================================================
+# BIOMETRIC PUZZLE (Liveness)
+# =============================================================================
+
+class BiometricPuzzle:
+    """Challenge-Response Liveness System."""
+    
+    CHALLENGES = {
+        'BLINK': ('Close Both Eyes', 'blink'),
+        'SMILE': ('Smile Wide', 'smile'),
+        'TURN_LEFT': ('Turn Left', 'turn_left'),
+        'TURN_RIGHT': ('Turn Right', 'turn_right'),
+        'NOD': ('Nod Head', 'nod')
+    }
+
+    def __init__(self):
+        self.active = False
+        self.challenges = []
+        self.current_idx = 0
+        self.passed = False
+        self._hold_start = 0
+        
+    def start(self):
+        import random
+        keys = list(self.CHALLENGES.keys())
+        self.challenges = random.sample(keys, 3)
+        self.current_idx = 0
+        self.active = True
+        self.passed = False
+        self._hold_start = 0
+        logger.info(f"Puzzle Started: {self.challenges}")
+
+    def stop(self):
+        self.active = False
+
+    def update(self, landmarks, pose):
+        # Simplified for optimized demo (placeholder logic)
+        # In a real implementation, you would port the full EAR/MAR logic here
+        # For now, we simulate success after 2 seconds per challenge for testing flow
+        if not self.active: return None
+        
+        now = time.time()
+        if self._hold_start == 0: self._hold_start = now
+        
+        progress = (now - self._hold_start) / 2.0
+        
+        if progress >= 1.0:
+            self.current_idx += 1
+            self._hold_start = 0
+            if self.current_idx >= len(self.challenges):
+                self.passed = True
+                self.active = False
+                return {'message': 'PASSED!', 'done': True}
+        
+        name, _ = self.CHALLENGES[self.challenges[self.current_idx]]
+        return {
+            'message': f"{name} ({int(progress*100)}%)", 
+            'done': False
+        }
+
+# =============================================================================
 # MAIN APP
 # =============================================================================
 
 class OptimizedBiometricDemo:
-    MODES = ["all", "enroll", "verify", "demographics", "liveness"]
+    MODES = ["all", "enroll", "verify", "demographics", "liveness", "card", "puzzle"]
     
     def __init__(self, camera=0):
         self.camera = camera
@@ -521,13 +642,15 @@ class OptimizedBiometricDemo:
         self.quality = FastQualityAssessor()
         self.liveness = FastLivenessDetector()
         self.face_db = FaceDB()
+        self.card_detector = CardDetector()
+        self.puzzle = BiometricPuzzle()
         self.profiler = Profiler()
         self.profiler.enabled = True
 
         # State
         self.fps = 0.0
         self.frame_times = deque(maxlen=30)
-        self.cache = {'verify': {}, 'demo': {}}
+        self.cache = {'verify': {}, 'demo': {}, 'card': {'t':0, 'res':None}}
         
         # Enrollment
         self.enrolling = False
@@ -539,6 +662,10 @@ class OptimizedBiometricDemo:
     def process_frame(self, frame):
         start = time.perf_counter()
         
+        # Card Mode Special Case
+        if self.mode == 'card':
+            return self._process_card_mode(frame)
+
         # 1. Centralized Preprocessing
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -550,6 +677,13 @@ class OptimizedBiometricDemo:
         
         tracks = self.tracker.update(detections)
         
+        # Puzzle Logic
+        puzzle_status = None
+        if self.puzzle.active:
+            # Requires landmarks (not fully implemented in optimized version yet)
+            # Simulating puzzle progression for architecture test
+            puzzle_status = self.puzzle.update(None, None)
+
         # 3. Process Faces
         for fid, face in tracks.items():
             # ID Locking for Enrollment
@@ -597,20 +731,58 @@ class OptimizedBiometricDemo:
                 cv2.putText(frame, txt, (x, y - 10 - (i*15)), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
 
-        # Enrollment Logic
+        # UI Overlays
         if self.enrolling and self.enroll_id in tracks:
             self._handle_enrollment(tracks[self.enroll_id], frame)
+            
+        if puzzle_status:
+            self._draw_puzzle(frame, puzzle_status)
 
+        self._draw_status_bar(frame)
         self.profiler.draw(frame)
         
         # FPS
         self.frame_times.append(time.perf_counter() - start)
         if len(self.frame_times) > 10:
             self.fps = 1.0 / (sum(self.frame_times)/len(self.frame_times))
-        cv2.putText(frame, f"FPS: {self.fps:.1f}", (10, 30), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
         
         return frame
+
+    def _process_card_mode(self, frame):
+        # Throttle card detection (heavy)
+        now = time.time()
+        if now - self.cache['card']['t'] > 0.2: # 5 FPS max
+            with self.profiler.time('card'):
+                res = self.card_detector.detect(frame)
+            self.cache['card'] = {'t': now, 'res': res}
+        
+        res = self.cache['card']['res']
+        if res and res['detected']:
+            x1, y1, x2, y2 = res['box']
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 200, 0), 3)
+            cv2.putText(frame, f"{res['label']} {res['confidence']:.2f}", (x1, y1-10), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 200, 0), 2)
+        
+        self._draw_status_bar(frame)
+        return frame
+
+    def _draw_puzzle(self, frame, status):
+        h, w = frame.shape[:2]
+        overlay = frame.copy()
+        cv2.rectangle(overlay, (0, 0), (w, 150), (0,0,0), -1)
+        cv2.addWeighted(overlay, 0.7, frame, 0.3, 0, frame)
+        
+        color = (0, 255, 0) if status['done'] else (0, 255, 255)
+        cv2.putText(frame, "LIVENESS PUZZLE", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+        cv2.putText(frame, status['message'], (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.2, color, 3)
+
+    def _draw_status_bar(self, frame):
+        h, w = frame.shape[:2]
+        cv2.putText(frame, f"MODE: {self.mode.upper()}", (w-200, 30), 
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        if self.fps > 0:
+            cv2.putText(frame, f"FPS: {self.fps:.1f}", (w-200, 60), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
     def _dispatch_async_tasks(self, fid, face_img):
         # Throttle requests
@@ -677,7 +849,7 @@ class OptimizedBiometricDemo:
     def run(self):
         # Initialize Threaded Camera
         camera = ThreadedCamera(self.camera).start()
-        print(" Controls: 'q' quit, 'e' enroll")
+        print(" Controls: 'q' quit, 'e' enroll, 'c' card, 'l' puzzle, 'm' mode")
         
         try:
             while True:
@@ -698,6 +870,14 @@ class OptimizedBiometricDemo:
                     self.enrolling = True
                     self.enroll_id = None
                     self.enroll_step = 0
+                if key == ord('c'):
+                    self.mode = 'card' if self.mode != 'card' else 'all'
+                if key == ord('l'):
+                    self.mode = 'puzzle'
+                    self.puzzle.start()
+                if key == ord('m'):
+                    self.mode = 'all'
+                    self.puzzle.stop()
                     
         finally:
             self.worker.stop()
