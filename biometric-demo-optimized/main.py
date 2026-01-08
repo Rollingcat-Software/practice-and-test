@@ -52,8 +52,8 @@ from src.domain.models import FaceRegion, Landmarks, Face
 from src.domain.challenges import Challenge
 from src.domain.enrollment import EnrollmentPhase, EnrollmentPose
 
-from src.infrastructure.detection import FaceDetector, LandmarkDetector, CardDetector
-from src.infrastructure.analysis import QualityAssessor, LivenessDetector, DemographicsAnalyzer, EmbeddingExtractor
+from src.infrastructure.detection import FaceDetector, LandmarkDetector, AsyncCardDetector
+from src.infrastructure.analysis import QualityAssessor, LivenessDetector, AsyncDemographicsAnalyzer, AsyncEmbeddingExtractor
 from src.infrastructure.persistence import FaceDatabase
 
 from src.application import BiometricPuzzleService, FaceTracker, EnrollmentService
@@ -109,11 +109,11 @@ class BiometricDemo:
         """Initialize infrastructure layer components."""
         self.face_detector = FaceDetector()
         self.landmark_detector = LandmarkDetector()
-        self.card_detector = CardDetector()
+        self.card_detector = AsyncCardDetector()  # Non-blocking
         self.quality_assessor = QualityAssessor()
         self.liveness_detector = LivenessDetector()
-        self.demographics_analyzer = DemographicsAnalyzer()
-        self.embedding_extractor = None  # Lazy load
+        self.demographics_analyzer = AsyncDemographicsAnalyzer()  # Non-blocking
+        self.embedding_extractor = AsyncEmbeddingExtractor()  # Non-blocking
         self.face_db = FaceDatabase()
 
         self.stats['Enrolled'] = len(self.face_db)
@@ -328,10 +328,7 @@ class BiometricDemo:
         x2 = min(frame.shape[1], face.x + face.w + 2*pad)
         face_img = frame[y1:y2, x1:x2]
 
-        # Extract embedding
-        if self.embedding_extractor is None:
-            self.embedding_extractor = EmbeddingExtractor()
-
+        # Extract embedding (async but use sync method for verification)
         emb = self.embedding_extractor.extract(face_img)
         if emb is None:
             return self._verify_cache.get(key, {}).get('m')
@@ -392,6 +389,10 @@ class BiometricDemo:
             finally:
                 if self.recording and self.video_writer:
                     self.video_writer.release()
+                # Stop all async background threads
+                self.demographics_analyzer.stop()
+                self.card_detector.stop()
+                self.embedding_extractor.stop()
                 cv2.destroyAllWindows()
 
                 self._print_summary()

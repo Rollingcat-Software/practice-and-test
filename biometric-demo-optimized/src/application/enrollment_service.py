@@ -9,7 +9,6 @@ import numpy as np
 from ..domain.models import FaceRegion, Landmarks, Pose, Quality
 from ..domain.enrollment import EnrollmentPhase, EnrollmentPose, EnrollmentState
 from ..infrastructure.analysis.quality_assessor import QualityAssessor
-from ..infrastructure.analysis.embedding_extractor import EmbeddingExtractor
 from ..infrastructure.persistence.face_database import FaceDatabase
 from .puzzle_service import BiometricPuzzleService
 
@@ -31,7 +30,7 @@ class EnrollmentService:
     def __init__(self, puzzle_service: BiometricPuzzleService,
                  face_db: FaceDatabase,
                  quality_assessor: QualityAssessor,
-                 embedding_extractor: Optional[EmbeddingExtractor] = None,
+                 embedding_extractor=None,  # AsyncEmbeddingExtractor or EmbeddingExtractor
                  min_quality: float = 65.0):
         self._puzzle = puzzle_service
         self._face_db = face_db
@@ -174,7 +173,7 @@ class EnrollmentService:
 
         # Extract embedding
         if self._embedding is None:
-            self._embedding = EmbeddingExtractor()
+            raise RuntimeError("Embedding extractor not provided to EnrollmentService")
 
         emb = self._embedding.extract(face_img)
         if emb is None:

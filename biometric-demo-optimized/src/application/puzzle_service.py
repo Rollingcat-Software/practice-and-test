@@ -179,9 +179,9 @@ class BiometricPuzzleService:
 
             return ChallengeResult(detected=True, progress=progress, message=message)
         else:
-            # Require 3 consecutive misses before resetting (prevents flickering)
+            # Require 5 consecutive misses before resetting (prevents flickering)
             self._miss_count = getattr(self, '_miss_count', 0) + 1
-            if self._miss_count >= 3:
+            if self._miss_count >= 5:
                 self._state.action_detected = False
                 self._state.hold_start = time.time()
                 return ChallengeResult(detected=False, progress=0, message=message)

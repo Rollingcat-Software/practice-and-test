@@ -3,12 +3,13 @@
 import os
 import logging
 import time
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 
 import cv2
 import numpy as np
 
 from ...domain.models import Landmarks, Pose
+from ...domain.filters import OneEuroFilter2D
 from .face_detector import get_resource_path
 
 logger = logging.getLogger(__name__)
@@ -19,9 +20,22 @@ class LandmarkDetector:
 
     Detects 468 facial landmarks and estimates head pose (yaw, pitch, roll).
     Supports both Tasks API and Solutions API.
+
+    Features:
+    - One Euro Filter smoothing for stable landmark tracking
+    - Reduces jitter while maintaining responsiveness
     """
 
-    def __init__(self, max_faces: int = 5, cache_interval: float = 0.05):
+    def __init__(self, max_faces: int = 5, cache_interval: float = 0.05,
+                 smooth: bool = True, smooth_beta: float = 0.01):
+        """Initialize landmark detector.
+
+        Args:
+            max_faces: Maximum faces to detect
+            cache_interval: Minimum time between detections (seconds)
+            smooth: Enable One Euro Filter smoothing
+            smooth_beta: Speed coefficient (higher = more responsive, lower = smoother)
+        """
         self._mp = None
         self._mesh = None
         self._use_tasks = False
@@ -29,6 +43,11 @@ class LandmarkDetector:
         self._cache_interval = cache_interval
         self._cache: List[Landmarks] = []
         self._last_detection = 0
+
+        # One Euro Filter smoothing for each landmark
+        self._smooth = smooth
+        self._smooth_beta = smooth_beta
+        self._filters: Dict[int, List[OneEuroFilter2D]] = {}  # face_idx -> filters per landmark
 
     def _load(self) -> bool:
         """Lazy load MediaPipe Face Mesh."""
@@ -104,6 +123,45 @@ class LandmarkDetector:
         logger.error("Failed to load any landmark detector!")
         return False
 
+    def _smooth_landmarks(self, face_idx: int, points: List[Tuple[int, int]], t: float) -> List[Tuple[int, int]]:
+        """Apply One Euro Filter smoothing to landmarks.
+
+        Args:
+            face_idx: Index of face (for multi-face tracking)
+            points: Raw landmark points
+            t: Current timestamp
+
+        Returns:
+            Smoothed landmark points
+        """
+        if not self._smooth:
+            return points
+
+        # Initialize filters for this face if needed
+        if face_idx not in self._filters:
+            self._filters[face_idx] = [
+                OneEuroFilter2D(min_cutoff=0.5, beta=self._smooth_beta)
+                for _ in range(len(points))
+            ]
+            # First frame: just return raw points (filters need initialization)
+            for i, pt in enumerate(points):
+                self._filters[face_idx][i](pt[0], pt[1], t)
+            return points
+
+        # Ensure we have enough filters
+        while len(self._filters[face_idx]) < len(points):
+            self._filters[face_idx].append(
+                OneEuroFilter2D(min_cutoff=0.5, beta=self._smooth_beta)
+            )
+
+        # Apply smoothing
+        smoothed = []
+        for i, pt in enumerate(points):
+            sx, sy = self._filters[face_idx][i](pt[0], pt[1], t)
+            smoothed.append((int(sx), int(sy)))
+
+        return smoothed
+
     def detect(self, frame: np.ndarray) -> List[Landmarks]:
         """Detect facial landmarks in frame.
 
@@ -127,27 +185,32 @@ class LandmarkDetector:
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
         try:
+            raw_landmarks = []
             if self._use_tasks:
                 mp_img = self._mp.Image(image_format=self._mp.ImageFormat.SRGB, data=rgb)
                 results = self._mesh.detect(mp_img)
                 if results.face_landmarks:
-                    self._cache = [
-                        Landmarks(points=[(int(lm.x * w), int(lm.y * h)) for lm in face])
+                    raw_landmarks = [
+                        [(int(lm.x * w), int(lm.y * h)) for lm in face]
                         for face in results.face_landmarks
                     ]
-                    logger.debug(f"Landmarks: {len(self._cache)} faces, {len(self._cache[0].points) if self._cache else 0} points")
-                else:
-                    self._cache = []
             else:
                 results = self._mesh.process(rgb)
                 if results.multi_face_landmarks:
-                    self._cache = [
-                        Landmarks(points=[(int(lm.x * w), int(lm.y * h)) for lm in face.landmark])
+                    raw_landmarks = [
+                        [(int(lm.x * w), int(lm.y * h)) for lm in face.landmark]
                         for face in results.multi_face_landmarks
                     ]
-                    logger.debug(f"Landmarks: {len(self._cache)} faces, {len(self._cache[0].points) if self._cache else 0} points")
-                else:
-                    self._cache = []
+
+            # Apply One Euro Filter smoothing
+            if raw_landmarks:
+                self._cache = [
+                    Landmarks(points=self._smooth_landmarks(i, pts, now))
+                    for i, pts in enumerate(raw_landmarks)
+                ]
+                logger.debug(f"Landmarks: {len(self._cache)} faces, {len(self._cache[0].points) if self._cache else 0} points")
+            else:
+                self._cache = []
 
             self._last_detection = now
         except Exception as e:
