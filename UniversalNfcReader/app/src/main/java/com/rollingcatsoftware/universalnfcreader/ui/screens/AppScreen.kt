@@ -17,9 +17,12 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -37,10 +40,33 @@ fun AppScreen(
     viewModel: MainViewModel,
     onOpenNfcSettings: () -> Unit,
     onRefreshNfcStatus: () -> Unit = {},
+    onResetNfcForRetap: () -> Unit = {},
+    onRestoreNormalNfc: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedItemIndex by rememberSaveable { mutableIntStateOf(0) }
+
+    // Track previous pendingAuthData state to detect state transitions
+    var previousPendingAuthData by remember { mutableStateOf(uiState.pendingAuthData) }
+
+    // Handle NFC dispatch mode changes based on pendingAuthData state
+    LaunchedEffect(uiState.pendingAuthData) {
+        when {
+            // MRZ was just provided - reset NFC for re-tap
+            uiState.pendingAuthData != null && previousPendingAuthData == null -> {
+                // Add delay to ensure camera resources are fully released
+                kotlinx.coroutines.delay(300)
+                onResetNfcForRetap()
+            }
+            // Read completed (success or cancelled) - restore normal NFC mode
+            uiState.pendingAuthData == null && previousPendingAuthData != null -> {
+                // Restore normal NFC mode after read completes
+                onRestoreNormalNfc()
+            }
+        }
+        previousPendingAuthData = uiState.pendingAuthData
+    }
 
     // Show badge on history tab when there are items
     val historyBadgeCount = uiState.readHistory.size
