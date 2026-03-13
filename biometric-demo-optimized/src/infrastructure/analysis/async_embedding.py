@@ -155,12 +155,15 @@ class AsyncEmbeddingExtractor:
 
     def stop(self):
         """Stop the background thread."""
+        if self._stopped:
+            return
         self._stopped = True
         try:
             self._queue.put_nowait(None)
         except Exception:
             pass
-        self._thread.join(timeout=2.0)
+        if hasattr(self, '_thread'):
+            self._thread.join(timeout=2.0)
         logger.info("Async embedding extractor stopped")
 
     def __del__(self):

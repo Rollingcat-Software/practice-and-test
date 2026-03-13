@@ -55,6 +55,8 @@ class BiometricPuzzleService:
         self._right_ear_smoother = TemporalSmoother(window_size=5)
         self._mar_smoother = TemporalSmoother(window_size=5)
         self._smile_smoother = TemporalSmoother(window_size=5)
+        self._last_log_time = 0.0
+        self._miss_count = 0
 
     @property
     def state(self) -> PuzzleState:
@@ -135,13 +137,17 @@ class BiometricPuzzleService:
         avg_ear = (left_ear + right_ear) / 2
         mar = self._mar_smoother.smooth(mar_raw)
         smile_width = self._smile_smoother.smooth(smile_width_raw)
-        brow_both, brow_left, brow_right, new_baseline = self._landmark_detector.calculate_eyebrow_raise(
+        brow_both, brow_left_raw, brow_right_raw, new_baseline = self._landmark_detector.calculate_eyebrow_raise(
             landmarks, self._state.baseline_eyebrow_dist
         )
+        # Swap brows for user perspective in mirrored camera
+        # (same swap logic as eyes: MediaPipe left = user's right in flipped view)
+        brow_left = brow_right_raw    # User's LEFT brow = MediaPipe RIGHT
+        brow_right = brow_left_raw    # User's RIGHT brow = MediaPipe LEFT
 
         # Log challenge detection values (throttled to reduce spam)
         now = time.time()
-        if not hasattr(self, '_last_log_time') or now - self._last_log_time > 0.5:
+        if now - self._last_log_time > 0.5:
             self._last_log_time = now
             # Include brow ratios for eyebrow challenges
             brow_info = f", Brow L:{brow_left:.2f} R:{brow_right:.2f}" if 'BROW' in challenge.name else ""
@@ -180,7 +186,7 @@ class BiometricPuzzleService:
             return ChallengeResult(detected=True, progress=progress, message=message)
         else:
             # Require 5 consecutive misses before resetting (prevents flickering)
-            self._miss_count = getattr(self, '_miss_count', 0) + 1
+            self._miss_count += 1
             if self._miss_count >= 5:
                 self._state.action_detected = False
                 self._state.hold_start = time.time()

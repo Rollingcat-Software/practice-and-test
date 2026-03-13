@@ -88,6 +88,8 @@ class AsyncCardDetector:
 
     def stop(self):
         """Stop the background thread."""
+        if self._stopped:
+            return
         self._stopped = True
         try:
             self._queue.put_nowait(None)

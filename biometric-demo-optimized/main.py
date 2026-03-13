@@ -104,6 +104,8 @@ class BiometricDemo:
         self._verify_cache: Dict[str, Dict] = {}
         self._live_cache: Dict[str, Dict] = {}
         self._card_cache = {'result': None, 'time': 0}
+        self._last_demo_time = 0.0
+        self._last_demo_result = None
 
     def _init_infrastructure(self):
         """Initialize infrastructure layer components."""
@@ -216,13 +218,13 @@ class BiometricDemo:
             if self.mode in ["all", "demographics"] and not skip_heavy:
                 now = time.time()
                 # Only run demographics every 3 seconds
-                if not hasattr(self, '_last_demo_time') or now - self._last_demo_time > 3.0:
+                if now - self._last_demo_time > 3.0:
                     self._last_demo_time = now
                     with self.profiler.time("demo"):
                         demo = self.demographics_analyzer.analyze(frame, face)
                     self._last_demo_result = demo
                 else:
-                    demo = getattr(self, '_last_demo_result', None)
+                    demo = self._last_demo_result
 
                 if demo:
                     info['Age'] = demo.age if demo.age else '...'
