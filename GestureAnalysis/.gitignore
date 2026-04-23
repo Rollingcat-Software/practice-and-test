@@ -1,0 +1,28 @@
+# IDE / editor
+.idea/
+.vscode/
+*.iml
+
+# Claude Code / agent metadata
+.claude/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.venv/
+venv/
+env/
+ENV/
+
+# Logs & evaluation outputs
+logs/
+eval_logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
