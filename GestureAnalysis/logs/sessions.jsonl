@@ -1,0 +1,4 @@
+{"timestamp": "2026-04-14T20:09:30.567301+00:00", "mode": "TouchTest", "result": "COMPLETE", "duration_s": 23.19, "metrics": {"passed_count": 5}}
+{"timestamp": "2026-04-14T20:13:04.673023+00:00", "mode": "TouchTest", "result": "COMPLETE", "duration_s": 31.5, "metrics": {"passed_count": 5}}
+{"timestamp": "2026-04-14T20:18:23.155358+00:00", "mode": "Liveness", "result": "VERIFIED_100", "duration_s": 37.68, "metrics": {"challenges_completed": 5, "score": 100, "spoof_blocks": 5}}
+{"timestamp": "2026-04-14T20:18:48.318025+00:00", "mode": "Liveness", "result": "VERIFIED_100", "duration_s": 22.19, "metrics": {"challenges_completed": 5, "score": 100, "spoof_blocks": 3}}
