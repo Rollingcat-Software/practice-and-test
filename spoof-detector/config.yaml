@@ -56,14 +56,18 @@ analyzers:
 #   Temporal: neutral (needs multi-frame warmup)
 #   Texture: -6.3 gap (ANTI-CORRELATED — suppressed)
 #   Moire: -5.0 gap (ANTI-CORRELATED — suppressed)
+# Calibrated 2026-05-02 from ground-truth data:
+#   MiniFASNet: scores 0-12 on ALL spoofs, 93+ on real — ONLY reliable analyzer
+#   rPPG: ANTI-CORRELATED (detects screen flicker as pulse, SNR 5-7 on spoofs vs 3.9 on real)
+#   Blink: false blinks on spoofs (screen flicker) + 0 real blinks (threshold too strict)
 fusion:
   weights:
-    minifasnet: 3.0
+    minifasnet: 5.0
     device_boundary: 2.5
-    blink: 2.0
-    rppg: 2.0
+    blink: 0.5
+    rppg: 0.0
     screen_replay: 0.5
-    ar_filter: 0.5
+    ar_filter: 0.3
     temporal: 0.3
     texture: 0.1
     moire: 0.1

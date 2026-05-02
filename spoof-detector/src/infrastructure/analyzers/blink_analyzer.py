@@ -75,10 +75,10 @@ class BlinkAnalyzer:
     """
 
     EAR_THRESHOLD = 0.20       # Below this = eye closed
-    CONSECUTIVE_FRAMES = 3     # Frames eye must be closed for a blink
-    REOPEN_THRESHOLD = 0.23    # EAR must recover above this after closing
-    REOPEN_FRAMES = 8          # Must reopen within this many frames after closing
-    MIN_OPEN_BETWEEN = 8       # Minimum frames between blinks (prevents noise counting)
+    CONSECUTIVE_FRAMES = 2     # Frames eye must be closed (at 14fps, blink = 2-3 frames)
+    REOPEN_THRESHOLD = 0.22    # EAR must recover above this after closing
+    REOPEN_FRAMES = 8          # Must reopen within this many frames
+    MIN_OPEN_BETWEEN = 6       # Minimum frames between blinks (~0.4s at 14fps)
     WARMUP_FRAMES = 45         # 1.5s before scoring (need baseline EAR)
     NORMAL_BLINK_RATE = 17.0   # Expected blinks/min for real person
 
