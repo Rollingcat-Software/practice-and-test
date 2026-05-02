@@ -46,6 +46,8 @@ analyzers:
   ar_filter:
     enabled: true            # Heuristic mode (ONNX model optional)
     model_path: null         # Set to models/ar_filter_detector.onnx when trained
+  landmark_variance:
+    enabled: true            # 478-point landmark tracking (shares FaceLandmarker with blink)
   makeup:
     enabled: false           # Experimental
 
@@ -71,6 +73,7 @@ fusion:
     temporal: 0.3
     texture: 0.1
     moire: 0.1
+    landmark_variance: 2.0
 
 overlay:
   show_detail_panel: true

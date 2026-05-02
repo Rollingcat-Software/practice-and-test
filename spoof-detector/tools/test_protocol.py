@@ -156,10 +156,11 @@ def run_scenario(scenario_id: int, pipeline, cap, output_dir: Path):
 
     # Capture phase
     results = []
-    interval = max(1, int(duration * 30 / n_captures))  # frames between captures
+    interval = max(1, int(duration * 15 / n_captures))  # adjusted for ~15fps
     frame_count = 0
     captured = 0
     start_time = time.time()
+    last_analysis = None
 
     print(f"\n  Capturing...")
     while captured < n_captures and (time.time() - start_time) < duration + 2:
@@ -168,8 +169,12 @@ def run_scenario(scenario_id: int, pipeline, cap, output_dir: Path):
             break
         frame_count += 1
 
-        # Run pipeline
-        analysis = pipeline.process(frame)
+        # Run pipeline every 2nd frame to maintain UI responsiveness
+        if frame_count % 2 == 0 or last_analysis is None:
+            analysis = pipeline.process(frame)
+            last_analysis = analysis
+        else:
+            analysis = last_analysis
 
         # Draw countdown
         elapsed = time.time() - start_time
@@ -198,7 +203,8 @@ def run_scenario(scenario_id: int, pipeline, cap, output_dir: Path):
         else:
             display_frame = frame
         cv2.imshow(window_name, display_frame)
-        cv2.waitKey(1)
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            return results
 
         # Capture at intervals
         if frame_count % interval == 0 and analysis.faces:

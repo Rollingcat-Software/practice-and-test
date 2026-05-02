@@ -33,6 +33,7 @@ DEFAULT_ANALYZER_WEIGHTS: dict[str, float] = {
     "temporal": 0.3,          # NEUTRAL: micro-motion naturalness
     "texture": 0.1,           # ANTI-CORRELATED: suppressed
     "moire": 0.1,             # ANTI-CORRELATED: suppressed
+    "landmark_variance": 2.0, # STRONG: zero variance = photo, natural = live
 }
 
 

@@ -9,6 +9,7 @@ venv/
 models/*.onnx
 models/*.tflite
 models/*.pth
+models/*.task
 !models/.gitkeep
 
 # Logs
@@ -17,9 +18,12 @@ logs/*.json
 logs/*.log
 !logs/.gitkeep
 
-# Research data (sensitive)
+# Research data (sensitive — contains face images)
 data/captures/*
 data/annotations/*
+data/protocol/*.jpg
+data/protocol/*.png
+data/ar_dataset/
 !data/captures/.gitkeep
 !data/annotations/.gitkeep
 

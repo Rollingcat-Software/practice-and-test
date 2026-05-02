@@ -60,6 +60,7 @@ from src.infrastructure.analyzers.device_boundary_analyzer import DeviceBoundary
 from src.infrastructure.analyzers.blink_analyzer import BlinkAnalyzer
 from src.infrastructure.analyzers.rppg_analyzer import RPPGAnalyzer
 from src.infrastructure.analyzers.ar_filter_analyzer import ARFilterAnalyzer
+from src.infrastructure.analyzers.landmark_variance_analyzer import LandmarkVarianceAnalyzer
 from src.infrastructure.fusion.multi_class_fuser import MultiClassFuser
 from src.infrastructure.logging.structured_logger import StructuredLogger
 
@@ -142,6 +143,9 @@ def build_pipeline(config: dict) -> tuple:
         ar_cfg = ana_cfg.get("ar_filter", {})
         model_path = ar_cfg.get("model_path")
         face_analyzers.append(ARFilterAnalyzer(model_path=model_path))
+
+    if ana_cfg.get("landmark_variance", {}).get("enabled", True):
+        face_analyzers.append(LandmarkVarianceAnalyzer())
 
     # Whole-frame analyzers
     frame_analyzers = []

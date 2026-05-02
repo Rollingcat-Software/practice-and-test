@@ -88,4 +88,11 @@ SPOOF_SIGNAL_MAP: dict[str, dict[SpoofCategory, float]] = {
         SpoofCategory.MASK_3D: 0.25,
         SpoofCategory.DEEPFAKE_INJECT: 0.20,
     },
+    "landmark_variance": {
+        SpoofCategory.STATIC_IMAGE: 0.50,
+        SpoofCategory.VIDEO_REPLAY: 0.15,
+        SpoofCategory.MASK_3D: 0.15,
+        SpoofCategory.DEEPFAKE_INJECT: 0.10,
+        SpoofCategory.AR_FILTER: 0.10,
+    },
 }

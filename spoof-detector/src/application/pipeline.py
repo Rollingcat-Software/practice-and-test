@@ -100,6 +100,13 @@ class SpoofDetectionPipeline:
                 # Pass original frame to analyzers that need context
                 if hasattr(analyzer, "set_frame"):
                     analyzer.set_frame(frame)
+                # Share landmarks from blink analyzer to landmark_variance analyzer
+                if hasattr(analyzer, "set_landmarks"):
+                    # Find the blink analyzer instance and get its landmarks
+                    for a in self._face_analyzers:
+                        if hasattr(a, "_last_landmarks") and a._last_landmarks is not None:
+                            analyzer.set_landmarks(a._last_landmarks)
+                            break
                 result = analyzer.analyze(crop, face)
                 results[analyzer.name] = result
             except Exception as e:

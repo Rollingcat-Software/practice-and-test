@@ -88,6 +88,7 @@ class BlinkAnalyzer:
         self._init_failed = False
         self._states: dict[int, BlinkState] = {}
         self._original_frame: np.ndarray | None = None
+        self._last_landmarks: np.ndarray | None = None
 
     @property
     def name(self) -> str:
@@ -177,6 +178,9 @@ class BlinkAnalyzer:
             return AnalyzerResult(name=self.name, score=50.0,
                                   details={"insufficient_landmarks": True},
                                   elapsed_ms=(time.perf_counter() - start) * 1000)
+
+        # Store landmarks for sharing with LandmarkVarianceAnalyzer
+        self._last_landmarks = best_landmarks
 
         # Compute EAR for both eyes
         left_ear = compute_ear(best_landmarks, LEFT_EYE)
