@@ -313,8 +313,12 @@ class SessionEngine:
         adjusted_real = adjusted_real * (1.0 - incident_penalty * 0.4)
         adjusted_real += temporal_boost * 0.15
 
-        is_live = adjusted_real > 0.45
-        confidence = min(1.0, data_confidence * (0.5 + abs(adjusted_real - 0.5)))
+        # Decision threshold: below 0.45 = SPOOF
+        # Also: if we have 3+ incidents, verdict is SPOOF regardless
+        incident_override = len(self._incidents) >= 3
+
+        is_live = adjusted_real > 0.45 and not incident_override
+        confidence = min(1.0, data_confidence * (0.5 + abs(adjusted_real - 0.45)))
 
         # Get blink count and BPM from analyzers and primary face signals
         blink_count = 0

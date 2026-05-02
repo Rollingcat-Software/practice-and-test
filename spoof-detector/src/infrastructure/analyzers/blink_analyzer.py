@@ -74,8 +74,11 @@ class BlinkAnalyzer:
     - 60-100: Normal blink rate detected (LIVE-like)
     """
 
-    EAR_THRESHOLD = 0.21       # Below this = eye closed
-    CONSECUTIVE_FRAMES = 2     # Frames eye must be closed for a blink
+    EAR_THRESHOLD = 0.19       # Below this = eye closed (tightened from 0.21)
+    CONSECUTIVE_FRAMES = 4     # Frames eye must be closed for a blink (raised from 2)
+    REOPEN_THRESHOLD = 0.24    # EAR must recover above this after closing to confirm blink
+    REOPEN_FRAMES = 8          # Must reopen within this many frames after closing
+    MIN_OPEN_BETWEEN = 10      # Minimum frames between blinks (prevents noise counting)
     WARMUP_FRAMES = 45         # 1.5s before scoring (need baseline EAR)
     NORMAL_BLINK_RATE = 17.0   # Expected blinks/min for real person
 
@@ -182,11 +185,17 @@ class BlinkAnalyzer:
 
         state.ear_history.append(avg_ear)
 
-        # Blink detection: eye closed for consecutive frames
+        # Blink detection with V-shape validation:
+        # 1. EAR must drop below threshold for CONSECUTIVE_FRAMES
+        # 2. Then EAR must recover above REOPEN_THRESHOLD within REOPEN_FRAMES
+        # 3. Minimum MIN_OPEN_BETWEEN frames between blinks (anti-noise)
         if avg_ear < self.EAR_THRESHOLD:
             state.eyes_closed_frames += 1
         else:
-            if state.eyes_closed_frames >= self.CONSECUTIVE_FRAMES:
+            if (state.eyes_closed_frames >= self.CONSECUTIVE_FRAMES
+                    and avg_ear >= self.REOPEN_THRESHOLD
+                    and (state.frame_count - state.last_blink_frame) >= self.MIN_OPEN_BETWEEN):
+                # Valid blink: closed long enough + reopened properly + not too soon after last
                 state.blink_count += 1
                 state.last_blink_frame = state.frame_count
             state.eyes_closed_frames = 0
