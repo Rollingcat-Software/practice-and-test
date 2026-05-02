@@ -59,6 +59,8 @@ class RPPGAnalyzer:
     def __init__(self, fps: float = 30.0):
         self._fps = fps
         self._states: dict[int, PulseState] = {}
+        self._frame_times: deque = deque(maxlen=60)
+        self._measured_fps: float = fps
 
     @property
     def name(self) -> str:
@@ -66,6 +68,14 @@ class RPPGAnalyzer:
 
     def analyze(self, face_crop: np.ndarray, face_roi: FaceROI) -> AnalyzerResult:
         start = time.perf_counter()
+
+        # Measure actual FPS
+        self._frame_times.append(start)
+        if len(self._frame_times) > 10:
+            dt = self._frame_times[-1] - self._frame_times[0]
+            if dt > 0:
+                self._measured_fps = (len(self._frame_times) - 1) / dt
+                self._fps = self._measured_fps
 
         fid = face_roi.face_id
         if fid not in self._states:

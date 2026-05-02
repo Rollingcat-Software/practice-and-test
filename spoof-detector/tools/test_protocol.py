@@ -138,6 +138,15 @@ def run_scenario(scenario_id: int, pipeline, cap, output_dir: Path):
         window_name = "Test Protocol"
         cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
         cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+        try:
+            import ctypes
+            _u32 = ctypes.windll.user32
+            _u32.SetProcessDPIAware()
+            _sw, _sh = _u32.GetSystemMetrics(0), _u32.GetSystemMetrics(1)
+        except Exception:
+            _sw, _sh = 0, 0
+        if _sw > 0:
+            frame = cv2.resize(frame, (_sw, _sh), interpolation=cv2.INTER_LINEAR)
         cv2.imshow(window_name, frame)
         key = cv2.waitKey(30) & 0xFF
         if key == ord(" "):
@@ -184,7 +193,11 @@ def run_scenario(scenario_id: int, pipeline, cap, output_dir: Path):
             cv2.putText(frame, lbl, (b.x1, b.y1 - 8),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 1)
 
-        cv2.imshow(window_name, frame)
+        if _sw > 0:
+            display_frame = cv2.resize(frame, (_sw, _sh), interpolation=cv2.INTER_LINEAR)
+        else:
+            display_frame = frame
+        cv2.imshow(window_name, display_frame)
         cv2.waitKey(1)
 
         # Capture at intervals

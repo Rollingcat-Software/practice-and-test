@@ -69,6 +69,9 @@ class SpoofDetectorApp:
         cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
         cv2.setWindowProperty(WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
+        # Get screen resolution for content scaling
+        screen_w, screen_h = self._get_screen_size()
+
         try:
             while self._running:
                 grabbed, frame = self._camera.read_copy()
@@ -97,6 +100,10 @@ class SpoofDetectorApp:
                 # Help overlay
                 if self._show_help:
                     self._draw_help(frame)
+
+                # Scale frame to fill screen
+                if screen_w > 0 and screen_h > 0:
+                    frame = cv2.resize(frame, (screen_w, screen_h), interpolation=cv2.INTER_LINEAR)
 
                 cv2.imshow(WINDOW_NAME, frame)
 
@@ -177,6 +184,17 @@ class SpoofDetectorApp:
             cv2.putText(frame, line, (x + 15, ty),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
             ty += 22
+
+    @staticmethod
+    def _get_screen_size() -> tuple[int, int]:
+        """Get screen resolution for content scaling."""
+        try:
+            import ctypes
+            user32 = ctypes.windll.user32  # type: ignore[attr-defined]
+            user32.SetProcessDPIAware()
+            return user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+        except Exception:
+            return 0, 0  # Fallback: no scaling
 
     def _draw_session_bar(self, frame: np.ndarray, verdict: SessionVerdict):
         """Draw session verdict bar at the top of the frame."""

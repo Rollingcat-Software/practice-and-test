@@ -282,6 +282,15 @@ def run_live_diagnostic(log_csv: bool = False):
             if frame_count == 1:
                 cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
                 cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+                try:
+                    import ctypes
+                    u32 = ctypes.windll.user32
+                    u32.SetProcessDPIAware()
+                    _screen_w, _screen_h = u32.GetSystemMetrics(0), u32.GetSystemMetrics(1)
+                except Exception:
+                    _screen_w, _screen_h = 0, 0
+            if _screen_w > 0:
+                frame = cv2.resize(frame, (_screen_w, _screen_h), interpolation=cv2.INTER_LINEAR)
             cv2.imshow(window_name, frame)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
