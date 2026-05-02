@@ -61,6 +61,9 @@ from src.infrastructure.analyzers.blink_analyzer import BlinkAnalyzer
 from src.infrastructure.analyzers.rppg_analyzer import RPPGAnalyzer
 from src.infrastructure.analyzers.ar_filter_analyzer import ARFilterAnalyzer
 from src.infrastructure.analyzers.landmark_variance_analyzer import LandmarkVarianceAnalyzer
+from src.infrastructure.analyzers.screen_flicker_analyzer import ScreenFlickerAnalyzer
+from src.infrastructure.analyzers.micro_tremor_analyzer import MicroTremorAnalyzer
+from src.infrastructure.analyzers.background_grid_analyzer import BackgroundGridAnalyzer
 from src.infrastructure.fusion.multi_class_fuser import MultiClassFuser
 from src.infrastructure.logging.structured_logger import StructuredLogger
 
@@ -146,6 +149,15 @@ def build_pipeline(config: dict) -> tuple:
 
     if ana_cfg.get("landmark_variance", {}).get("enabled", True):
         face_analyzers.append(LandmarkVarianceAnalyzer())
+
+    if ana_cfg.get("screen_flicker", {}).get("enabled", True):
+        face_analyzers.append(ScreenFlickerAnalyzer())
+
+    if ana_cfg.get("micro_tremor", {}).get("enabled", True):
+        face_analyzers.append(MicroTremorAnalyzer())
+
+    if ana_cfg.get("background_grid", {}).get("enabled", True):
+        face_analyzers.append(BackgroundGridAnalyzer())
 
     # Whole-frame analyzers
     frame_analyzers = []

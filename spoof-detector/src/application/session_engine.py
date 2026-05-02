@@ -191,6 +191,15 @@ class SessionEngine:
             lv_var = lv_result.details.get("overall_var", 0) if lv_result else 0
             lv_expr = lv_result.details.get("expression_ratio", 0) if lv_result else 0
 
+            # Micro-tremor feeds into liveness prover
+            mt_result = cls.analyzer_results.get("micro_tremor")
+            if mt_result and mt_result.details.get("tremor_ratio", 0) > 1.0:
+                # Tremor detected — strong liveness evidence
+                tremor_pts = min(20.0, mt_result.details["tremor_ratio"] * 8.0)
+                self._prover._score.landmark_points = max(
+                    self._prover._score.landmark_points, tremor_pts
+                )
+
             # Get landmarks from blink analyzer instance (not from result)
             landmarks = None
             for a in self._pipeline_analyzers:

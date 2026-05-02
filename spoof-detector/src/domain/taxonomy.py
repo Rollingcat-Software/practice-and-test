@@ -95,4 +95,20 @@ SPOOF_SIGNAL_MAP: dict[str, dict[SpoofCategory, float]] = {
         SpoofCategory.DEEPFAKE_INJECT: 0.10,
         SpoofCategory.AR_FILTER: 0.10,
     },
+    "screen_flicker": {
+        SpoofCategory.VIDEO_REPLAY: 0.50,
+        SpoofCategory.STATIC_IMAGE: 0.30,
+        SpoofCategory.DEEPFAKE_INJECT: 0.20,
+    },
+    "micro_tremor": {
+        SpoofCategory.STATIC_IMAGE: 0.30,
+        SpoofCategory.VIDEO_REPLAY: 0.30,
+        SpoofCategory.MASK_3D: 0.20,
+        SpoofCategory.DEEPFAKE_INJECT: 0.20,
+    },
+    "background_grid": {
+        SpoofCategory.STATIC_IMAGE: 0.40,
+        SpoofCategory.VIDEO_REPLAY: 0.40,
+        SpoofCategory.DEEPFAKE_INJECT: 0.20,
+    },
 }

@@ -24,16 +24,19 @@ from src.domain.taxonomy import SPOOF_SIGNAL_MAP
 # Calibrated weights based on measured discrimination power.
 # Higher weight = analyzer score has more influence on final classification.
 DEFAULT_ANALYZER_WEIGHTS: dict[str, float] = {
-    "minifasnet": 5.0,        # PROVEN: +94.7 gap — must dominate fusion
-    "device_boundary": 2.5,   # GOOD: physical bezel detection
-    "blink": 0.5,             # UNVALIDATED: false blinks on spoofs, 0 on real — needs calibration
-    "rppg": 0.0,              # ANTI-CORRELATED: detects screen flicker as pulse — disabled
-    "ar_filter": 0.3,         # MODERATE: heuristic mode
-    "screen_replay": 0.5,     # WEAK: +9.6 gap
-    "temporal": 0.3,          # NEUTRAL: micro-motion naturalness
-    "texture": 0.1,           # ANTI-CORRELATED: suppressed
-    "moire": 0.1,             # ANTI-CORRELATED: suppressed
-    "landmark_variance": 2.0, # STRONG: zero variance = photo, natural = live
+    "minifasnet": 5.0,          # PROVEN: +94.7 gap
+    "screen_flicker": 3.0,     # NEW: 50/60Hz temporal detection — catches ANY screen
+    "device_boundary": 2.5,    # GOOD: physical bezel detection
+    "micro_tremor": 2.5,       # NEW: 8-12Hz oscillation — catches video replay
+    "landmark_variance": 2.0,  # STRONG: zero variance = photo
+    "background_grid": 1.5,    # NEW: background stability for proctoring
+    "rppg": 0.0,               # DISABLED: needs notch filter fix first
+    "blink": 0.5,              # MODERATE: blink count
+    "screen_replay": 0.5,      # WEAK: +9.6 gap
+    "ar_filter": 0.3,          # MODERATE: heuristic mode
+    "temporal": 0.3,           # NEUTRAL: micro-motion
+    "texture": 0.1,            # ANTI-CORRELATED: suppressed
+    "moire": 0.1,              # ANTI-CORRELATED: suppressed
 }
 
 
