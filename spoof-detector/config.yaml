@@ -1,0 +1,74 @@
+# FIVUCSAS Spoof Detector Configuration
+# Session-based multi-method face spoof detection
+
+camera:
+  index: 0
+  width: 1280
+  height: 720
+
+detection:
+  backend: mediapipe        # mediapipe or retinaface
+  min_confidence: 0.5
+
+tracking:
+  iou_threshold: 0.3
+  max_lost_frames: 15
+
+session:
+  min_duration_sec: 5       # Minimum session for verdict (amispoof.com)
+  max_duration_sec: 10800   # 3 hours max (proctoring)
+  warmup_frames: 30         # ~1s baseline accumulation
+
+analyzers:
+  minifasnet:
+    enabled: true
+  texture:
+    enabled: true
+    laplacian_threshold: 100.0
+    fft_downsample: [192, 108]
+  moire:
+    enabled: true
+    response_std_threshold: 45.0
+  screen_replay:
+    enabled: true
+  temporal:
+    enabled: true
+    buffer_size: 30
+    min_motion_std: 0.0003
+  device_boundary:
+    enabled: true
+    padding_ratio: 0.55
+    spoof_threshold: 0.50
+  rppg:
+    enabled: false           # Phase 3: requires 2s warmup
+  ar_filter:
+    enabled: false           # Phase 5: requires trained model
+  makeup:
+    enabled: false           # Experimental
+
+# Calibrated weights based on ground-truth testing (2026-05-02):
+#   MiniFASNet: +94.7 discrimination gap (PROVEN)
+#   Device Boundary: +19.2 gap (GOOD for screen attacks)
+#   Screen Replay: +9.6 gap (WEAK)
+#   Temporal: neutral (needs multi-frame warmup)
+#   Texture: -6.3 gap (ANTI-CORRELATED — suppressed)
+#   Moire: -5.0 gap (ANTI-CORRELATED — suppressed)
+fusion:
+  weights:
+    minifasnet: 3.0
+    device_boundary: 2.5
+    screen_replay: 0.5
+    temporal: 0.3
+    texture: 0.1
+    moire: 0.1
+
+overlay:
+  show_detail_panel: true
+  show_profiler: false
+  bbox_thickness: 2
+
+logging:
+  enabled: true
+  output_dir: logs
+  format: jsonl
+  log_every_n_frames: 30    # Log every N frames (1 = every frame)

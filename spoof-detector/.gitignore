@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Models (downloaded at runtime)
+models/*.onnx
+models/*.tflite
+models/*.pth
+!models/.gitkeep
+
+# Logs
+logs/*.jsonl
+logs/*.json
+logs/*.log
+!logs/.gitkeep
+
+# Research data (sensitive)
+data/captures/*
+data/annotations/*
+!data/captures/.gitkeep
+!data/annotations/.gitkeep
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Initial prompt
+initial-prompt.txt
