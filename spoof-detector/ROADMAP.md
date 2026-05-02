@@ -90,6 +90,30 @@
 - [ ] Docker container packaging
 - [ ] CI/CD pipeline
 
+## P1.5 — Next Features (User Ideas 2026-05-02)
+
+### Grid-Based Environment Analyzer
+- Divide frame into NxM grid (e.g., 8x6 cells)
+- In proctoring, camera is fixed — background cells should be static
+- If background cells show motion → something suspicious (screen held up, person swap)
+- Per-cell analysis: abnormal reflections, screen glare, sudden brightness spikes
+- Background consistency over session → detect virtual backgrounds
+- Implementation: store per-cell mean/std over time, flag anomalous cells
+
+### Behavioral Signal Processing (Heartbeat-Style Analysis)
+- Treat blink timing, head rotation angles, landmark positions as TIME SERIES
+- Apply signal processing (FFT, autocorrelation, wavelet) to detect:
+  - Natural blink rhythm (~0.3Hz, semi-periodic with jitter)
+  - Micro-tremor frequency (8-12Hz natural oscillation)
+  - Head movement frequency spectrum (natural = low-freq drift + micro-tremor)
+  - Video replay: unnaturally PERFECT periodicity (looping) or fixed frequency
+  - Photo: ZERO signal (flat line — no variation at all)
+- Anomaly detection: establish per-person baseline, flag deviations
+  - Person's normal blink rate changes suddenly → might have swapped
+  - Head movement pattern changes → different person or switched to video
+- This is essentially treating behavioral biometrics as a signal processing problem
+- Paper angle: "Behavioral frequency analysis for continuous identity verification"
+
 ## P3 — Future Work / Research Extensions
 
 ### New Attack Detection
