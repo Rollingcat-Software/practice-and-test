@@ -20,22 +20,39 @@ Real-time face spoof detection that runs for **5 seconds to 3 hours**, accumulat
 
 ```
 Session Engine (5s - 3hr)
-  |-- accumulates per-frame evidence
-  |-- detects incidents (spoof bursts, frozen face, missing face)
+  |-- "guilty until proven innocent" liveness prover
+  |-- accumulates per-frame evidence + liveness proof score (0-100)
+  |-- detects incidents (spoof bursts, frozen face, MiniFASNet instability)
   |-- peak-sensitive verdict (worst-window prevents dilution)
-  |-- session report on exit
+  |-- session report with liveness breakdown on exit
   |
-Pipeline (per-frame, ~20ms)
+Pipeline (per-frame)
   |-- MediaPipe face detection (~2ms)
+  |-- MediaPipe FaceLandmarker (478 points, shared across analyzers)
   |-- IoU multi-face tracking
-  |-- 6 analyzers (calibrated weights from ground-truth testing):
-  |     MiniFASNet ONNX      (3.0x) +94.7 gap  PROVEN
-  |     Device Boundary      (2.5x) +19.2 gap  GOOD
-  |     Screen Replay        (0.5x) +9.6 gap   WEAK
-  |     Temporal Consistency  (0.3x) motion-based
-  |     Texture              (0.1x) anti-correlated
-  |     Moire                (0.1x) anti-correlated
-  |-- MultiClassFuser -> 7-category probability distribution
+  |-- 13 analyzers in 3 layers:
+  |
+  |  Layer 1 — Pixel Forensics:
+  |     MiniFASNet ONNX       (5.0x) +94.7 gap  PROVEN
+  |     Screen Flicker        (3.0x) 50/60Hz temporal aliasing
+  |     Device Boundary       (2.5x) phone bezel detection
+  |     Screen Replay         (0.5x) FFT + skin color
+  |
+  |  Layer 2 — Behavioral Signals:
+  |     Micro-Tremor          (2.5x) 8-12Hz involuntary oscillation
+  |     Landmark Variance     (2.0x) 478-point motion tracking
+  |     Blink (EAR)           (0.5x) V-shape validated blinks
+  |     Temporal              (0.3x) micro-motion naturalness
+  |     rPPG                  (0.0x) DISABLED — false pulse on screens
+  |
+  |  Layer 3 — Environment:
+  |     Background Grid       (1.5x) 6x4 cell stability monitoring
+  |     AR Filter             (0.3x) heuristic (ONNX model pending)
+  |     Texture               (0.1x) anti-correlated, suppressed
+  |     Moire                 (0.1x) anti-correlated, suppressed
+  |
+  |-- MultiClassFuser (calibrated weights) -> 7-category probabilities
+  |-- LivenessProver: blinks(25) + motion(20) + rotation(15) + expression(15) = 75 max
 ```
 
 ## Quick Start
@@ -114,11 +131,19 @@ spoof-detector/
 
 ## Ground-Truth Results (2026-05-02)
 
-Calibration from labeled captures:
-- **Per-capture accuracy**: 8/8 (100%) with calibrated weights
-- **Session accuracy**: Real-only -> LIVE 95%, Spoof-only -> SPOOF 63%
-- **MiniFASNet**: Only analyzer with proven discrimination (+94.7 gap)
+ISO 30107-3 metrics: BPCER 0.00% | APCER 30% | ACER 15% | **Grade C**
+
+Session-level accuracy (4 test scenarios):
+- **Real face**: LIVE 78%, liveness 63/100 PROVEN, 5 blinks, 0 incidents
+- **Phone screen photo**: SPOOF 43%, liveness 23/100, 0 blinks, 7 incidents
+- **Printed photo**: SPOOF 58%, liveness 50/100, 3 incidents
+- **Video replay**: LIVE 60% — remaining challenge (video shows real blinks/motion)
+
+Key calibration findings:
+- **MiniFASNet**: Only reliable per-frame discriminator (+94.7 gap)
+- **rPPG**: Anti-correlated — detects screen flicker as false pulse (disabled)
 - **Texture/Moire**: Anti-correlated on screen attacks (suppressed to 0.1 weight)
+- **Blink EAR 0.20**: Works for real faces, some false blinks on video playback
 
 ## Academic Paper
 
@@ -136,11 +161,14 @@ Novel contributions:
 
 - [x] Phase 1: Foundation (detection, tracking, overlay)
 - [x] Phase 2: Analyzer integration (MiniFASNet, texture, moire, screen replay, temporal)
-- [x] Phase 2.5: Device boundary detection, calibrated fusion, session engine
-- [ ] Phase 3: Temporal analyzers (blink detection, rPPG pulse)
+- [x] Phase 2.5: Device boundary, calibrated fusion, session engine
+- [x] Phase 3: Temporal analyzers (blink EAR, rPPG, landmark variance)
+- [x] Phase 3.5: Guilty-until-proven liveness architecture
+- [x] Phase 3.6: Three-layer detection (screen flicker, micro-tremor, background grid)
+- [ ] Phase 3.7: Connect fusion ↔ liveness prover, fix video replay
 - [ ] Phase 4: Data collection (AR-filter dataset via amispoof.com)
 - [ ] Phase 5: AR filter detector training (MobileNetV3-Small)
-- [ ] Phase 6: Paper + evaluation (APCER/BPCER/ACER benchmarks)
+- [ ] Phase 6: Paper + evaluation (APCER/BPCER/ACER → Grade B target)
 - [ ] Phase 7: amispoof.com demo
 - [ ] Phase 8: Production integration into FIVUCSAS
 
