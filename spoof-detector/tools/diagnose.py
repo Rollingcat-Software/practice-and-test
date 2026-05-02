@@ -278,7 +278,11 @@ def run_live_diagnostic(log_csv: bool = False):
             # Draw dashboard
             dashboard.draw(frame, len(tracked), pipeline_ms)
 
-            cv2.imshow("Spoof Detector Diagnostic", frame)
+            window_name = "Spoof Detector Diagnostic"
+            if frame_count == 1:
+                cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+                cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+            cv2.imshow(window_name, frame)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
     finally:

@@ -135,7 +135,10 @@ def run_scenario(scenario_id: int, pipeline, cap, output_dir: Path):
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
         cv2.putText(frame, "Press SPACE to start, Q to skip", (20, 120),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 200, 0), 1)
-        cv2.imshow("Test Protocol", frame)
+        window_name = "Test Protocol"
+        cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+        cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+        cv2.imshow(window_name, frame)
         key = cv2.waitKey(30) & 0xFF
         if key == ord(" "):
             break
@@ -181,7 +184,7 @@ def run_scenario(scenario_id: int, pipeline, cap, output_dir: Path):
             cv2.putText(frame, lbl, (b.x1, b.y1 - 8),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 1)
 
-        cv2.imshow("Test Protocol", frame)
+        cv2.imshow(window_name, frame)
         cv2.waitKey(1)
 
         # Capture at intervals

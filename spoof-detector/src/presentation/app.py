@@ -67,6 +67,7 @@ class SpoofDetectorApp:
         self._session.start()
 
         cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
+        cv2.setWindowProperty(WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
         try:
             while self._running:
