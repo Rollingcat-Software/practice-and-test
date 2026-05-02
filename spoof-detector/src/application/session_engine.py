@@ -60,7 +60,7 @@ class SessionEngine:
     FACE_MISSING_ALERT_SEC = 5.0
     IDENTITY_CHANGE_THRESHOLD = 0.35  # MiniFASNet score swing threshold
 
-    def __init__(self, session_id: str | None = None):
+    def __init__(self, session_id: str | None = None, pipeline_analyzers: list | None = None):
         self._session_id = session_id or f"session_{int(time.time())}"
         self._state = SessionState.WARMING_UP
         self._start_time: float = 0.0
@@ -87,7 +87,9 @@ class SessionEngine:
         self._consecutive_spoof_frames = 0
 
         # Liveness prover — "guilty until proven innocent"
-        self._prover = LivenessProver(enable_challenges=True)
+        # Challenges disabled: proctoring students can't be interrupted
+        self._prover = LivenessProver(enable_challenges=False)
+        self._pipeline_analyzers = pipeline_analyzers or []
 
     @property
     def state(self) -> SessionState:
@@ -189,11 +191,12 @@ class SessionEngine:
             lv_var = lv_result.details.get("overall_var", 0) if lv_result else 0
             lv_expr = lv_result.details.get("expression_ratio", 0) if lv_result else 0
 
-            # Get landmarks from blink analyzer
+            # Get landmarks from blink analyzer instance (not from result)
             landmarks = None
-            for analyzer_name, ar in cls.analyzer_results.items():
-                if analyzer_name == "blink" and hasattr(ar, "_landmarks"):
-                    landmarks = ar._landmarks
+            for a in self._pipeline_analyzers:
+                if hasattr(a, "_last_landmarks") and a._last_landmarks is not None:
+                    landmarks = a._last_landmarks
+                    break
 
             self._prover.update(
                 landmarks=landmarks,

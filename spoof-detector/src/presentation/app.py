@@ -53,7 +53,9 @@ class SpoofDetectorApp:
         self._camera = camera
         self._logger = struct_logger
         self._overlay = Overlay(show_detail=show_detail, show_profiler=show_profiler)
-        self._session = SessionEngine()
+        self._session = SessionEngine(
+            pipeline_analyzers=pipeline._face_analyzers if hasattr(pipeline, '_face_analyzers') else []
+        )
         self._show_help = False
         self._save_counter = 0
         self._running = False
@@ -253,12 +255,10 @@ class SpoofDetectorApp:
 
         # Score breakdown
         items = [
-            (f"Blinks: {score.blink_points:.0f}/20", score.blink_points / 20),
-            (f"Motion: {score.landmark_points:.0f}/15", score.landmark_points / 15),
+            (f"Blinks: {score.blink_points:.0f}/25", score.blink_points / 25),
+            (f"Motion: {score.landmark_points:.0f}/20", score.landmark_points / 20),
             (f"Rotation: {score.rotation_points:.0f}/15", score.rotation_points / 15),
-            (f"Expression: {score.expression_points:.0f}/10", score.expression_points / 10),
-            (f"Challenges: {score.challenges_passed}/{score.challenges_passed + score.challenges_failed}",
-             score.challenge_points / 40),
+            (f"Expression: {score.expression_points:.0f}/15", score.expression_points / 15),
         ]
 
         y = py + 38
@@ -334,16 +334,10 @@ class SpoofDetectorApp:
         print(f"  Verdict: {verdict.summary}")
         print(f"  Face detected: {verdict.face_detected_ratio:.0%} of frames")
         print(f"\n  Liveness Proof: {liveness.total:.0f}/100 {'PROVEN' if liveness.is_proven_live else 'NOT PROVEN'}")
-        print(f"    Blinks:     {liveness.blink_points:.0f}/20")
-        print(f"    Motion:     {liveness.landmark_points:.0f}/15")
+        print(f"    Blinks:     {liveness.blink_points:.0f}/25")
+        print(f"    Motion:     {liveness.landmark_points:.0f}/20")
         print(f"    Rotation:   {liveness.rotation_points:.0f}/15")
-        print(f"    Expression: {liveness.expression_points:.0f}/10")
-        print(f"    Challenges: {liveness.challenge_points:.0f}/40 ({liveness.challenges_passed} passed, {liveness.challenges_failed} failed)")
-        challenges = self._session.prover.get_challenge_history()
-        if challenges:
-            print(f"\n  Challenge History:")
-            for c in challenges:
-                print(f"    {c['type']:>12s}: {c['state']:>10s} ({c['latency_ms']:.0f}ms)")
+        print(f"    Expression: {liveness.expression_points:.0f}/15")
         if verdict.incidents:
             print(f"\n  Incident Timeline:")
             for item in self._session.get_timeline():

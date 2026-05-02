@@ -124,9 +124,9 @@ class LivenessProver:
     CHALLENGE_INTERVAL_SEC = 8.0   # Seconds between challenges
     MAX_CHALLENGES = 5             # Total challenges per session
     BLINK_AWARD = 5.0              # Points per real blink detected
-    MAX_BLINK_POINTS = 20.0
-    LANDMARK_VAR_THRESHOLD = 2.0   # Minimum variance for points
-    ROTATION_THRESHOLD = 5.0       # Degrees of rotation for points
+    MAX_BLINK_POINTS = 25.0        # Raised: blinks are the strongest passive signal
+    LANDMARK_VAR_THRESHOLD = 1.0   # Lowered: even small natural movement counts
+    ROTATION_THRESHOLD = 3.0       # Lowered: natural micro-rotations during exam
     CHALLENGE_AWARD = 10.0         # Points per passed challenge
 
     def __init__(self, enable_challenges: bool = True):
@@ -177,11 +177,11 @@ class LivenessProver:
 
         # === Passive Proof: Landmark Variance ===
         if landmark_variance > self.LANDMARK_VAR_THRESHOLD:
-            self._score.landmark_points = min(15.0, landmark_variance * 3.0)
+            self._score.landmark_points = min(20.0, landmark_variance * 4.0)
 
         # === Passive Proof: Expression Changes ===
-        if expression_ratio > 1.5:
-            self._score.expression_points = min(10.0, expression_ratio * 2.0)
+        if expression_ratio > 1.2:
+            self._score.expression_points = min(15.0, expression_ratio * 3.0)
 
         # === Passive Proof: Head Rotation ===
         if landmarks is not None and len(landmarks) > max(NOSE_TIP, LEFT_EAR, RIGHT_EAR, FOREHEAD, CHIN):
