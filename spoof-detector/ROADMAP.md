@@ -100,6 +100,15 @@
 - Background consistency over session → detect virtual backgrounds
 - Implementation: store per-cell mean/std over time, flag anomalous cells
 
+### Pixel-Level Screen Forensics
+- **Camera reflection detection**: webcam lens creates a circular reflection on screens — detect this circle shape in the face region via Hough circle transform
+- **Sub-pixel pattern analysis**: LCD/OLED have RGB sub-pixel arrangements (PenTile, stripe) visible at close range — Fourier analysis detects the periodic sub-pixel grid
+- **FPS mismatch / temporal aliasing**: screen refresh (60Hz) vs camera capture (30fps) creates rolling shutter artifacts, "pixel ants", and temporal beating patterns — detectable via frame-to-frame pixel difference frequency analysis
+- **Color order analysis**: screens emit pure RGB primaries; real skin reflects continuous spectrum — spectral analysis of color channel ratios can detect discrete vs continuous color sources
+- **Screen uniformity artifacts**: backlight bleed, IPS glow, OLED black crush — these create characteristic brightness gradients not found in natural scenes
+- **Reflection completeness**: real environments have complex multi-source reflections; screens show uniform single-source reflections (the backlight)
+- **Green/white block detection**: compression artifacts, screen burn-in, dead pixels — statistical outliers in pixel value distribution within face region
+
 ### Behavioral Signal Processing (Heartbeat-Style Analysis)
 - Treat blink timing, head rotation angles, landmark positions as TIME SERIES
 - Apply signal processing (FFT, autocorrelation, wavelet) to detect:
