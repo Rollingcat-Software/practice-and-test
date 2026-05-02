@@ -84,14 +84,17 @@ class TestSessionLifecycle:
 # ─── Verdict Logic ─────────────────────────────────────────────
 
 class TestVerdictLogic:
-    def test_all_real_frames_give_live_verdict(self):
+    def test_high_real_frames_without_liveness_proof_is_spoof(self):
+        """With guilty-until-proven architecture, high P(real) alone isn't enough.
+        Must also prove liveness through blinks/landmarks/challenges."""
         engine = SessionEngine()
         engine.start()
         for i in range(100):
             engine.ingest(make_frame_analysis(i, p_real=0.80))
         verdict = engine.get_verdict()
-        assert verdict.is_live is True
-        assert verdict.confidence > 0.0  # Confidence may be low in unit tests (elapsed_sec ~0)
+        # Without liveness proof (no blinks, no landmarks), verdict is SPOOF
+        # even with high P(real) — this is the "guilty until proven" design
+        assert verdict.is_live is False
 
     def test_all_spoof_frames_give_spoof_verdict(self):
         engine = SessionEngine()

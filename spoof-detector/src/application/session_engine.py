@@ -30,6 +30,7 @@ from src.domain.session import (
     SessionState, SessionVerdict, Incident, Severity,
     TemporalSignals,
 )
+from src.application.liveness_prover import LivenessProver, ChallengeState
 
 logger = logging.getLogger(__name__)
 
@@ -85,9 +86,16 @@ class SessionEngine:
         self._last_face_time: float = 0.0
         self._consecutive_spoof_frames = 0
 
+        # Liveness prover — "guilty until proven innocent"
+        self._prover = LivenessProver(enable_challenges=True)
+
     @property
     def state(self) -> SessionState:
         return self._state
+
+    @property
+    def prover(self) -> LivenessProver:
+        return self._prover
 
     @property
     def elapsed_sec(self) -> float:
@@ -99,6 +107,7 @@ class SessionEngine:
         """Start the session clock."""
         self._start_time = time.time()
         self._state = SessionState.WARMING_UP
+        self._prover.start()
         logger.info(f"Session {self._session_id} started")
 
     def ingest(self, analysis: FrameAnalysis, frame: Optional[np.ndarray] = None):
@@ -172,6 +181,27 @@ class SessionEngine:
             self._check_spoof_incident(cls, analysis.frame_id, elapsed)
             self._check_motion_naturalness(signals, analysis.frame_id, elapsed)
             self._check_minifasnet_instability(signals, cls, analysis.frame_id, elapsed)
+
+            # === Liveness Prover: feed evidence ===
+            blink_result = cls.analyzer_results.get("blink")
+            blink_count = blink_result.details.get("blinks", 0) if blink_result else 0
+            lv_result = cls.analyzer_results.get("landmark_variance")
+            lv_var = lv_result.details.get("overall_var", 0) if lv_result else 0
+            lv_expr = lv_result.details.get("expression_ratio", 0) if lv_result else 0
+
+            # Get landmarks from blink analyzer
+            landmarks = None
+            for analyzer_name, ar in cls.analyzer_results.items():
+                if analyzer_name == "blink" and hasattr(ar, "_landmarks"):
+                    landmarks = ar._landmarks
+
+            self._prover.update(
+                landmarks=landmarks,
+                blink_count=blink_count,
+                landmark_variance=lv_var,
+                expression_ratio=lv_expr,
+                face_count=len(analysis.faces),
+            )
 
     def _check_spoof_incident(self, cls: SpoofClassification, frame_id: int, elapsed: float):
         """Check if current frame shows spoof evidence.
@@ -344,23 +374,32 @@ class SessionEngine:
         adjusted_real = adjusted_real * (1.0 - incident_penalty * 0.4)
         adjusted_real += temporal_boost * 0.15
 
-        # Decision threshold: below 0.45 = SPOOF
-        # Also: if we have 3+ incidents, verdict is SPOOF regardless
+        # === Liveness Prover: "guilty until proven innocent" ===
+        liveness_score = self._prover.get_score()
+        prover_live = liveness_score.is_proven_live  # Must reach 60/100
+
+        # Combined decision:
+        # 1. Analyzer fusion says it's real (adjusted_real > 0.45)
+        # 2. Liveness prover confirms it's live (score >= 60)
+        # 3. No incident override (3+ incidents = SPOOF)
         incident_override = len(self._incidents) >= 3
 
-        is_live = adjusted_real > 0.45 and not incident_override
-        confidence = min(1.0, data_confidence * (0.5 + abs(adjusted_real - 0.45)))
+        # Both must agree for LIVE verdict
+        is_live = adjusted_real > 0.45 and prover_live and not incident_override
 
-        # Get blink count and BPM from analyzers and primary face signals
+        # Confidence blends both signals
+        prover_confidence = liveness_score.total / 100.0
+        confidence = min(1.0, data_confidence * (0.3 * prover_confidence + 0.3 + 0.4 * max(0, adjusted_real - 0.3)))
+
+        # Get blink count and BPM from liveness prover
         blink_count = 0
         estimated_bpm = None
         identity_changes = 0
 
-        # Extract blink/rppg data from recent verdicts' analyzer results
+        # Use prover's blink count (more reliable than raw analyzer)
+        blink_count = int(liveness_score.blink_points / 5.0)  # 5 points per blink
+
         for cls in self._recent_verdicts:
-            blink_result = cls.analyzer_results.get("blink")
-            if blink_result and "blinks" in blink_result.details:
-                blink_count = max(blink_count, blink_result.details["blinks"])
             rppg_result = cls.analyzer_results.get("rppg")
             if rppg_result and rppg_result.details.get("bpm") is not None:
                 estimated_bpm = rppg_result.details["bpm"]

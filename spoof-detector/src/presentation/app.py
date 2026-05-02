@@ -12,6 +12,7 @@ from src.presentation.camera import ThreadedCamera
 from src.presentation.overlay import Overlay
 from src.application.pipeline import SpoofDetectionPipeline
 from src.application.session_engine import SessionEngine
+from src.application.liveness_prover import ChallengeState
 from src.infrastructure.logging.structured_logger import StructuredLogger
 from src.domain.models import FrameAnalysis
 from src.domain.session import SessionVerdict
@@ -96,6 +97,12 @@ class SpoofDetectorApp:
 
                 # Render session verdict bar
                 self._draw_session_bar(frame, verdict)
+
+                # Render active challenge
+                self._draw_challenge(frame)
+
+                # Render liveness score
+                self._draw_liveness_score(frame)
 
                 # Help overlay
                 if self._show_help:
@@ -196,6 +203,78 @@ class SpoofDetectorApp:
         except Exception:
             return 0, 0  # Fallback: no scaling
 
+    def _draw_challenge(self, frame: np.ndarray):
+        """Draw active challenge prompt in center of screen."""
+        challenge = self._session.prover.get_active_challenge()
+        if challenge is None or challenge.state != ChallengeState.PROMPTED:
+            return
+
+        h, w = frame.shape[:2]
+        text = challenge.display_text
+        elapsed = self._session.elapsed_sec - challenge.prompted_at
+        remaining = max(0, challenge.timeout_sec - elapsed)
+
+        # Flashing background for urgency
+        alpha = 0.7 if int(elapsed * 3) % 2 == 0 else 0.5
+        overlay = frame.copy()
+        cv2.rectangle(overlay, (w // 4, h // 3 - 40), (3 * w // 4, h // 3 + 50), (0, 0, 180), -1)
+        cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
+
+        # Challenge text
+        (tw, th), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1.2, 3)
+        tx = (w - tw) // 2
+        cv2.putText(frame, text, (tx, h // 3 + 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 3, cv2.LINE_AA)
+
+        # Timer
+        timer_text = f"{remaining:.1f}s"
+        cv2.putText(frame, timer_text, (w // 2 - 30, h // 3 + 45),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1, cv2.LINE_AA)
+
+    def _draw_liveness_score(self, frame: np.ndarray):
+        """Draw liveness proof score on the right side."""
+        score = self._session.prover.get_score()
+        h, w = frame.shape[:2]
+
+        # Panel position (right side)
+        px = w - 220
+        py = 120
+        panel_h = 130
+
+        overlay = frame.copy()
+        cv2.rectangle(overlay, (px, py), (w - 10, py + panel_h), (0, 0, 0), -1)
+        cv2.addWeighted(overlay, 0.7, frame, 0.3, 0, frame)
+
+        # Title
+        status = "PROVEN LIVE" if score.is_proven_live else "PROVING..."
+        color = (0, 200, 0) if score.is_proven_live else (0, 200, 200)
+        cv2.putText(frame, f"Liveness: {score.total:.0f}/100 [{status}]", (px + 5, py + 18),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.35, color, 1, cv2.LINE_AA)
+
+        # Score breakdown
+        items = [
+            (f"Blinks: {score.blink_points:.0f}/20", score.blink_points / 20),
+            (f"Motion: {score.landmark_points:.0f}/15", score.landmark_points / 15),
+            (f"Rotation: {score.rotation_points:.0f}/15", score.rotation_points / 15),
+            (f"Expression: {score.expression_points:.0f}/10", score.expression_points / 10),
+            (f"Challenges: {score.challenges_passed}/{score.challenges_passed + score.challenges_failed}",
+             score.challenge_points / 40),
+        ]
+
+        y = py + 38
+        for label, ratio in items:
+            bar_color = (0, 200, 0) if ratio > 0.5 else (0, 200, 200) if ratio > 0 else (80, 80, 80)
+            cv2.putText(frame, label, (px + 5, y),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.3, (180, 180, 180), 1, cv2.LINE_AA)
+            # Mini bar
+            bar_x = px + 150
+            bar_w = 55
+            fill = int(bar_w * min(1.0, ratio))
+            cv2.rectangle(frame, (bar_x, y - 8), (bar_x + bar_w, y), (40, 40, 40), -1)
+            if fill > 0:
+                cv2.rectangle(frame, (bar_x, y - 8), (bar_x + fill, y), bar_color, -1)
+            y += 20
+
     def _draw_session_bar(self, frame: np.ndarray, verdict: SessionVerdict):
         """Draw session verdict bar at the top of the frame."""
         h, w = frame.shape[:2]
@@ -248,11 +327,23 @@ class SpoofDetectorApp:
 
         # Session report
         verdict = self._session.conclude()
+        liveness = self._session.prover.get_score()
         print(f"\n{'=' * 60}")
         print(f"  SESSION REPORT")
         print(f"{'=' * 60}")
         print(f"  Verdict: {verdict.summary}")
         print(f"  Face detected: {verdict.face_detected_ratio:.0%} of frames")
+        print(f"\n  Liveness Proof: {liveness.total:.0f}/100 {'PROVEN' if liveness.is_proven_live else 'NOT PROVEN'}")
+        print(f"    Blinks:     {liveness.blink_points:.0f}/20")
+        print(f"    Motion:     {liveness.landmark_points:.0f}/15")
+        print(f"    Rotation:   {liveness.rotation_points:.0f}/15")
+        print(f"    Expression: {liveness.expression_points:.0f}/10")
+        print(f"    Challenges: {liveness.challenge_points:.0f}/40 ({liveness.challenges_passed} passed, {liveness.challenges_failed} failed)")
+        challenges = self._session.prover.get_challenge_history()
+        if challenges:
+            print(f"\n  Challenge History:")
+            for c in challenges:
+                print(f"    {c['type']:>12s}: {c['state']:>10s} ({c['latency_ms']:.0f}ms)")
         if verdict.incidents:
             print(f"\n  Incident Timeline:")
             for item in self._session.get_timeline():
