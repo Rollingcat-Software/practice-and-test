@@ -316,14 +316,19 @@ class SessionEngine:
         is_live = adjusted_real > 0.45
         confidence = min(1.0, data_confidence * (0.5 + abs(adjusted_real - 0.5)))
 
-        # Get blink count and BPM from primary face
+        # Get blink count and BPM from analyzers and primary face signals
         blink_count = 0
         estimated_bpm = None
         identity_changes = 0
-        if self._primary_face_id and self._primary_face_id in self._signals:
-            sig = self._signals[self._primary_face_id]
-            blink_count = sig.blink_count
-            estimated_bpm = sig.estimated_bpm
+
+        # Extract blink/rppg data from recent verdicts' analyzer results
+        for cls in self._recent_verdicts:
+            blink_result = cls.analyzer_results.get("blink")
+            if blink_result and "blinks" in blink_result.details:
+                blink_count = max(blink_count, blink_result.details["blinks"])
+            rppg_result = cls.analyzer_results.get("rppg")
+            if rppg_result and rppg_result.details.get("bpm") is not None:
+                estimated_bpm = rppg_result.details["bpm"]
 
         return SessionVerdict(
             is_live=is_live,

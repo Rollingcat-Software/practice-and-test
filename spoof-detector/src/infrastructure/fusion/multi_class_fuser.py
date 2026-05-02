@@ -24,12 +24,15 @@ from src.domain.taxonomy import SPOOF_SIGNAL_MAP
 # Calibrated weights based on measured discrimination power.
 # Higher weight = analyzer score has more influence on final classification.
 DEFAULT_ANALYZER_WEIGHTS: dict[str, float] = {
-    "minifasnet": 3.0,        # PROVEN: +94.7 gap (the only reliably discriminating analyzer)
-    "device_boundary": 2.5,   # HIGH EXPECTED: physical bezel detection
-    "screen_replay": 0.5,     # WEAK: +9.6 gap (barely useful)
-    "temporal": 0.3,          # NEUTRAL: good for static image but needs warmup
-    "texture": 0.1,           # ANTI-CORRELATED: scores spoof higher (-6.3 gap)
-    "moire": 0.1,             # ANTI-CORRELATED: scores spoof higher (-5.0 gap)
+    "minifasnet": 3.0,        # PROVEN: +94.7 gap
+    "device_boundary": 2.5,   # GOOD: physical bezel detection
+    "blink": 2.0,             # STRONG: no blinks = no life (temporal, 3s warmup)
+    "rppg": 2.0,              # STRONG: no pulse = no life (temporal, 5s warmup)
+    "ar_filter": 0.5,         # MODERATE: heuristic mode, higher when ONNX model ready
+    "screen_replay": 0.5,     # WEAK: +9.6 gap
+    "temporal": 0.3,          # NEUTRAL: micro-motion naturalness
+    "texture": 0.1,           # ANTI-CORRELATED: suppressed
+    "moire": 0.1,             # ANTI-CORRELATED: suppressed
 }
 
 

@@ -39,10 +39,13 @@ analyzers:
     enabled: true
     padding_ratio: 0.55
     spoof_threshold: 0.50
+  blink:
+    enabled: true            # EAR-based blink detection (MediaPipe FaceLandmarker)
   rppg:
-    enabled: false           # Phase 3: requires 2s warmup
+    enabled: true            # Remote PPG pulse detection (3-5s warmup)
   ar_filter:
-    enabled: false           # Phase 5: requires trained model
+    enabled: true            # Heuristic mode (ONNX model optional)
+    model_path: null         # Set to models/ar_filter_detector.onnx when trained
   makeup:
     enabled: false           # Experimental
 
@@ -57,7 +60,10 @@ fusion:
   weights:
     minifasnet: 3.0
     device_boundary: 2.5
+    blink: 2.0
+    rppg: 2.0
     screen_replay: 0.5
+    ar_filter: 0.5
     temporal: 0.3
     texture: 0.1
     moire: 0.1

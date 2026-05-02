@@ -57,6 +57,9 @@ from src.infrastructure.analyzers.moire_analyzer import MoireAnalyzer
 from src.infrastructure.analyzers.screen_replay_analyzer import ScreenReplayAnalyzer
 from src.infrastructure.analyzers.temporal_analyzer import TemporalAnalyzer
 from src.infrastructure.analyzers.device_boundary_analyzer import DeviceBoundaryAnalyzer
+from src.infrastructure.analyzers.blink_analyzer import BlinkAnalyzer
+from src.infrastructure.analyzers.rppg_analyzer import RPPGAnalyzer
+from src.infrastructure.analyzers.ar_filter_analyzer import ARFilterAnalyzer
 from src.infrastructure.fusion.multi_class_fuser import MultiClassFuser
 from src.infrastructure.logging.structured_logger import StructuredLogger
 
@@ -128,6 +131,17 @@ def build_pipeline(config: dict) -> tuple:
             padding_ratio=db_cfg.get("padding_ratio", 0.55),
             spoof_threshold=db_cfg.get("spoof_threshold", 0.50),
         ))
+
+    if ana_cfg.get("blink", {}).get("enabled", True):
+        face_analyzers.append(BlinkAnalyzer())
+
+    if ana_cfg.get("rppg", {}).get("enabled", True):
+        face_analyzers.append(RPPGAnalyzer())
+
+    if ana_cfg.get("ar_filter", {}).get("enabled", True):
+        ar_cfg = ana_cfg.get("ar_filter", {})
+        model_path = ar_cfg.get("model_path")
+        face_analyzers.append(ARFilterAnalyzer(model_path=model_path))
 
     # Whole-frame analyzers
     frame_analyzers = []

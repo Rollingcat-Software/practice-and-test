@@ -266,3 +266,73 @@ class TestDeviceBoundaryAnalyzer:
 
     def test_name(self, analyzer):
         assert analyzer.name == "device_boundary"
+
+
+# --- rPPG Analyzer ---
+
+class TestRPPGAnalyzer:
+    @pytest.fixture
+    def analyzer(self):
+        from src.infrastructure.analyzers.rppg_analyzer import RPPGAnalyzer
+        return RPPGAnalyzer()
+
+    def test_warmup_returns_neutral(self, analyzer):
+        img = np.random.randint(50, 200, (200, 200, 3), dtype=np.uint8)
+        roi = FaceROI(face_id=1, bbox=BBox(0, 0, 200, 200), confidence=0.9)
+        result = analyzer.analyze(img, roi)
+        assert result.score == 50.0
+        assert result.details.get("warmup") is True
+
+    def test_score_after_accumulation(self, analyzer):
+        roi = FaceROI(face_id=1, bbox=BBox(0, 0, 200, 200), confidence=0.9)
+        for i in range(70):
+            img = np.random.randint(50, 200, (200, 200, 3), dtype=np.uint8)
+            result = analyzer.analyze(img, roi)
+        assert 0 <= result.score <= 100
+        assert "snr" in result.details
+
+    def test_name(self, analyzer):
+        assert analyzer.name == "rppg"
+
+
+# --- AR Filter Analyzer ---
+
+class TestARFilterAnalyzer:
+    @pytest.fixture
+    def analyzer(self):
+        from src.infrastructure.analyzers.ar_filter_analyzer import ARFilterAnalyzer
+        return ARFilterAnalyzer()
+
+    def test_score_range(self, analyzer):
+        img = np.random.randint(50, 200, (200, 200, 3), dtype=np.uint8)
+        roi = FaceROI(face_id=1, bbox=BBox(0, 0, 200, 200), confidence=0.9)
+        result = analyzer.analyze(img, roi)
+        assert 0 <= result.score <= 100
+
+    def test_heuristic_method(self, analyzer):
+        img = np.random.randint(50, 200, (200, 200, 3), dtype=np.uint8)
+        roi = FaceROI(face_id=1, bbox=BBox(0, 0, 200, 200), confidence=0.9)
+        result = analyzer.analyze(img, roi)
+        assert result.details.get("method") == "heuristic"
+
+    def test_name(self, analyzer):
+        assert analyzer.name == "ar_filter"
+
+
+# --- Blink Analyzer (basic, no FaceLandmarker model needed) ---
+
+class TestBlinkAnalyzer:
+    @pytest.fixture
+    def analyzer(self):
+        from src.infrastructure.analyzers.blink_analyzer import BlinkAnalyzer
+        return BlinkAnalyzer()
+
+    def test_no_frame_returns_neutral(self, analyzer):
+        img = np.random.randint(50, 200, (200, 200, 3), dtype=np.uint8)
+        roi = FaceROI(face_id=1, bbox=BBox(0, 0, 200, 200), confidence=0.9)
+        # Without set_frame, should return neutral
+        result = analyzer.analyze(img, roi)
+        assert result.score == 50.0
+
+    def test_name(self, analyzer):
+        assert analyzer.name == "blink"
