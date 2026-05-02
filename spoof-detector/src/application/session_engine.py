@@ -171,6 +171,7 @@ class SessionEngine:
             # === Incident Detection ===
             self._check_spoof_incident(cls, analysis.frame_id, elapsed)
             self._check_motion_naturalness(signals, analysis.frame_id, elapsed)
+            self._check_minifasnet_instability(signals, cls, analysis.frame_id, elapsed)
 
     def _check_spoof_incident(self, cls: SpoofClassification, frame_id: int, elapsed: float):
         """Check if current frame shows spoof evidence.
@@ -242,6 +243,36 @@ class SessionEngine:
             signals.motion_naturalness = 0.4  # Suspiciously still
         else:
             signals.motion_naturalness = min(1.0, 0.5 + pos_std * 100)
+
+    def _check_minifasnet_instability(self, signals: TemporalSignals,
+                                      cls: SpoofClassification,
+                                      frame_id: int, elapsed: float):
+        """Detect MiniFASNet score instability — a strong spoof signal.
+
+        Real faces produce consistently high MiniFASNet scores (95-100).
+        Spoofs on high-quality screens oscillate between 0-100 frame-to-frame.
+        High variance = screen attack where MiniFASNet is uncertain.
+
+        This catches the STATIC_SCREEN attack type that single-frame
+        MiniFASNet misses 46% of the time.
+        """
+        if len(signals.minifasnet_scores) < 20:  # Need ~0.7s of data
+            return
+
+        recent = list(signals.minifasnet_scores)[-30:]
+        scores = np.array(recent)
+        std = float(np.std(scores))
+        mean = float(np.mean(scores))
+
+        # Real faces: mean ~95, std < 10
+        # Screen spoofs: mean ~50, std > 30 (oscillates between 0 and 100)
+        if std > 25 and mean < 80:
+            if not self._incidents or elapsed - self._incidents[-1].timestamp > 3.0:
+                self._add_incident(
+                    frame_id, Severity.MEDIUM, SpoofCategory.STATIC_IMAGE,
+                    f"MiniFASNet unstable: mean={mean:.0f}, std={std:.0f} (screen-like oscillation)",
+                    {"mfn_mean": round(mean, 1), "mfn_std": round(std, 1)},
+                )
 
     def _add_incident(self, frame_id: int, severity: Severity,
                       category: SpoofCategory, description: str,
