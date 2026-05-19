@@ -1,1 +1,8 @@
 DeepFacePractice1/nul
+
+# Build / cache artifacts (cleaned 2026-05-19)
+gradle-temp/
+**/output/
+**/_archive/old_reports/
+**/__pycache__/
+*.pyc
