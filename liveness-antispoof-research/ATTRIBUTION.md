@@ -25,12 +25,12 @@ on the relevant ranges in `Rollingcat-Software/biometric-processor` and
 
 ### Ayşe Gülsüm EREN
 - **Email**: aysegulsumeren@gmail.com
-- **GitHub handle**: not yet confirmed in this audit. The investigation doc
-  flags this as an open question (§Risks): "Are these the same person under
-  different commit identities, or two collaborators?" The split email
-  domains (`hotmail.com` vs `gmail.com`) plus the distinct commit-message
-  style (Conventional Commits with subsystem scopes for Ayşe vs free-form
-  for Aysenur15) strongly suggest **two separate collaborators**.
+- **GitHub handle**: `@aysegulsum` (https://github.com/aysegulsum) — confirmed
+  2026-05-21. This is distinct from Aysenur15's `@Aysenur15`, which (together
+  with the split email domains `hotmail.com` vs `gmail.com` and the distinct
+  commit-message styles — Conventional Commits with subsystem scopes for Ayşe
+  vs free-form for Aysenur15) confirms **two separate collaborators**, resolving
+  the open question raised in `INVESTIGATION_2026-05-09.md` §Risks.
 - **Primary work areas**: FRR-reduction tuning + hijab/head-turn occlusion
   fixes + decision-guard EMA work
 - **Branches**:
