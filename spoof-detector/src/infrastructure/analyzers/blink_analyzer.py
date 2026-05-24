@@ -60,6 +60,7 @@ class BlinkState:
     eyes_closed_frames: int = 0
     last_blink_frame: int = 0
     frame_count: int = 0
+    blink_timestamps: list = field(default_factory=list)  # Wall-clock times of each blink
 
 
 class BlinkAnalyzer:
@@ -202,6 +203,7 @@ class BlinkAnalyzer:
                 # Valid blink: closed long enough + reopened properly + not too soon after last
                 state.blink_count += 1
                 state.last_blink_frame = state.frame_count
+                state.blink_timestamps.append(time.perf_counter())
             state.eyes_closed_frames = 0
 
         # Score calculation
@@ -250,3 +252,8 @@ class BlinkAnalyzer:
     def get_blink_count(self, face_id: int) -> int:
         state = self._states.get(face_id)
         return state.blink_count if state else 0
+
+    def get_blink_timestamps(self, face_id: int) -> list[float]:
+        """Return wall-clock timestamps of detected blinks for a face."""
+        state = self._states.get(face_id)
+        return list(state.blink_timestamps) if state else []

@@ -23,6 +23,7 @@ from collections import deque
 from dataclasses import dataclass, field
 
 import numpy as np
+from scipy.signal import iirnotch, sosfilt, butter
 
 from src.domain.models import FaceROI, AnalyzerResult
 
@@ -33,6 +34,28 @@ PULSE_LOW_HZ = 0.75   # 45 BPM
 PULSE_HIGH_HZ = 4.0   # 240 BPM
 MIN_FRAMES = 60        # ~2s at 30fps minimum for any signal
 GOOD_FRAMES = 150      # ~5s for reliable pulse detection
+
+# Screen flicker notch filter frequencies (Hz).
+#
+# At 30 fps the Nyquist limit is 15 Hz, so screen refresh rates
+# alias into the 0-15 Hz band and contaminate the pulse range:
+#
+#   50 Hz screen → aliases to |50 - 2*30| = 10 Hz
+#   60 Hz screen → aliases to |60 - 2*30| = 0 Hz (DC, harmless)
+#                  also |60 - 30| = 30 Hz, but that's above Nyquist
+#   100 Hz (2nd harmonic of 50 Hz) → |100 - 3*30| = 10 Hz
+#   120 Hz (2nd harmonic of 60 Hz) → |120 - 4*30| = 0 Hz (DC)
+#
+# The dominant alias is 10 Hz. We also notch 15 Hz (Nyquist edge,
+# where spectral leakage from any near-Nyquist artifact concentrates)
+# and 20 Hz (|50 - 30| fundamental beat, theoretically above Nyquist
+# but still appears in real FFT bins due to spectral leakage from
+# rectangular/windowed sampling near the folding boundary).
+#
+# Q factor 5-10 gives a narrow notch (~1-2 Hz wide) that does not
+# affect the 0.75-4.0 Hz pulse band at all.
+NOTCH_FREQS_HZ = [10.0, 15.0, 20.0]
+NOTCH_Q = 8.0  # Quality factor — narrower is safer for pulse band
 
 
 @dataclass
@@ -61,6 +84,40 @@ class RPPGAnalyzer:
         self._states: dict[int, PulseState] = {}
         self._frame_times: deque = deque(maxlen=60)
         self._measured_fps: float = fps
+        # Pre-compute notch filter coefficients (SOS form) for screen
+        # flicker suppression.  These are designed at the nominal fps;
+        # the aliased artefact frequencies don't shift much with small
+        # fps drift so a one-time design is fine.
+        self._notch_sos = self._design_notch_filters(fps)
+        # Butterworth bandpass isolates the pulse band (0.75-4.0 Hz)
+        # in the time domain, killing high-frequency screen artefacts
+        # before they can leak into pulse bins via windowed FFT.
+        self._bandpass_sos = butter(
+            4, [PULSE_LOW_HZ, PULSE_HIGH_HZ],
+            btype="band", fs=fps, output="sos",
+        )
+
+    @staticmethod
+    def _design_notch_filters(fps: float) -> np.ndarray:
+        """Build a cascade of IIR notch filters (SOS) for screen flicker.
+
+        Only includes notch frequencies that are below the Nyquist limit
+        for the given sample rate, so it is safe for any fps.
+        """
+        nyquist = fps / 2.0
+        sections = []
+        for freq in NOTCH_FREQS_HZ:
+            if freq >= nyquist:
+                continue  # skip frequencies at or above Nyquist
+            b, a = iirnotch(freq, NOTCH_Q, fs=fps)
+            # Convert to second-order section for numerical stability
+            # iirnotch returns a single biquad, so we can pack it directly.
+            # SOS row: [b0, b1, b2, 1, a1, a2]
+            sos_row = np.array([b[0], b[1], b[2], a[0], a[1], a[2]])
+            sections.append(sos_row)
+        if not sections:
+            return np.zeros((0, 6))
+        return np.array(sections)
 
     @property
     def name(self) -> str:
@@ -110,6 +167,16 @@ class RPPGAnalyzer:
         # Detrend (remove slow drift from lighting changes)
         signal = signal - np.convolve(signal, np.ones(15) / 15, mode="same")
 
+        # ── Bandpass + notch filters (time domain) ────────────────
+        # 1) Butterworth bandpass (0.75-4.0 Hz) isolates the pulse
+        #    band and kills high-frequency screen artefacts that
+        #    would otherwise leak into pulse bins via windowed FFT.
+        signal = sosfilt(self._bandpass_sos, signal)
+        # 2) Notch filters remove any aliased 50/60 Hz screen
+        #    refresh artefacts that survive the bandpass rolloff.
+        if self._notch_sos.shape[0] > 0:
+            signal = sosfilt(self._notch_sos, signal)
+
         # Apply Hanning window
         window = np.hanning(len(signal))
         signal = signal * window
@@ -118,6 +185,21 @@ class RPPGAnalyzer:
         fft = np.fft.rfft(signal)
         magnitude = np.abs(fft)
         freqs = np.fft.rfftfreq(len(signal), d=1.0 / self._fps)
+
+        # ── Screen-flicker notch filters (frequency domain) ─────
+        # Belt-and-suspenders: zero out any residual energy at the
+        # exact aliased bins so even spectral leakage is squashed.
+        # Track which bins were killed so we exclude them from noise.
+        nyquist = self._fps / 2.0
+        notch_killed = np.zeros(len(freqs), dtype=bool)
+        for nf in NOTCH_FREQS_HZ:
+            if nf >= nyquist:
+                continue
+            # Zero a +-1.0 Hz band around each notch frequency to catch
+            # spectral leakage from windowing (Hanning sidelobes)
+            kill_mask = (freqs >= nf - 1.0) & (freqs <= nf + 1.0)
+            magnitude[kill_mask] = 0.0
+            notch_killed |= kill_mask
 
         # Find pulse band
         pulse_mask = (freqs >= PULSE_LOW_HZ) & (freqs <= PULSE_HIGH_HZ)
@@ -136,10 +218,21 @@ class RPPGAnalyzer:
         peak_freq = float(pulse_freqs[peak_idx])
         peak_magnitude = float(pulse_magnitudes[peak_idx])
 
-        # Signal-to-noise ratio
-        noise_mask = ~pulse_mask & (freqs > 0.1)  # Exclude DC
+        # Signal-to-noise ratio (exclude DC and notch-killed bins).
+        # Use the UNFILTERED magnitude for noise estimation so that
+        # the bandpass/notch suppression of out-of-band energy does
+        # not artificially deflate the noise floor to near-zero.
+        raw_fft = np.fft.rfft(
+            np.array(state.green_values, dtype=np.float64)
+            - np.convolve(
+                np.array(state.green_values, dtype=np.float64),
+                np.ones(15) / 15, mode="same",
+            )
+        )
+        raw_magnitude = np.abs(raw_fft)
+        noise_mask = ~pulse_mask & (freqs > 0.1) & ~notch_killed
         if np.any(noise_mask):
-            noise_mean = float(np.mean(magnitude[noise_mask]))
+            noise_mean = float(np.mean(raw_magnitude[noise_mask]))
         else:
             noise_mean = 1e-6
 

@@ -184,6 +184,15 @@ class SessionEngine:
             self._check_motion_naturalness(signals, analysis.frame_id, elapsed)
             self._check_minifasnet_instability(signals, cls, analysis.frame_id, elapsed)
 
+            # === Fusion -> Liveness penalty ===
+            p_real = cls.probabilities.get(SpoofCategory.REAL, 1.0)
+            if p_real < 0.45:
+                penalty = max(0.0, (0.45 - p_real) * 18.0)
+                self._prover.penalize(
+                    penalty,
+                    f"fusion P(real)={p_real:.2f} frame={analysis.frame_id}",
+                )
+
             # === Liveness Prover: feed evidence ===
             blink_result = cls.analyzer_results.get("blink")
             blink_count = blink_result.details.get("blinks", 0) if blink_result else 0

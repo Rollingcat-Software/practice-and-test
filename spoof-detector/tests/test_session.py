@@ -211,6 +211,66 @@ class TestIncidentDetection:
             assert "description" in entry
 
 
+# ─── Fusion-Liveness Penalty ─────────────────────────────────
+
+class TestFusionLivenessPenalty:
+    def test_spoof_frames_penalize_liveness(self):
+        """When fusion says SPOOF, liveness score should be penalized."""
+        engine = SessionEngine()
+        engine.start()
+        # Manually give some liveness points so we can observe the drop
+        engine.prover._score.blink_points = 20.0
+        engine.prover._score.landmark_points = 15.0
+        engine.prover._score.update_total()
+        initial_total = engine.prover.get_score().total
+        assert initial_total == 35.0
+
+        # Feed spoof frames
+        for i in range(10):
+            engine.ingest(make_frame_analysis(i, p_real=0.20))
+
+        score = engine.prover.get_score()
+        assert score.total_penalty > 0
+        assert score.total < initial_total
+        assert len(engine.prover.penalty_history) == 10
+
+    def test_penalty_proportional_to_spoof_confidence(self):
+        """Lower P(real) should produce stronger penalty."""
+        engine_weak = SessionEngine()
+        engine_weak.start()
+        engine_weak.ingest(make_frame_analysis(1, p_real=0.40))  # Barely spoof
+        penalty_weak = engine_weak.prover.get_score().total_penalty
+
+        engine_strong = SessionEngine()
+        engine_strong.start()
+        engine_strong.ingest(make_frame_analysis(1, p_real=0.10))  # Strong spoof
+        penalty_strong = engine_strong.prover.get_score().total_penalty
+
+        assert penalty_strong > penalty_weak
+        # P(real)=0.40 -> penalty = (0.45-0.40)*18 = 0.9
+        # P(real)=0.10 -> penalty = (0.45-0.10)*18 = 6.3
+        assert abs(penalty_weak - 0.9) < 0.01
+        assert abs(penalty_strong - 6.3) < 0.01
+
+    def test_no_penalty_on_real_frames(self):
+        """Frames with P(real) >= 0.45 should not penalize liveness."""
+        engine = SessionEngine()
+        engine.start()
+        for i in range(50):
+            engine.ingest(make_frame_analysis(i, p_real=0.80))
+        assert engine.prover.get_score().total_penalty == 0
+        assert len(engine.prover.penalty_history) == 0
+
+    def test_score_never_below_zero(self):
+        """Even with massive penalties, liveness score floors at 0."""
+        engine = SessionEngine()
+        engine.start()
+        for i in range(100):
+            engine.ingest(make_frame_analysis(i, p_real=0.05))
+        score = engine.prover.get_score()
+        assert score.total >= 0
+
+
 # ─── Device Boundary Analyzer ─────────────────────────────────
 
 class TestDeviceBoundaryAnalyzer:

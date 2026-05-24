@@ -79,15 +79,17 @@ class LivenessScore:
     challenge_points: float = 0.0   # Max 40 (active challenges)
     challenges_passed: int = 0
     challenges_failed: int = 0
+    total_penalty: float = 0.0  # Cumulative penalty from fusion SPOOF
 
     def update_total(self):
-        self.total = min(100.0, (
+        self.total = max(0.0, min(100.0, (
             self.blink_points
             + self.landmark_points
             + self.rotation_points
             + self.expression_points
             + self.challenge_points
-        ))
+            - self.total_penalty
+        )))
 
     @property
     def is_proven_live(self) -> bool:
@@ -150,8 +152,32 @@ class LivenessProver:
         self._blink_count_at_challenge: int = 0
         self._hand_detected_at_challenge: bool = False
 
+        # Penalty tracking from fusion engine
+        self._penalty_history: list[dict] = []
+
     def start(self):
         self._start_time = time.time()
+
+    def penalize(self, amount: float, reason: str):
+        """Subtract from liveness score due to fusion SPOOF evidence.
+
+        The score floor is 0 — penalties cannot make it negative.
+        """
+        if amount <= 0:
+            return
+        self._score.total_penalty += amount
+        self._penalty_history.append({
+            "timestamp": self.elapsed,
+            "amount": round(amount, 2),
+            "reason": reason,
+            "cumulative": round(self._score.total_penalty, 2),
+        })
+        self._score.update_total()
+        logger.debug(f"Liveness penalty: -{amount:.1f} ({reason}), total_penalty={self._score.total_penalty:.1f}")
+
+    @property
+    def penalty_history(self) -> list[dict]:
+        return self._penalty_history
 
     @property
     def elapsed(self) -> float:

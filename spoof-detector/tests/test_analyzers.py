@@ -361,3 +361,310 @@ class TestPipelineIntegration:
         fid = analysis.faces[0].face_id
         cls = analysis.classifications[fid]
         assert abs(sum(cls.probabilities.values()) - 1.0) < 0.01
+
+
+# ─── Blink Rhythm Analyzer ────────────────────────────────────
+
+class TestBlinkRhythmAnalyzer:
+    """Test blink rhythm periodicity detection for video replay loops."""
+
+    @pytest.fixture
+    def analyzer(self):
+        from src.infrastructure.analyzers.blink_rhythm_analyzer import BlinkRhythmAnalyzer
+        return BlinkRhythmAnalyzer()
+
+    @staticmethod
+    def _make_mock_blink_analyzer(timestamps: list[float]):
+        """Create a mock BlinkAnalyzer that returns fixed timestamps."""
+        class MockBlinkAnalyzer:
+            def get_blink_timestamps(self, face_id: int) -> list[float]:
+                return list(timestamps)
+        return MockBlinkAnalyzer()
+
+    def test_insufficient_data_returns_neutral(self, analyzer):
+        """With fewer than 8 blinks, score should be neutral (50)."""
+        mock = self._make_mock_blink_analyzer([1.0, 2.0, 3.0])
+        analyzer.set_blink_analyzer(mock)
+        result = analyzer.analyze(make_noisy_image(), make_face_roi())
+        assert result.score == 50.0
+        assert result.details["status"] == "insufficient_data"
+
+    def test_regular_intervals_low_score(self, analyzer):
+        """Perfectly regular blink intervals (loop) should score low."""
+        # 10 blinks at exactly 2.0 second intervals
+        timestamps = [2.0 * i for i in range(10)]
+        mock = self._make_mock_blink_analyzer(timestamps)
+        analyzer.set_blink_analyzer(mock)
+        result = analyzer.analyze(make_noisy_image(), make_face_roi())
+        assert result.score < 25, (
+            f"Regular intervals scored {result.score}, expected < 25 (loop signature)"
+        )
+        assert result.details["cv"] < 0.01
+
+    def test_irregular_intervals_high_score(self, analyzer):
+        """Naturally irregular blink intervals should score high."""
+        # Irregular intervals mimicking a real person
+        rng = np.random.RandomState(42)
+        timestamps = []
+        t = 0.0
+        for _ in range(12):
+            t += rng.uniform(1.5, 5.0)  # Irregular 1.5-5.0 second intervals
+            timestamps.append(t)
+        mock = self._make_mock_blink_analyzer(timestamps)
+        analyzer.set_blink_analyzer(mock)
+        result = analyzer.analyze(make_noisy_image(), make_face_roi())
+        assert result.score > 60, (
+            f"Irregular intervals scored {result.score}, expected > 60 (live-like)"
+        )
+        assert result.details["cv"] > 0.3
+
+    def test_no_blink_analyzer_returns_neutral(self, analyzer):
+        """Without a blink analyzer reference, should return neutral."""
+        result = analyzer.analyze(make_noisy_image(), make_face_roi())
+        assert result.score == 50.0
+        assert result.details.get("error") == "no_blink_analyzer"
+
+    def test_moderately_regular_intervals_mid_score(self, analyzer):
+        """Slightly irregular intervals should score in the middle range."""
+        # Small variation around 2.5 seconds
+        rng = np.random.RandomState(123)
+        timestamps = []
+        t = 0.0
+        for _ in range(10):
+            t += 2.5 + rng.normal(0, 0.3)  # Small CV ~0.12
+            timestamps.append(t)
+        mock = self._make_mock_blink_analyzer(timestamps)
+        analyzer.set_blink_analyzer(mock)
+        result = analyzer.analyze(make_noisy_image(), make_face_roi())
+        # Should be in the suspicious-to-moderate range
+        assert 10 < result.score < 60, (
+            f"Moderately regular scored {result.score}, expected 10-60"
+        )
+
+    def test_score_range(self, analyzer):
+        """Score should always be in [0, 100]."""
+        timestamps = [float(i) * 2.0 for i in range(15)]
+        mock = self._make_mock_blink_analyzer(timestamps)
+        analyzer.set_blink_analyzer(mock)
+        result = analyzer.analyze(make_noisy_image(), make_face_roi())
+        assert 0 <= result.score <= 100
+
+    def test_result_details_present(self, analyzer):
+        """Result details should contain key diagnostic fields."""
+        timestamps = [float(i) * 2.0 for i in range(10)]
+        mock = self._make_mock_blink_analyzer(timestamps)
+        analyzer.set_blink_analyzer(mock)
+        result = analyzer.analyze(make_noisy_image(), make_face_roi())
+        assert "cv" in result.details
+        assert "autocorr_peak" in result.details
+        assert "mean_ibi_sec" in result.details
+        assert "blinks" in result.details
+
+
+# ─── rPPG Analyzer (notch filter) ────────────────────────────
+
+class TestRPPGAnalyzerNotchFilters:
+    """Verify that 50/60Hz screen-flicker notch filters work correctly.
+
+    - A synthetic 1.2 Hz (72 BPM) pulse signal must survive the filters.
+    - A synthetic 10 Hz signal (50 Hz aliased to 10 Hz at 30 fps) must be
+      suppressed so it does not inflate the SNR in the pulse band.
+    """
+
+    @pytest.fixture
+    def analyzer(self):
+        from src.infrastructure.analyzers.rppg_analyzer import RPPGAnalyzer
+        return RPPGAnalyzer(fps=30.0)
+
+    @staticmethod
+    def _feed_synthetic_signal(analyzer, signal: np.ndarray) -> "AnalyzerResult":
+        """Feed a pre-built green-channel time series into the analyzer.
+
+        We bypass the image path by writing directly into the internal
+        state and calling analyze() with a dummy face crop that yields the
+        next value in the signal.  This avoids needing a real camera.
+        """
+        from src.infrastructure.analyzers.rppg_analyzer import PulseState
+        from collections import deque
+
+        fid = 99
+        state = PulseState()
+        state.green_values = deque(signal.tolist(), maxlen=300)
+        state.frame_count = len(signal)
+        analyzer._states[fid] = state
+
+        # Build a tiny face crop whose forehead green mean equals the
+        # last value — only matters for the append inside analyze().
+        last_val = int(np.clip(signal[-1], 0, 255))
+        face_crop = np.full((100, 100, 3), last_val, dtype=np.uint8)
+        roi = make_face_roi(face_id=fid)
+        return analyzer.analyze(face_crop, roi)
+
+    def test_pulse_signal_survives_notch(self, analyzer):
+        """A 1.2 Hz (72 BPM) pulse should pass through the notch filters."""
+        fps = 30.0
+        duration = 5.0  # seconds
+        n = int(fps * duration)
+        t = np.arange(n) / fps
+        # Pure 1.2 Hz sinusoid (well within pulse band, far from notches)
+        signal = 128.0 + 5.0 * np.sin(2 * np.pi * 1.2 * t)
+
+        result = self._feed_synthetic_signal(analyzer, signal)
+
+        # Should detect a pulse (score > 50) with BPM near 72
+        assert result.score > 50, (
+            f"Pulse signal scored {result.score}, expected > 50 (pulse should survive)"
+        )
+        bpm = result.details.get("bpm")
+        assert bpm is not None, "No BPM detected for a clean 1.2 Hz pulse"
+        assert 60 <= bpm <= 84, f"BPM {bpm} too far from expected 72"
+
+    def test_screen_artifact_suppressed(self, analyzer):
+        """A 10 Hz signal (aliased 50 Hz screen flicker) should be killed."""
+        fps = 30.0
+        duration = 5.0
+        n = int(fps * duration)
+        t = np.arange(n) / fps
+        # Pure 10 Hz sinusoid — screen artefact, no real pulse
+        signal = 128.0 + 5.0 * np.sin(2 * np.pi * 10.0 * t)
+
+        result = self._feed_synthetic_signal(analyzer, signal)
+
+        # The 10 Hz energy should be notched out.  Without any real
+        # pulse in the 0.75-4.0 Hz band the SNR should be low and
+        # the score should NOT indicate a live person.
+        snr = result.details.get("snr", 0)
+        assert snr < 3.0, (
+            f"10 Hz artefact SNR is {snr}, expected < 3 after notch filter"
+        )
+        assert result.score <= 50, (
+            f"10 Hz artefact scored {result.score}, expected <= 50 (should not look live)"
+        )
+
+    def test_mixed_pulse_and_artifact(self, analyzer):
+        """A 1.2 Hz pulse + 10 Hz artefact: pulse should dominate after filtering."""
+        fps = 30.0
+        duration = 5.0
+        n = int(fps * duration)
+        t = np.arange(n) / fps
+        # Pulse (small) + screen flicker (large)
+        signal = 128.0 + 3.0 * np.sin(2 * np.pi * 1.2 * t) + 8.0 * np.sin(2 * np.pi * 10.0 * t)
+
+        result = self._feed_synthetic_signal(analyzer, signal)
+
+        # After notch filtering the 10 Hz component, the 1.2 Hz pulse
+        # should be the dominant frequency detected.
+        bpm = result.details.get("bpm")
+        peak_freq = result.details.get("peak_freq_hz", 0)
+        # Peak should be near 1.2 Hz, not near 10 Hz
+        assert peak_freq < 4.0, (
+            f"Peak freq {peak_freq} Hz — artefact was not suppressed"
+        )
+
+
+# ─── Image Quality Analyzer ─────────────────────────────────
+
+class TestImageQualityAnalyzer:
+    """Verify quality scoring for various lighting/blur conditions."""
+
+    def test_bright_image_scores_high(self):
+        from src.infrastructure.analyzers.image_quality_analyzer import ImageQualityAnalyzer
+        analyzer = ImageQualityAnalyzer(frame_area=1280 * 720)
+        # Bright, contrasty face crop
+        crop = np.random.randint(100, 200, (200, 200, 3), dtype=np.uint8)
+        roi = make_face_roi(w=200, h=200)
+        result = analyzer.analyze(crop, roi)
+        assert result.score >= 50, f"Bright image scored {result.score}, expected >= 50"
+        assert result.details["quality_grade"] in ("A", "B", "C")
+        assert result.details["quality_weight"] >= 0.5
+
+    def test_dark_image_scores_low(self):
+        from src.infrastructure.analyzers.image_quality_analyzer import ImageQualityAnalyzer
+        analyzer = ImageQualityAnalyzer(frame_area=1280 * 720)
+        # Very dark crop (mean ~10) — random noise has high Laplacian variance,
+        # so sharpness stays high; but brightness+contrast are terrible
+        crop = np.random.randint(0, 20, (200, 200, 3), dtype=np.uint8)
+        roi = make_face_roi(w=200, h=200)
+        result = analyzer.analyze(crop, roi)
+        assert result.score < 40, f"Dark image scored {result.score}, expected < 40"
+        assert result.details["quality_grade"] in ("C", "D", "F")
+        assert result.details["brightness"] < 20
+
+    def test_blurry_image_penalized(self):
+        from src.infrastructure.analyzers.image_quality_analyzer import ImageQualityAnalyzer
+        analyzer = ImageQualityAnalyzer(frame_area=1280 * 720)
+        # Completely uniform = zero sharpness AND zero contrast
+        # but brightness is perfect (128), so overall score is moderate
+        crop = np.full((200, 200, 3), 128, dtype=np.uint8)
+        roi = make_face_roi(w=200, h=200)
+        result = analyzer.analyze(crop, roi)
+        assert result.details["sharpness"] < 1.0
+        assert result.details["contrast"] < 1.0
+        assert result.score < 55, f"Uniform/blurry image scored {result.score}"
+
+    def test_quality_weight_range(self):
+        from src.infrastructure.analyzers.image_quality_analyzer import ImageQualityAnalyzer
+        analyzer = ImageQualityAnalyzer()
+        crop = np.random.randint(50, 200, (200, 200, 3), dtype=np.uint8)
+        roi = make_face_roi(w=200, h=200)
+        result = analyzer.analyze(crop, roi)
+        qw = result.details["quality_weight"]
+        assert 0.0 <= qw <= 1.0, f"quality_weight {qw} out of range"
+
+    def test_name(self):
+        from src.infrastructure.analyzers.image_quality_analyzer import ImageQualityAnalyzer
+        assert ImageQualityAnalyzer().name == "image_quality"
+
+
+class TestFusionQualityGating:
+    """Verify that low quality down-weights non-robust analyzers."""
+
+    def test_dark_conditions_reduce_minifasnet_influence(self):
+        from src.infrastructure.fusion.multi_class_fuser import MultiClassFuser
+        fuser = MultiClassFuser()
+
+        # Simulate dark conditions: quality_weight = 0.1
+        quality_result = AnalyzerResult(
+            name="image_quality", score=15.0,
+            details={"quality_weight": 0.1, "quality_grade": "F"},
+        )
+        # MiniFASNet scores low (darkness causes false spoof)
+        minifas_result = AnalyzerResult(name="minifasnet", score=5.0, details={})
+        # Device boundary is fine (quality-robust)
+        device_result = AnalyzerResult(name="device_boundary", score=90.0, details={})
+
+        results = {
+            "image_quality": quality_result,
+            "minifasnet": minifas_result,
+            "device_boundary": device_result,
+        }
+
+        cls = fuser.fuse(face_id=1, results=results)
+        p_real = cls.probabilities[SpoofCategory.REAL]
+
+        # Without quality gating, MiniFASNet's 5.0 would dominate → very low P(real)
+        # With gating, MiniFASNet weight is 5.0*0.1=0.5, device_boundary stays 2.5
+        # Device boundary's 90.0 score should pull P(real) up significantly
+        assert p_real > 0.4, (
+            f"P(real)={p_real:.3f} — quality gating should reduce MiniFASNet influence "
+            f"so device_boundary (robust) dominates"
+        )
+
+    def test_good_conditions_full_weights(self):
+        from src.infrastructure.fusion.multi_class_fuser import MultiClassFuser
+        fuser = MultiClassFuser()
+
+        quality_result = AnalyzerResult(
+            name="image_quality", score=85.0,
+            details={"quality_weight": 1.0, "quality_grade": "A"},
+        )
+        minifas_result = AnalyzerResult(name="minifasnet", score=95.0, details={})
+
+        results = {
+            "image_quality": quality_result,
+            "minifasnet": minifas_result,
+        }
+
+        cls = fuser.fuse(face_id=1, results=results)
+        p_real = cls.probabilities[SpoofCategory.REAL]
+        assert p_real > 0.8, f"Good quality + high MiniFASNet should give P(real) > 0.8, got {p_real:.3f}"

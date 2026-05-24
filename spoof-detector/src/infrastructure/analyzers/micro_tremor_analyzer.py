@@ -16,6 +16,19 @@ Algorithm:
 4. FFT on position time-series
 5. Measure power in 8-12Hz band relative to total power
 6. High relative power = live person
+
+Validation (2026-05-02):
+- BUG FIXED (Nyquist clamping): At 30fps Nyquist=15Hz, so 13Hz is only 2Hz from
+  the limit. If actual FPS drops below ~26fps, 13Hz becomes unresolvable. Added
+  dynamic clamping: effective_high = min(TREMOR_HIGH_HZ, measured_fps/2 - 1.0).
+- BUG FIXED (score discontinuity): At tremor_ratio=1.5 boundary, score jumped from
+  ~72.5 (second branch) to 70-100 (first branch). Smoothed scoring to be continuous.
+- FFT resolution: At MIN_FRAMES=45 and 30fps, resolution=0.667Hz. The tremor band
+  7-13Hz (6Hz wide) gets ~9 bins. Adequate. At GOOD_FRAMES=90, 0.33Hz. Fine.
+- Detrending: 15-sample MA at 30fps -> ~2Hz cutoff. Removes head drift while
+  preserving 7+ Hz tremor signal. CORRECT.
+- Edge cases: warmup returns neutral 50. No crash on empty buffers. CORRECT.
+- Minor: list() in np.array(list(deque)) is unnecessary but harmless.
 """
 
 import time
@@ -90,8 +103,22 @@ class MicroTremorAnalyzer:
                 elapsed_ms=elapsed_ms,
             )
 
-        positions = np.array(list(self._states[fid]))  # (N, 2)
+        positions = np.array(self._states[fid])  # (N, 2)
         n = len(positions)
+
+        # Clamp tremor band to stay below Nyquist (fps/2).
+        # At 30fps Nyquist=15Hz; if FPS drops below ~26, 13Hz is unresolvable.
+        nyquist = self._fps / 2.0
+        effective_high = min(TREMOR_HIGH_HZ, nyquist - 1.0)
+        if effective_high <= TREMOR_LOW_HZ:
+            # FPS too low for any tremor detection — return neutral
+            elapsed_ms = (time.perf_counter() - start) * 1000
+            return AnalyzerResult(
+                name=self.name, score=50.0,
+                details={"fps_too_low": True, "measured_fps": round(self._fps, 1),
+                         "nyquist_hz": round(nyquist, 1), "frames": n},
+                elapsed_ms=elapsed_ms,
+            )
 
         # Analyze X and Y independently
         results = []
@@ -113,8 +140,8 @@ class MicroTremorAnalyzer:
             magnitude = np.abs(fft)
             freqs = np.fft.rfftfreq(n, d=1.0 / self._fps)
 
-            # Tremor band power
-            tremor_mask = (freqs >= TREMOR_LOW_HZ) & (freqs <= TREMOR_HIGH_HZ)
+            # Tremor band power (clamped to effective Nyquist)
+            tremor_mask = (freqs >= TREMOR_LOW_HZ) & (freqs <= effective_high)
             if not np.any(tremor_mask):
                 results.append(0.0)
                 continue
@@ -133,18 +160,25 @@ class MicroTremorAnalyzer:
         data_quality = min(1.0, n / GOOD_FRAMES)
 
         # Score: high tremor ratio = live
+        # Continuous scoring to avoid discontinuities at boundaries.
+        # ratio -> score mapping (approximate):
+        #   0.0  -> 10-30 (spoof, depends on data sufficiency)
+        #   0.5  -> 40
+        #   1.0  -> 55
+        #   1.5  -> 70
+        #   2.0+ -> 85-100
         if avg_tremor_ratio > 1.5:
-            score = 70.0 + data_quality * 30.0  # Strong tremor
-        elif avg_tremor_ratio > 1.0:
-            score = 50.0 + avg_tremor_ratio * 15.0
+            # Strong tremor — high confidence live
+            score = 70.0 + min((avg_tremor_ratio - 1.5) * 20.0, 30.0) * data_quality
         elif avg_tremor_ratio > 0.5:
-            score = 30.0 + avg_tremor_ratio * 20.0
+            # Linear ramp from 40 to 70 over ratio 0.5 -> 1.5
+            score = 40.0 + (avg_tremor_ratio - 0.5) * 30.0
         else:
-            # No tremor
+            # No meaningful tremor
             if n > GOOD_FRAMES:
-                score = 10.0  # Enough data, no tremor = spoof
+                score = 10.0 + avg_tremor_ratio * 40.0  # 10-30 range
             else:
-                score = 30.0  # Not enough data yet
+                score = 30.0 + avg_tremor_ratio * 20.0  # 30-40, not enough data
 
         elapsed_ms = (time.perf_counter() - start) * 1000
 

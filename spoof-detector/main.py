@@ -64,6 +64,8 @@ from src.infrastructure.analyzers.landmark_variance_analyzer import LandmarkVari
 from src.infrastructure.analyzers.screen_flicker_analyzer import ScreenFlickerAnalyzer
 from src.infrastructure.analyzers.micro_tremor_analyzer import MicroTremorAnalyzer
 from src.infrastructure.analyzers.background_grid_analyzer import BackgroundGridAnalyzer
+from src.infrastructure.analyzers.blink_rhythm_analyzer import BlinkRhythmAnalyzer
+from src.infrastructure.analyzers.image_quality_analyzer import ImageQualityAnalyzer
 from src.infrastructure.fusion.multi_class_fuser import MultiClassFuser
 from src.infrastructure.logging.structured_logger import StructuredLogger
 
@@ -107,8 +109,9 @@ def build_pipeline(config: dict) -> tuple:
         max_lost_frames=trk_cfg.get("max_lost_frames", 15),
     )
 
-    # Per-face analyzers
+    # Per-face analyzers — image_quality runs FIRST to gate unreliable analyzers
     face_analyzers = []
+    face_analyzers.append(ImageQualityAnalyzer())
     if ana_cfg.get("minifasnet", {}).get("enabled", True):
         face_analyzers.append(MiniFASNetAnalyzer())
     if ana_cfg.get("texture", {}).get("enabled", True):
@@ -158,6 +161,15 @@ def build_pipeline(config: dict) -> tuple:
 
     if ana_cfg.get("background_grid", {}).get("enabled", True):
         face_analyzers.append(BackgroundGridAnalyzer())
+
+    if ana_cfg.get("blink_rhythm", {}).get("enabled", True):
+        blink_rhythm = BlinkRhythmAnalyzer()
+        # Wire the blink analyzer reference so blink_rhythm can read timestamps
+        for a in face_analyzers:
+            if isinstance(a, BlinkAnalyzer):
+                blink_rhythm.set_blink_analyzer(a)
+                break
+        face_analyzers.append(blink_rhythm)
 
     # Whole-frame analyzers
     frame_analyzers = []
