@@ -11,18 +11,19 @@ You now have a **professional-grade DeepFace practice project** that will teach 
 
 ## 🚀 Quick Start (3 Steps)
 
-### Step 1: Verify Installation
-
-```bash
-python simple_test.py
-```
-
-This checks that everything is set up correctly (takes 5 seconds).
-
-### Step 2: Run Interactive Tutorial
+### Step 1: Verify Installation & Run Interactive Tutorial
 
 ```bash
 python quick_start.py
+```
+
+This checks that everything is set up correctly and lets you choose a demo to learn interactively.
+(`simple_test.py` has been archived; use `quick_start.py` as the entry point.)
+
+### Step 2: Explore Quality Inspection
+
+```bash
+python run_quality_inspection.py
 ```
 
 Choose a demo to learn interactively.

@@ -3,7 +3,7 @@
 A complete, functional Android Kotlin NFC application that reads data from the Turkish National ID Card (Türkiye Cumhuriyeti Yeni Kimlik Kartı, eID) using NFC + IsoDep.
 
 ![Android](https://img.shields.io/badge/Android-5.0%2B-green)
-![Kotlin](https://img.shields.io/badge/Kotlin-1.9.20-blue)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-blue)
 ![License](https://img.shields.io/badge/License-Educational-orange)
 
 ## Features
@@ -30,10 +30,10 @@ A complete, functional Android Kotlin NFC application that reads data from the T
 - NFC must be enabled in device settings
 
 ### Development Requirements
-- Android Studio Arctic Fox or newer
+- Android Studio Koala or newer (AGP 8.13)
 - JDK 17
-- Kotlin 1.9.20
-- Gradle 8.1.4
+- Kotlin 2.0.21
+- Gradle 8.13
 
 ### Card Requirements
 - Turkish National ID Card (Türkiye Cumhuriyeti Kimlik Kartı)
@@ -398,7 +398,7 @@ This is an educational project. If you find bugs or want to improve it:
 
 For issues, questions, or contributions:
 - Check the [Issues](../../issues) page
-- Review the [se-checklist.md](../se-checklist.md) for security guidelines
+- Review the [se-checklist.md](../docs/archive/2026-04-16/se-checklist.md) for security guidelines
 
 ## License
 
@@ -409,6 +409,6 @@ This project is provided for **educational purposes only**. Use responsibly and 
 **Made with ❤️ for educational purposes**
 
 **Version**: 1.0.0
-**Last Updated**: November 2025
+**Last Updated**: 2026-05
 **Minimum Android**: 5.0 (API 21)
 **Target Android**: 14 (API 34)
