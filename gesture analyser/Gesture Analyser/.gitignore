@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Runtime / generated data
+eval_logs/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Claude internal
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db

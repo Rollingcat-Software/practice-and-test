@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/face_i18n.ts","./src/face_tasks.ts","./src/liveness_i18n.ts","./src/main.tsx","./src/sequential_i18n.ts","./src/shape_i18n.ts","./src/tasks.ts","./src/touch_i18n.ts","./src/usegesturesocket.ts","./src/components/sessionhud.tsx","./src/components/taskcanvas.tsx","./src/components/taskcard.tsx","./src/components/taskrunner.tsx"],"version":"5.9.3"}

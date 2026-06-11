@@ -1,0 +1,155 @@
+# =============================================================================
+#  Liveness Challenge System -- Application Configuration
+# =============================================================================
+#
+#  This is the single source of truth for every tunable parameter.
+#  Edit this file to adapt the system to a new environment without touching
+#  source code.  Missing keys fall back to safe built-in defaults defined
+#  in app_config.py.
+#
+#  Sections
+#  --------
+#    tracker     -- MediaPipe hand detection settings
+#    gesture     -- Finger-open / finger-close thresholds
+#    touch       -- Fingertip touch detection geometry
+#    anti_spoof  -- Static-image / frozen-video detection
+#    math        -- Math challenge timing
+#    liveness    -- Liveness challenge timing and scoring
+#    sequential  -- Sequential challenge timing
+#    touch_test  -- Touch Test session settings
+#    shape_trace -- Shape-tracing DTW verification
+#    shape_eval  -- Shape evaluation session settings
+# =============================================================================
+
+
+# ── Hand Tracker ─────────────────────────────────────────────────────────────
+tracker:
+  detection_confidence: 0.70   # MediaPipe min_hand_detection_confidence
+  tracking_confidence:  0.50   # MediaPipe min_tracking_confidence
+                                # (lower = holds onto hand once found)
+  max_lost_frames:      2      # frames a hand may disappear before being dropped
+  clahe_clip_limit:     2.0    # CLAHE contrast enhancement clip limit
+  clahe_tile_size:      8      # CLAHE tile grid size N (produces NxN grid)
+
+
+# ── Gesture Validator ─────────────────────────────────────────────────────────
+#
+#  finger_ratio formula:
+#    Index-Pinky: (Dist(Wrist,Tip) - Dist(Wrist,PIP)) / hand_scale
+#    Thumb:        Dist(ThumbTip,  PinkyMCP)           / hand_scale
+#
+#  Hysteresis: a finger opens when ratio > open_threshold,
+#              and closes only when ratio < close_threshold.
+#
+gesture:
+  finger_open_threshold:  0.20   # ratio must exceed this for index–pinky to open
+  finger_close_threshold: 0.12   # ratio must drop below this for index–pinky to close
+  thumb_open_threshold:   0.75   # ratio must exceed this for thumb to open
+  thumb_close_threshold:  0.60   # ratio must drop below this for thumb to close
+  ewma_alpha:             0.35   # EWMA weight on current frame (0=frozen, 1=raw)
+  smoothing_window:       7      # passed to legacy SmoothingWindow (kept for compat)
+
+
+# ── Finger Touch Detector ─────────────────────────────────────────────────────
+#
+#  Validation pipeline (all four gates must pass):
+#    1. is_fist() == False
+#    2. Z-depth gap between the two tips <= z_max_diff
+#    3. Normalised Euclidean distance    <  threshold
+#    4. At least bystander_min_open bystander fingers have
+#       finger_ratio > bystander_open_thresh
+#
+touch:
+  threshold:              0.28   # max normalised distance (fraction of bbox diagonal)
+  z_max_diff:             0.04   # max Z-depth gap between the two fingertips
+  verify_frames:          10     # consecutive frames required to confirm a touch
+  bystander_open_thresh:  0.05   # min finger_ratio for a bystander to count as "open"
+  bystander_min_open:     1      # minimum number of open bystander fingers required
+
+
+# ── Anti-Spoof ────────────────────────────────────────────────────────────────
+#
+#  MicroTremorDetector: flags a hand that is unnaturally still.
+#    Real hands show ~0.002+ normalised-unit wrist jitter per frame.
+#
+#  BrightnessMonitor: flags a scene with near-zero brightness variance.
+#    Static printed images have almost no luminance change over time.
+#
+anti_spoof:
+  enabled:               false   # master switch: false = no spoof blocking in Liveness
+                                 # (challenges judged purely on whether the gesture is
+                                 #  performed correctly; no "SPOOF DETECTED" gate)
+  tremor_min_std:        0.0003  # min wrist-position std-dev (below = static spoof)
+  tremor_buffer_size:    30      # frames kept for tremor analysis (~1 s at 30 fps)
+  tremor_warmup_frames:  90      # startup frames before flagging (~3 s at 30 fps)
+  brightness_min_var:    0.05    # min brightness std-dev (below = static image)
+  brightness_buffer:     60      # number of brightness samples to keep
+  block_frames:          45      # consecutive suspicious frames before hard-blocking
+                                 # (~1.5 s at 30 fps). Raise to tolerate brief freezes;
+                                 # lower for stricter, faster rejection.
+
+
+# ── Math Challenge ────────────────────────────────────────────────────────────
+math:
+  stability_seconds:    2.0    # hold time before an answer is accepted
+  pause_after_success:  1.5    # display duration after a correct answer (seconds)
+  game_duration:        60.0   # total game length (seconds)
+  smoothing_window:     7      # GestureValidator smoothing window
+
+
+# ── Liveness Challenge ────────────────────────────────────────────────────────
+liveness:
+  time_limit:            4.0   # seconds allowed per challenge
+  debounce_seconds:      0.5   # hold time to confirm static gesture matches
+  area_change_threshold: 0.20  # required depth-proxy fractional change for MOVE cmds
+  pause_after_result:    1.5   # display duration for pass/fail before next challenge
+  num_challenges:        5     # challenges needed to reach 100% verification
+  smoothing_window:      7     # GestureValidator smoothing window
+
+
+# ── Sequential Challenge ──────────────────────────────────────────────────────
+sequential:
+  hold_seconds:      1.0   # hold time to complete each step
+  pause_after_step:  1.0   # pause duration between steps
+  depth_threshold:   0.20  # depth-proxy change required for spatial steps
+  smoothing_window:  7     # GestureValidator smoothing window
+
+
+# ── Touch Test Session ────────────────────────────────────────────────────────
+touch_test:
+  verify_frames:       10    # consecutive frames required per touch command
+  pause_after_success: 1.5   # pause duration after each command passes
+
+
+# ── Shape Tracing ─────────────────────────────────────────────────────────────
+#
+#  DTW verification pipeline:
+#    1. Resample both paths to resample_n evenly-spaced points.
+#    2. Centroid-normalise (translation + scale invariant).
+#    3. Compute DTW cost matrix.
+#    4. Accept if normalised cost <= dtw_threshold.
+#
+shape_trace:
+  draw_time:       18.0   # seconds allowed per trace attempt (timer starts at TRACING)
+  dtw_threshold:   0.25   # normalised per-point DTW cost acceptance threshold
+  resample_n:      50     # number of points for DTW resampling
+  min_hand_scale:  0.05   # minimum hand_scale (depth liveness gate; loosened for Z-axis flexibility)
+  pos_hold:        1.50   # seconds to hold at start point before TRACING begins
+  instruct_time:   3.0    # seconds to display the instruction overlay
+
+
+# ── Shape Evaluation Session ──────────────────────────────────────────────────
+shape_eval:
+  dtw_threshold: 0.25   # acceptance threshold forwarded to ShapeTracerSession
+  auto_advance:  true   # auto-advance to next round after result_pause expires
+
+
+# ── Session Audit Logger ──────────────────────────────────────────────────────
+#
+#  One JSON-Lines record is appended to <log_dir>/sessions.jsonl each time a
+#  mode reaches a terminal state (game-over, verified, complete).
+#  Set enabled: false to silence all logging without touching source code.
+#
+logging:
+  enabled: true
+  log_dir: "logs"   # relative to the working directory; created automatically
