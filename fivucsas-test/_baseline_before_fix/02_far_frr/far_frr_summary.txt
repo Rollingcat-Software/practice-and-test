@@ -1,0 +1,8 @@
+Pairs: 772 genuine, 4828 imposter
+AUC: 0.9943
+EER: 0.0193 at threshold (distance) = 0.5885
+High-security (FAR<=0.1%): threshold=0.0292  FAR=0.0000  FRR=1.0000
+Balanced     (FAR<=1%):   threshold=0.0292  FAR=0.0000  FRR=1.0000
+
+Default production threshold (from /verify): 0.45
+  At distance=0.45: FAR=0.0027  FRR=0.0440

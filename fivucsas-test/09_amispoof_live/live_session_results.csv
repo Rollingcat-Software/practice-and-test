@@ -1,0 +1,15 @@
+trial,case_label,verdict,confidence,duration_s,frames,blinks,incidents,faces,minifasnet,device_boundary,texture,moire,screen_replay,notes
+1,genuine_real_face,LIVE,93,17.7,406,2,0,1,100,86,70,48,58,baseline
+2,genuine_still,LIVE,80,207.4,1401,3,0,1,100,100,67,48,61,holding still - conf dropped vs baseline (less motion)
+3,cover_face_attempt,LIVE,81,263.9,1979,4,0,1,100,84,80,49,48,cover not yet effective - face still detected; session cumulative (no reset)
+4,cover_face_no_face,SPOOF(static_image),82,27.2,456,2,21,0,NA,NA,NA,NA,NA,after reset - face covered; 0 faces detected; flagged spoof
+5,two_faces_in_frame,LIVE,72,19.6,304,0,1,1,100,93,74,49,35,TWO people present but Faces detected=1 (only primary tracked); verdict stayed LIVE - no multi-face flag
+6,two_faces_sustained_noblink,SPOOF(static_image),76,92.3,1804,0,16,1,100,75,61,46,39,verdict FLIPPED to spoof after 92s with 0 blinks (peak-sensitive); real faces but no liveness motion -> static_image
+7,printed_photo,SPOOF(static_image),57,41.2,866,0,6,1,100,86,43,50,72,caught as SPOOF via liveness (0 blinks/static); MiniFASNet still 100 (texture did NOT flag print); conf only 57%
+8,video_replay,LIVE,96,57.1,1429,33,0,1,100,100,67,49,33,*** BYPASS *** video replay accepted as LIVE 96%; 33 blinks satisfied liveness; MiniFASNet 100 (texture fooled); Screen-replay analyzer 33 sensed it but w0.5 too low to flip; device boundary 100 = no bezel
+9,video_replay_2,SPOOF(static_image),78,52.0,1521,15,10,1,23,86,55,49,60,CAUGHT this time - MiniFASNet dropped to 23 (screen texture detected); CONTRAST with trial 8 which passed LIVE; replay detection condition-dependent
+10,video_replay_3,LIVE,97,75.6,1683,9,0,1,100,72,71,47,40,BYPASS again - LIVE 97pct MiniFASNet 100; screen-replay analyzer 40 sensed but did not flip; 2 of 3 replay trials bypassed (APCER ~67pct small sample)
+11,video_replay_4,LIVE,86,47.7,951,3,2,1,79,83,61,48,61,BYPASS - LIVE 86pct; MiniFASNet 79 (borderline sensed) + 2 incidents but did not flip; 3 of 4 replay bypassed (APCER ~75pct)
+13,fakecam_injection_youtube,LIVE,91,42.3,787,12,0,1,100,75,42,47,58,*** PURE INJECTION BYPASS *** YouTube video fed as Chrome fake-camera (no screen/no physical hold); LIVE 91pct sustained 42s 0 incidents; does NOT flip unlike physical replay (zero screen artifacts); amispoof defenseless vs virtual-camera injection
+14,fakecam_injection_woman,LIVE,97,56.4,878,8,0,1,100,75,50,48,46,INJECTION 2/3 - frontal woman youtube clip; LIVE 97pct sustained 56s 0 incidents
+15,fakecam_injection_news,LIVE,93,59.0,1360,21,1,1,100,93,57,48,65,INJECTION 3/3 - real NATO news broadcast clip; LIVE 93pct 59s; 3/3 fakecam injections bypassed = APCER 100pct

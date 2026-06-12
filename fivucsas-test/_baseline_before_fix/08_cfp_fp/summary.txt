@@ -1,0 +1,30 @@
+CFP-FP Frontal-Profile Angle Robustness Test Summary
+=======================================================
+
+Dataset : CFP-FP (frontal vs 90-degree profile pairs)
+Pairs   : 1378 valid  (716 genuine, 662 imposter)
+Errors  : 5622
+
+=== Biometric Metrics ===
+AUC  : 0.9845
+EER  : 0.2709  at distance threshold 1.0000
+
+=== Veri Seti Karsilastirmasi ===
+Metrik         CFP-FP        LFW       Fark
+------------------------------------------
+AUC            0.9845     0.9943    -0.0098
+EER            0.2709     0.0193    +0.2516
+
+=== Frontal vs Profil Kalite Farki (genuine cifler) ===
+Ortalama frontal kalite skoru : 85.0
+Ortalama profil  kalite skoru : 82.0
+Fark : +3.0 (profil daha dusuk)
+
+=== Uretim Esiklerinde Performans ===
+/verify esigi (distance=0.45):  FAR=0.0000  FRR=0.5531
+/compare esigi (distance=0.40): FAR=0.0000  FRR=0.6564
+
+=== Yorum ===
+SONUC: Profil acisi performansi ciddi sekilde dusurmus.
+Sistem yan bakan yuzlerde guvensiz — kayit kosullari standartlastirilmali.
+Kullanicilara kayit sirasinda 'kameraya tam bakin' yonlendirmesi zorunlu olmali.

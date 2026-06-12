@@ -1,0 +1,310 @@
+{
+  "generated_at": "2026-05-23T13:07:08.468Z",
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
+  "verdict": {
+    "is_live": true,
+    "confidence": 0.7077197976375724,
+    "dominant_threat": null,
+    "category_scores": {
+      "real": 0.7739342969846753,
+      "static_image": 0.09343413326778358,
+      "video_replay": 0.060342221490618866,
+      "mask_3d": 0.027302630806668112,
+      "heavy_makeup": 6.07640250764298e-10,
+      "ar_filter": 0.011304485229846084,
+      "deepfake_inject": 0.03368223161276734
+    },
+    "incidents": [],
+    "session_duration_sec": 11.053,
+    "frames_analyzed": 286,
+    "face_detected_ratio": 1,
+    "blink_count": 1,
+    "estimated_bpm": null,
+    "identity_changes": 0,
+    "summary": "LIVE | conf=71% | 11.1s | 286 frames | blinks=1 | incidents=0"
+  },
+  "latest_analyzer_scores": {
+    "minifasnet": {
+      "score": 100,
+      "details": {
+        "is_real": true,
+        "confidence": 0.9999999579870005,
+        "context": "frame",
+        "p_real": 0.9999999579870005,
+        "p_spoof": 4.2012999499484275e-8
+      }
+    },
+    "device_boundary": {
+      "score": 74.4,
+      "details": {
+        "boundary_score": 0.4271,
+        "line_score": 0.8541,
+        "contour_score": 0,
+        "bezel_detected": false,
+        "n_lines": 5
+      }
+    },
+    "texture": {
+      "score": 67.4,
+      "details": {
+        "texture_score": 50.475,
+        "color_score": 79.6047,
+        "frequency_score": 64.3207,
+        "color_drift_score": 98.9127,
+        "color_drift_samples": 300,
+        "mean_h": 30.8,
+        "mean_s": 0.424,
+        "mean_v": 0.62
+      }
+    },
+    "moire": {
+      "score": 48.9,
+      "details": {
+        "moire_risk": 0.5108,
+        "gabor_risk": 0.5748,
+        "fft_risk": 0.0072,
+        "response_fraction": 1,
+        "std_mean": 1210.5359
+      }
+    },
+    "screen_replay": {
+      "score": 61.1,
+      "details": {
+        "fft_score": 59.3949,
+        "laplacian_score": 98.1375,
+        "laplacian_var": 414.214,
+        "skin_score": 38.7558,
+        "specular_score": 100
+      }
+    },
+    "screen_flicker": {
+      "score": 85,
+      "details": {
+        "flicker_snr": null,
+        "dominant_freq_hz": 0,
+        "max_flicker_power": 0,
+        "noise_floor": null,
+        "measured_fps": 26,
+        "frames": 30
+      }
+    },
+    "micro_tremor": {
+      "score": 30,
+      "details": {
+        "tremor_ratio": 0.2697,
+        "tremor_x": 0.2378,
+        "tremor_y": 0.3017,
+        "measured_fps": 26,
+        "frames": 30,
+        "data_quality": 0.33
+      }
+    },
+    "landmark_variance": {
+      "score": 0.3,
+      "details": {
+        "overall_var": 0.0137,
+        "max_var": 0.0555,
+        "eye_var": 0.0165,
+        "mouth_var": 0.0158,
+        "forehead_var": 0.0345,
+        "expression_ratio": 0.47,
+        "n_frames": 30
+      }
+    },
+    "rppg": {
+      "score": 10,
+      "details": {
+        "bpm": null,
+        "snr": null,
+        "signal_strength": null,
+        "peak_freq_hz": 0,
+        "measured_fps": 26,
+        "frames": 285,
+        "data_quality": 1
+      }
+    },
+    "blink": {
+      "score": 90,
+      "details": {
+        "ear": 0.236,
+        "blinks": 1,
+        "blink_rate_per_min": 5.5,
+        "duration_sec": 10.9,
+        "eyes_open": true
+      }
+    },
+    "temporal": {
+      "score": 90,
+      "details": {
+        "pos_std": 0.005812,
+        "area_std": 0.007091,
+        "motion": 0.009357,
+        "frames": 285
+      }
+    },
+    "background_grid": {
+      "score": 90,
+      "details": {
+        "stability_ratio": 1,
+        "stable_cells": 23,
+        "total_bg_cells": 23,
+        "specular_cells": 0,
+        "cool_cells": 0,
+        "specular_ratio": 0,
+        "cool_ratio": 0
+      }
+    },
+    "eyebrow_motion": {
+      "score": 8.2,
+      "details": {
+        "activation": 0.085,
+        "mean": 0.079,
+        "std": 0.0054,
+        "frames": 90,
+        "per_blendshape": {
+          "browInnerUp": 0.001,
+          "browDownLeft": 0.195,
+          "browDownRight": 0.165,
+          "browOuterUpLeft": 0.047,
+          "browOuterUpRight": 0.017
+        }
+      }
+    },
+    "blink_symmetry": {
+      "score": 0,
+      "details": {
+        "corr": -0.466,
+        "std_left": 0.0114,
+        "std_right": 0.0212,
+        "eye_blink_left": 0.204,
+        "eye_blink_right": 0.323,
+        "frames": 90
+      }
+    },
+    "gaze": {
+      "score": 30,
+      "details": {
+        "gaze_x": -0.641,
+        "gaze_y": -0.445,
+        "std_x": 0.0233,
+        "std_y": 0.0333,
+        "saccade_count": 8,
+        "saccade_rate_per_sec": 0.73,
+        "frames": 90
+      }
+    },
+    "expression_dynamics": {
+      "score": 11.6,
+      "details": {
+        "total": 0.157,
+        "mean": 0.201,
+        "std": 0.029,
+        "frames": 90,
+        "top_active": [
+          {
+            "blendshape": "mouthPressLeft",
+            "value": 0.08
+          },
+          {
+            "blendshape": "mouthPressRight",
+            "value": 0.056
+          },
+          {
+            "blendshape": "mouthDimpleRight",
+            "value": 0.011
+          }
+        ]
+      }
+    },
+    "pose_3d_consistency": {
+      "score": 60.9,
+      "details": {
+        "ortho_residual": 0,
+        "ortho_score": 1,
+        "tz": -57.975,
+        "tz_std": 0.172,
+        "z_score": 0.022,
+        "frames": 90
+      }
+    },
+    "behavioral_pattern": {
+      "score": 47.6,
+      "details": {
+        "blink_ibi_samples": 0,
+        "blink_cv": 0,
+        "blink_cv_score": 0,
+        "saccade_count": 29,
+        "saccade_rate_per_sec": 2.64,
+        "saccade_score": 0.879,
+        "entropy_nats": 2.124,
+        "entropy_score": 0.708,
+        "composite_min": 0.037,
+        "composite_max": 0.081,
+        "fps": 25.9
+      }
+    },
+    "background_motion": {
+      "score": 100,
+      "details": {
+        "samples": 57,
+        "bg_pixel_ratio": 0.763,
+        "std_r": 10.555,
+        "std_g": 11.323,
+        "std_b": 10.428,
+        "drift": 10.769
+      }
+    },
+    "hand_tracking": null,
+    "voice_activity": null,
+    "audio_mouth_sync": null
+  },
+  "latest_gate_result": {
+    "usable": false,
+    "blocked": true,
+    "reason": "critical_face_region_occluded",
+    "state": "OCCLUDED_NO_FACE",
+    "occluded": true,
+    "qualityOk": true,
+    "occlusionScore": 0.4725397531491251,
+    "illuminationScore": 0.7581653235925885,
+    "occludedRegions": [
+      "mouth",
+      "lower_face"
+    ],
+    "underexposedRegions": [],
+    "overexposedRegions": []
+  },
+  "latest_liveness_proof": {
+    "score": 57.10077963111499,
+    "is_proven_live": false,
+    "details": {
+      "total": 57.10077963111499,
+      "blink_points": 25,
+      "landmark_points": 2.234,
+      "rotation_points": 4.306366363336054,
+      "expression_points": 1.41,
+      "challenge_points": 0,
+      "challenges_passed": 0,
+      "challenges_failed": 0,
+      "eye_motion_points": 1.338,
+      "mouth_motion_points": 0.5595,
+      "face_motion_points": 1.04658,
+      "eyebrow_motion_points": 0.6533585812632912,
+      "blink_symmetry_points": 0.8080805361114074,
+      "gaze_variation_points": 2.4038530479171305,
+      "expression_dynamics_points": 0.9292625380975345,
+      "pose_3d_consistency_points": 3.6516726697483053,
+      "behavioral_pattern_points": 4.760105894641271,
+      "background_motion_points": 8,
+      "hand_naturalness_points": 0,
+      "voice_activity_points": 0,
+      "audio_mouth_sync_points": 0
+    },
+    "active_challenge": null,
+    "challenge_history": [],
+    "elapsed_sec": 11.057,
+    "yaw_range_seen_deg": 7.141612836244358,
+    "pitch_range_seen_deg": 2.4518664840462523
+  },
+  "fps_smoothed": 27.1
+}

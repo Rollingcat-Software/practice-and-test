@@ -1,0 +1,10 @@
+file,generated_at,verdict,confidence,dominant_threat,duration_s,frames,blinks,incidents,face_ratio,liveness_proof,gate_usable,gate_reason,p_real,p_static_image,p_video_replay,p_mask_3d,p_heavy_makeup,p_ar_filter,p_deepfake_inject,minifasnet,device_boundary,texture,moire,screen_replay,screen_flicker,micro_tremor,rppg,blink,temporal
+1779538353617,2026-05-23T12:12:33,SPOOF,66.7,static_image,33.0,755,0,4,1,81.73040228404521,False,critical_face_region_occluded,0.798,0.079,0.058,0.024,0.0,0.009,0.033,100,92.9,67.5,47.7,38.3,85,30,10,10,90
+1779538500414,2026-05-23T12:15:00,SPOOF,68.1,static_image,84.8,1801,13,3,0.999,77.42198551597697,True,face_usable,0.809,0.074,0.055,0.024,0.001,0.007,0.03,99.8,93,44.6,50.2,67.8,85,30,10,90,90
+1779538586280,2026-05-23T12:16:26,SPOOF,49.9,static_image,42.8,901,0,6,1,27.59590132826258,True,face_usable,0.761,0.097,0.062,0.031,0.0,0.013,0.036,100,85.7,42.6,49.7,71.9,85,30,10,10,90
+1779538741806,2026-05-23T12:19:01,LIVE,84.3,-,45.3,1192,27,0,0.805,100,False,critical_face_region_occluded,0.888,0.038,0.04,0.012,0.0,0.001,0.021,100,100,66.5,48.7,59.9,85,30,10,90,90
+1779538839781,2026-05-23T12:20:39,SPOOF,70.8,static_image,30.4,900,9,4,0.597,100,True,face_usable,0.809,0.067,0.061,0.025,0.003,0.005,0.03,82.8,85.6,57.9,48.6,48.3,85,30,10,90,90
+1779538859868,2026-05-23T12:20:59,SPOOF,68.7,static_image,50.5,1492,15,9,0.58,100,False,critical_face_region_occluded,0.788,0.074,0.066,0.03,0.004,0.006,0.032,10,84.1,53,48.2,50.9,85,30,10,90,90
+1779539082994,2026-05-23T12:24:42,LIVE,85.2,-,38.2,869,4,0,1,100,True,face_usable,0.836,0.062,0.049,0.019,0.0,0.005,0.027,99.9,85.5,69.8,47.2,45.6,85,40.3,10,90,90
+1779539290947,2026-05-23T12:28:10,SPOOF,70.7,static_image,69.6,1443,4,5,0.998,100,False,critical_face_region_occluded,0.841,0.058,0.05,0.02,0.001,0.004,0.027,98.9,72.3,65,48.5,54,85,44.6,10,50.4,90
+1779539328044,2026-05-23T12:28:48,SPOOF,70.0,static_image,106.6,2146,7,8,0.999,100,False,critical_face_region_occluded,0.812,0.069,0.056,0.025,0.002,0.006,0.03,99.9,100,61.6,49,63.1,85,30,10,52.9,90

@@ -1,0 +1,13 @@
+# YouTube injection-attack source URLs — one per line.
+# Lines starting with # are ignored.
+#
+# Pick face-centric, single-person, talking-head / vlog clips (a clear frontal
+# face filling much of the frame works best — the detector needs to see a face).
+# 15 seconds is taken from each (configurable with --seconds / --start).
+#
+# Paste ~20 URLs below, then run:
+#   python fetch_youtube.py --urls youtube_urls.txt --seconds 15
+#
+# Example format (replace with real URLs):
+# https://www.youtube.com/watch?v=XXXXXXXXXXX
+# https://www.youtube.com/watch?v=YYYYYYYYYYY

@@ -1,0 +1,23 @@
+Liveness & Anti-Spoofing Test Summary
+========================================
+
+=== A. Liveness Endpoint ===
+STATUS: BROKEN — endpoint returns 500 on all calls
+ROOT CAUSE: MiniFASNet model path misconfigured (Permission denied: '/nonexistent')
+IMPACT: Liveness check is completely non-functional
+BPCER: N/A (endpoint broken)
+APCER: N/A (endpoint broken — cannot test spoof rejection)
+ACTION NEEDED: Fix MINIFAS_MODEL_PATH env var in docker-compose
+
+=== B. Client-Side Bypass Test ===
+Baseline verified=True
+Bypass attempts: 6
+Concerns (verified changed): 0
+PASS — server ignores all injected bypass fields
+
+=== C. Spoof Dataset TODO ===
+To measure APCER, download a spoof dataset:
+  CelebA-Spoof: https://github.com/Davidzhangyuanhan/CelebA-Spoof
+  OULU-NPU:     https://sites.google.com/site/oulunpudatabase/
+  Replay-Attack (requires academic email)
+Once downloaded, add spoof images to this script under run_apcer().

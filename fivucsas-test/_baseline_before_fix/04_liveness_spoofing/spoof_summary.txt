@@ -1,0 +1,23 @@
+Synthetic Spoof Attack Test Summary
+=============================================
+
+Tenant : lfw-test
+Users  : 60
+Label             Total  Accept  Reject     Rate  Metric
+-------------------------------------------------------
+PRINT_MILD           58      54       4   0.9310  APCER
+BORDER_PRINT         56      54       2   0.9643  APCER
+PRINT_STRONG         57      39      18   0.6842  APCER
+GENUINE              55      52       3   0.0545  BPCER
+SCREEN_REPLAY        57      54       3   0.9474  APCER
+
+Interpretation
+-------------------------------------------------------
+APCER = 0.00: no spoof images accepted -> perfect anti-spoof
+APCER = 1.00: all spoof images accepted -> no anti-spoof at /verify
+BPCER = 0.00: all genuine images accepted -> no false rejections
+
+Verdict
+-------------------------------------------------------
+HIGH RISK: avg APCER=0.882 — partial spoof resistance.
+BPCER=0.0545 — 5.5% of genuine images were falsely rejected.

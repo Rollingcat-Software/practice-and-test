@@ -1,0 +1,22 @@
+# YouTube SEARCH QUERIES for injection-attack face videos (multi-query mode).
+# One query per line. yt-dlp resolves each to real, current videos live —
+# more reliable than hand-typed video IDs.
+#
+# These target "no copyright / free stock footage" channels: face-centric,
+# single-person, frontal — and license-clean (lower ToS/copyright risk).
+#
+# Run:
+#   python fetch_youtube.py --queries-file youtube_queries.txt --per-query 4 --seconds 15
+# (8 queries x 4 = ~32 candidates; dedup + face-detection drops some → ~20 usable)
+#
+# Tune: edit/add lines, change --per-query. Prefer queries that yield a clear
+# frontal face filling the frame (the detector must see a face).
+
+no copyright people talking face closeup
+free stock footage man talking to camera face
+free stock footage woman talking to camera face
+talking head free stock video closeup no copyright
+person speaking to camera closeup free footage
+presenter talking to camera free stock footage
+vlogger face closeup no copyright stock video
+interview face closeup free stock footage

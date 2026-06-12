@@ -1,0 +1,11 @@
+case_id,desc,status,body,verdict
+01_no_face,blank white — no face,400,"{""error_code"": ""FACE_NOT_DETECTED"", ""message"": ""No face detected in the image. Please ensure a clear, front-facing photo.""}",PASS
+02_tiny_face,10x10 image — face too small,400,"{""error_code"": ""FACE_NOT_DETECTED"", ""message"": ""No face detected in the image. Please ensure a clear, front-facing photo.""}",PASS
+03_blank_white,solid white 640x480,400,"{""error_code"": ""FACE_NOT_DETECTED"", ""message"": ""No face detected in the image. Please ensure a clear, front-facing photo.""}",PASS
+04_black_image,solid black 640x480,400,"{""error_code"": ""FACE_NOT_DETECTED"", ""message"": ""No face detected in the image. Please ensure a clear, front-facing photo.""}",PASS
+05_large_image,12MB garbage content,413,"{""error_code"": ""PAYLOAD_TOO_LARGE"", ""message"": ""Request body exceeds maximum size of 10485760 bytes""}",PASS
+06_gif_format,GIF file,500,"{""error_code"": ""FILE_STORAGE_ERROR"", ""message"": ""File storage operation 'save' failed: File type not allowed. Allowed types: .webp, .jpeg, .jpg, .png"", ""operation"": ""save"", ""reason"": ""File type not al","FAIL — expected 400/415, got 500"
+07_corrupted_jpeg,JPEG header + random bytes,400,"{""error_code"": ""INVALID_INPUT"", ""message"": ""Failed to load image: /app/temp_uploads/5acd4dec-cb0c-4464-94b1-b7bc5faf6309.jpg""}",PASS
+08_text_file,text file disguised as JPEG,400,"{""detail"": ""File is not a valid image. File type detection failed. Please upload a valid JPEG, PNG, GIF, or BMP image.""}",PASS
+09_same_image_enroll_verify,same image enrolled and verified,200,"{""verified"": true, ""confidence"": 1.0, ""distance"": 0.0, ""threshold"": 0.45, ""message"": ""Face verified successfully""}",PASS
+10_no_api_key,invalid X-Api-Key header,200,"{""verified"": true, ""confidence"": 0.7999550104141235, ""distance"": 0.20004498958587646, ""threshold"": 0.45, ""message"": ""Face verified successfully""}","FAIL — expected 401, got 200"

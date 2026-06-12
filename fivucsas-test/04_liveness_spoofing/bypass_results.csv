@@ -1,0 +1,7 @@
+attempt,extra_fields,status,verified,distance,liveness_used,verdict,raw
+1,"{""liveness_passed"": ""true""}",404,,,unknown,PASS (no change vs baseline),"{""error_code"": ""EMBEDDING_NOT_FOUND"", ""message"": ""No face embedding found for user 'Abdullah_Gul'. Please enroll first."", ""user_id"": ""Abdullah_Gul""}"
+2,"{""liveness_verified"": ""true""}",404,,,unknown,PASS (no change vs baseline),"{""error_code"": ""EMBEDDING_NOT_FOUND"", ""message"": ""No face embedding found for user 'Abdullah_Gul'. Please enroll first."", ""user_id"": ""Abdullah_Gul""}"
+3,"{""skip_liveness"": ""true""}",404,,,unknown,PASS (no change vs baseline),"{""error_code"": ""EMBEDDING_NOT_FOUND"", ""message"": ""No face embedding found for user 'Abdullah_Gul'. Please enroll first."", ""user_id"": ""Abdullah_Gul""}"
+4,"{""is_live"": ""true""}",404,,,unknown,PASS (no change vs baseline),"{""error_code"": ""EMBEDDING_NOT_FOUND"", ""message"": ""No face embedding found for user 'Abdullah_Gul'. Please enroll first."", ""user_id"": ""Abdullah_Gul""}"
+5,"{""anti_spoofing_passed"": ""true""}",404,,,unknown,PASS (no change vs baseline),"{""error_code"": ""EMBEDDING_NOT_FOUND"", ""message"": ""No face embedding found for user 'Abdullah_Gul'. Please enroll first."", ""user_id"": ""Abdullah_Gul""}"
+6,"{""liveness_passed"": ""true"", ""skip_liveness"": ""true"", ""is_live"": ""true""}",404,,,unknown,PASS (no change vs baseline),"{""error_code"": ""EMBEDDING_NOT_FOUND"", ""message"": ""No face embedding found for user 'Abdullah_Gul'. Please enroll first."", ""user_id"": ""Abdullah_Gul""}"

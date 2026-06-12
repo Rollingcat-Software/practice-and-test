@@ -1,0 +1,20 @@
+Liveness & Anti-Spoofing Test Summary
+========================================
+
+=== A. Liveness Endpoint ===
+BPCER: 0.0816
+APCER: Not measured (requires dedicated spoof dataset e.g. CelebA-Spoof)
+TODO: Download CelebA-Spoof and re-run to measure APCER
+
+=== B. Client-Side Bypass Test ===
+Baseline verified=None
+Bypass attempts: 6
+Concerns (verified changed): 0
+PASS — server ignores all injected bypass fields
+
+=== C. Spoof Dataset TODO ===
+To measure APCER, download a spoof dataset:
+  CelebA-Spoof: https://github.com/Davidzhangyuanhan/CelebA-Spoof
+  OULU-NPU:     https://sites.google.com/site/oulunpudatabase/
+  Replay-Attack (requires academic email)
+Once downloaded, add spoof images to this script under run_apcer().

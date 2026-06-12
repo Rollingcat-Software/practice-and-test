@@ -1,0 +1,16 @@
+amispoof Live PAD Metrics (ISO/IEC 30107-3) — labeled session reports
+============================================================
+Sessions: 12  (2 bona-fide, 8 attack, 2 special)
+
+BPCER (genuine called SPOOF) : 0%
+APCER by attack type (attack called LIVE = bypass):
+  print         : 0%  (n=1)
+  screen_photo  : 0%  (n=1)
+  video_injection: 100%  (n=3)
+  video_replay  : 67%  (n=3)
+APCER (overall, worst-case)  : 100%
+ACER  = (APCER+BPCER)/2      : 50%
+
+Special (not in APCER/BPCER):
+  2faces                 -> LIVE (expected LIVE)
+  noface                 -> SPOOF (expected SPOOF)

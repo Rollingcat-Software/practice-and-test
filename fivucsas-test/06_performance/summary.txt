@@ -1,0 +1,19 @@
+Performance Test Summary
+========================================
+
+=== P1. Sequential Latency ===
+  n=30  min=0.098s  p50=0.379s  p95=0.407s  p99=0.452s  max=0.452s
+  Target p95 <= 1.5s:  PASS
+
+=== P2. Concurrent Load (20 workers) ===
+  Wall time: 6.96s
+  Per-request: p50=3.102s  p95=5.193s
+  Errors: 9/20  (possible OOM / thread contention)
+
+=== P3. Rate Limiting ===
+  WARN — rate limit NOT triggered in 40 rapid calls
+  Check RATE_LIMIT_ENABLED env var (README: set to False for testing)
+
+=== P4. Search Latency ===
+  median=0.345s  max=0.399s
+  Note: pgvector HNSW index gap flagged in TODO — latency may grow with scale

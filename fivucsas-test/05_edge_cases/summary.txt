@@ -1,0 +1,18 @@
+Edge Case Test Summary
+========================================
+Total : 10
+PASS  : 8
+FAIL  : 2
+
+Case                                Status  Verdict
+--------------------------------------------------------------------------------
+01_no_face                             400  PASS
+02_tiny_face                           400  PASS
+03_blank_white                         400  PASS
+04_black_image                         400  PASS
+05_large_image                         413  PASS
+06_gif_format                          500  FAIL — expected 400/415, got 500
+07_corrupted_jpeg                      400  PASS
+08_text_file                           400  PASS
+09_same_image_enroll_verify            200  PASS
+10_no_api_key                          404  FAIL — expected 401, got 404

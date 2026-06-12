@@ -1,0 +1,12 @@
+Cross-Tenant Isolation Test Summary
+========================================
+Total cases : 6
+PASS        : 3
+FAIL        : 3
+
+  [PASS] 01_control_positive  status=200  verified=True
+  [FAIL expected verified=false, got status=200 verified=True] 02_isolation_same_id_diff_person  status=200  verified=True
+  [FAIL expected verified=false, got status=200 verified=True] 03_cross_person_same_id  status=200  verified=True
+  [PASS] 04_unknown_user_in_tenant  status=404  verified=None
+  [FAIL expected 404, got 200] 05_unknown_tenant  status=200  verified=True
+  [PASS] 06_cross_user_same_tenant  status=200  verified=False

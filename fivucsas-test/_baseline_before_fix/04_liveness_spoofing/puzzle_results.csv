@@ -1,0 +1,13 @@
+test,status,liveness_confirmed,score,reason_codes,verdict
+T1_FAKE_BYPASS,200,False,98.99999999999999,"['STEP_0_ACTION_MISMATCH:expected=smile,got=fake_action', 'STEP_1_ACTION_MISMATCH:expected=blink,got=fake_action', 'STEP_2_ACTION_MISMATCH:expected=turn_left,got=fake_action']",PASS — fake bypass correctly rejected
+T2_CORRECT_FAKE,200,True,98.99999999999999,[],CRITICAL — correct-action fake bypass accepted (no server-side frame check)
+T3_REPLAY_ATTACK,200,False,0.0,['PUZZLE_ALREADY_COMPLETED'],PASS — replay correctly blocked
+T4_EXPIRED_PUZZLE,200,False,0.0,['PUZZLE_NOT_FOUND'],PASS — nonexistent puzzle rejected
+T5_WRONG_STEPS,200,False,98.99999999999999,"['STEP_0_ACTION_MISMATCH:expected=finger_tap,got=turn_left', 'STEP_1_ACTION_MISMATCH:expected=turn_right,got=blink', 'STEP_2_ACTION_MISMATCH:expected=hand_flip,got=smile']",PASS — wrong step sequence rejected
+T6_LOW_CONFIDENCE,200,False,30.0,"['STEP_0_LOW_CONFIDENCE:got=0.30,min=0.6', 'STEP_1_LOW_CONFIDENCE:got=0.30,min=0.6', 'STEP_2_LOW_CONFIDENCE:got=0.30,min=0.6', 'STEP_3_LOW_CONFIDENCE:got=0.30,min=0.6']",PASS — low confidence rejected
+T7_SHORT_DURATION,200,False,99.0,"['STEP_0_TOO_SHORT', 'STEP_1_TOO_SHORT', 'STEP_2_TOO_SHORT', 'STEP_3_TOO_SHORT']",PASS — short duration rejected
+T8_TIMESTAMP_REPLAY,200,False,99.0,['TIMESTAMP_BEFORE_PUZZLE'],PASS — past timestamps rejected
+T9_SPOT_FRAME_SPOOF,200,True,98.99999999999999,[],WARN — static photo accepted as spot_frame (detector may be disabled)
+T10_DIFFICULTY_EASY,200,,,"[{'action': 'hand_flip', 'duration_seconds': 7.0, 'order': 0}, {'action': 'turn_left', 'duration_seconds': 7.0, 'order': 1}]",PASS
+T10_DIFFICULTY_STANDARD,200,,,"[{'action': 'hold_position', 'duration_seconds': 5.0, 'order': 0}, {'action': 'finger_tap', 'duration_seconds': 5.0, 'order': 1}, {'action': 'turn_left', 'duration_seconds': 5.0, 'order': 2}]",PASS
+T10_DIFFICULTY_HARD,200,,,"[{'action': 'pinch', 'duration_seconds': 4.0, 'order': 0}, {'action': 'light', 'duration_seconds': 4.0, 'order': 1}, {'action': 'shape_trace', 'duration_seconds': 4.0, 'order': 2}, {'action': 'hand_flip', 'duration_seconds': 4.0, 'order': 3}]",PASS

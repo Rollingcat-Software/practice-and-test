@@ -1,0 +1,91 @@
+label,user_id,status,elapsed,verified,distance,error
+sequential,Abdullah_Gul,404,0.3919,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+sequential,Adrien_Brody,404,0.3148,,,No face embedding found for user 'Adrien_Brody'. Please enroll first.
+sequential,Ahmed_Chalabi,404,0.4024,,,No face embedding found for user 'Ahmed_Chalabi'. Please enroll first.
+sequential,Ai_Sugiyama,400,0.1127,,,"{""detail"":{""error_code"":""LIVENESS_FAILED"",""message"":""Liveness check failed"",""score"":63.2958159621064"
+sequential,Al_Gore,404,0.3331,,,No face embedding found for user 'Al_Gore'. Please enroll first.
+sequential,Al_Sharpton,404,0.4518,,,No face embedding found for user 'Al_Sharpton'. Please enroll first.
+sequential,Alan_Greenspan,404,0.3797,,,No face embedding found for user 'Alan_Greenspan'. Please enroll first.
+sequential,Alastair_Campbell,404,0.38,,,No face embedding found for user 'Alastair_Campbell'. Please enroll first.
+sequential,Albert_Costa,404,0.386,,,No face embedding found for user 'Albert_Costa'. Please enroll first.
+sequential,Alejandro_Toledo,404,0.3929,,,No face embedding found for user 'Alejandro_Toledo'. Please enroll first.
+sequential,Ali_Naimi,404,0.368,,,No face embedding found for user 'Ali_Naimi'. Please enroll first.
+sequential,Allyson_Felix,404,0.3369,,,No face embedding found for user 'Allyson_Felix'. Please enroll first.
+sequential,Alvaro_Uribe,404,0.4045,,,No face embedding found for user 'Alvaro_Uribe'. Please enroll first.
+sequential,Amelia_Vega,404,0.3549,,,No face embedding found for user 'Amelia_Vega'. Please enroll first.
+sequential,Amelie_Mauresmo,404,0.3786,,,No face embedding found for user 'Amelie_Mauresmo'. Please enroll first.
+sequential,Ana_Guevara,404,0.3552,,,No face embedding found for user 'Ana_Guevara'. Please enroll first.
+sequential,Ana_Palacio,404,0.4071,,,No face embedding found for user 'Ana_Palacio'. Please enroll first.
+sequential,Andre_Agassi,400,0.1078,,,"{""detail"":{""error_code"":""LIVENESS_FAILED"",""message"":""Liveness check failed"",""score"":69.2750392627293"
+sequential,Andy_Roddick,404,0.3285,,,No face embedding found for user 'Andy_Roddick'. Please enroll first.
+sequential,Angela_Bassett,404,0.3893,,,No face embedding found for user 'Angela_Bassett'. Please enroll first.
+sequential,Angela_Merkel,404,0.379,,,No face embedding found for user 'Angela_Merkel'. Please enroll first.
+sequential,Angelina_Jolie,404,0.4018,,,No face embedding found for user 'Angelina_Jolie'. Please enroll first.
+sequential,Ann_Veneman,404,0.3481,,,No face embedding found for user 'Ann_Veneman'. Please enroll first.
+sequential,Anna_Kournikova,404,0.4051,,,No face embedding found for user 'Anna_Kournikova'. Please enroll first.
+sequential,Antonio_Banderas,404,0.3772,,,No face embedding found for user 'Antonio_Banderas'. Please enroll first.
+sequential,Antonio_Palocci,404,0.402,,,No face embedding found for user 'Antonio_Palocci'. Please enroll first.
+sequential,Ari_Fleischer,404,0.3781,,,No face embedding found for user 'Ari_Fleischer'. Please enroll first.
+sequential,Ariel_Sharon,404,0.397,,,No face embedding found for user 'Ariel_Sharon'. Please enroll first.
+sequential,Arminio_Fraga,404,0.3566,,,No face embedding found for user 'Arminio_Fraga'. Please enroll first.
+sequential,Arnold_Schwarzenegger,400,0.098,,,"{""detail"":{""error_code"":""LIVENESS_FAILED"",""message"":""Liveness check failed"",""score"":67.3713335267982"
+concurrent,Ai_Sugiyama,400,2.5386,,,"{""detail"":{""error_code"":""LIVENESS_FAILED"",""message"":""Liveness check failed"",""score"":63.2958159621064"
+concurrent,Alejandro_Toledo,400,3.0502,,,"No face detected in the image. Please ensure a clear, front-facing photo."
+concurrent,Al_Gore,400,3.1023,,,"No face detected in the image. Please ensure a clear, front-facing photo."
+concurrent,Alan_Greenspan,400,3.1009,,,"No face detected in the image. Please ensure a clear, front-facing photo."
+concurrent,Alastair_Campbell,400,3.1057,,,"No face detected in the image. Please ensure a clear, front-facing photo."
+concurrent,Andre_Agassi,400,2.0469,,,"{""detail"":{""error_code"":""LIVENESS_FAILED"",""message"":""Liveness check failed"",""score"":69.2750392627293"
+concurrent,Abdullah_Gul,404,5.1714,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+concurrent,Allyson_Felix,404,5.0178,,,No face embedding found for user 'Allyson_Felix'. Please enroll first.
+concurrent,Ahmed_Chalabi,404,5.1877,,,No face embedding found for user 'Ahmed_Chalabi'. Please enroll first.
+concurrent,Ali_Naimi,404,5.0264,,,No face embedding found for user 'Ali_Naimi'. Please enroll first.
+concurrent,Al_Sharpton,404,5.1915,,,No face embedding found for user 'Al_Sharpton'. Please enroll first.
+concurrent,Adrien_Brody,404,5.193,,,No face embedding found for user 'Adrien_Brody'. Please enroll first.
+concurrent,Alvaro_Uribe,404,5.0305,,,No face embedding found for user 'Alvaro_Uribe'. Please enroll first.
+concurrent,Albert_Costa,404,5.1781,,,No face embedding found for user 'Albert_Costa'. Please enroll first.
+concurrent,Angela_Bassett,400,1.8199,,,"No face detected in the image. Please ensure a clear, front-facing photo."
+concurrent,Ana_Palacio,400,2.1063,,,"No face detected in the image. Please ensure a clear, front-facing photo."
+concurrent,Amelie_Mauresmo,400,2.1067,,,"No face detected in the image. Please ensure a clear, front-facing photo."
+concurrent,Andy_Roddick,400,1.8317,,,"No face detected in the image. Please ensure a clear, front-facing photo."
+concurrent,Amelia_Vega,400,2.6709,,,"No face detected in the image. Please ensure a clear, front-facing photo."
+concurrent,Ana_Guevara,404,2.3629,,,No face embedding found for user 'Ana_Guevara'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3566,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3599,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3637,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3826,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3794,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.392,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3486,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3678,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3533,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3907,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3621,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3367,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3457,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3299,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3799,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3346,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3791,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3486,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3742,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3564,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.341,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3828,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3321,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.4296,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3467,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3748,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.35,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3605,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3417,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3881,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3833,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3644,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3919,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3917,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.4341,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3739,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.39,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3643,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3991,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.
+rate-burst,Abdullah_Gul,404,0.3759,,,No face embedding found for user 'Abdullah_Gul'. Please enroll first.

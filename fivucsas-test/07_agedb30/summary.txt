@@ -1,0 +1,25 @@
+AgeDB-30 Age-Invariance Test Summary
+=============================================
+
+Dataset : AgeDB-30 (30-year age gap pairs)
+Pairs   : 5084 valid  (2515 genuine + 2569 imposter)
+Errors  : 916
+
+=== Biometric Metrics ===
+AUC  : 0.9475
+EER  : 0.3399  at distance threshold 1.0000
+
+=== LFW ile Karsilastirma ===
+Metric         AgeDB-30          LFW       Fark
+----------------------------------------------
+AUC              0.9475       0.9943    -0.0468
+EER              0.3399       0.0193    +0.3206
+
+=== Uretim Esiklerinde Performans ===
+/verify esigi (distance=0.45):  FAR=0.0027  FRR=0.6783
+/compare esigi (distance=0.40): FAR=0.0004  FRR=0.7877
+
+=== Yorum ===
+SONUC: Yas farki performansi ciddi sekilde dusurmus.
+Model yas degisikligine karsi hassas — embedding yenileme politikasi gerekebilir.
+Oneri: Kullanicilari her 1-2 yilda bir yeniden kayit ettirin.

@@ -1,0 +1,38 @@
+Puzzle Liveness Verification Test Summary
+==================================================
+
+Endpoint: POST http://localhost:8001/api/v1/liveness/verify
+
+Test                           LiveConf  Verdict
+--------------------------------------------------------------------------------
+T1_FAKE_BYPASS                    False  PASS — fake bypass correctly rejected
+T2_CORRECT_FAKE                    True  CRITICAL — correct-action fake bypass accepted (no server-side frame check)
+T3_REPLAY_ATTACK                  False  PASS — replay correctly blocked
+T4_EXPIRED_PUZZLE                 False  PASS — nonexistent puzzle rejected
+T5_WRONG_STEPS                    False  PASS — wrong step sequence rejected
+T6_LOW_CONFIDENCE                 False  PASS — low confidence rejected
+T7_SHORT_DURATION                 False  PASS — short duration rejected
+T8_TIMESTAMP_REPLAY               False  PASS — past timestamps rejected
+T9_SPOT_FRAME_SPOOF                True  WARN — static photo accepted as spot_frame (detector may be disabled)
+T10_DIFFICULTY_EASY                None  PASS
+T10_DIFFICULTY_STANDARD            None  PASS
+T10_DIFFICULTY_HARD                None  PASS
+
+PASS     : 10
+CRITICAL : 1
+WARN     : 1
+FAIL     : 0
+
+WARNING: CRITICAL FINDINGS:
+  [T2_CORRECT_FAKE] CRITICAL — correct-action fake bypass accepted (no server-side frame check)
+
+Root cause: liveness confirmation is based only on client-supplied
+confidence values + timestamp ordering. The server has no frame-level
+image analysis to verify actions were actually performed.
+The spot_frame check (server-side frame analysis) exists in code but
+the MiniFASNet detector is broken (BUG-02), so it always passes.
+
+Recommended fix:
+  1. Fix MiniFASNet model path (BUG-02) to enable server-side spot check.
+  2. Make spot_frames mandatory (not optional) in the verify request.
+  3. Reject any verify request without valid spot_frames.
