@@ -1,0 +1,17 @@
+# Pre-commit hooks (IN-M1 — 2026-04-19).
+# Minimal set: gitleaks only. We deliberately skip detect-secrets to avoid
+# baselining maintenance overhead. Per-submodule configs may add more
+# (see biometric-processor/.pre-commit-config.yaml for the Python-heavy case).
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+  # Repo structure-lock (mirrors FIVUCSAS#209) — fast local feedback mirroring
+  # the CI gate (.github/workflows/structure-check.yml). Freezes the root layout
+  # and blocks stray/dated tracking docs before they are committed. Pin `rev` to
+  # a tag/SHA once the org .github repo cuts one.
+  - repo: https://github.com/Rollingcat-Software/.github
+    rev: main
+    hooks:
+      - id: repo-structure
