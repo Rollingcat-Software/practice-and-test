@@ -1,0 +1,19 @@
+# Repo structure-lock gate — mirrors the FIVUCSAS umbrella pilot
+# (Rollingcat-Software/FIVUCSAS#209).
+#
+# Thin caller for the org-shared reusable workflow. It FREEZES this repo's root
+# layout (see .repo-structure.yml) and FAILS the PR when a disallowed/forbidden
+# file appears — e.g. a stray dated tracking doc at the root.
+#
+# Owner step to make it BLOCK merges: add the status check named
+# "repo-structure / structure-check" (the reusable job) as a REQUIRED check in
+# this repo's branch protection / ruleset. See the PR body for context.
+name: structure-check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  repo-structure:
+    uses: Rollingcat-Software/.github/.github/workflows/repo-structure.yml@main
