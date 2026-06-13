@@ -2,10 +2,10 @@
 
 Bulk move of stale compliance/progress/status reports out of the practice-and-test tree. This is an R&D sandbox repo — the doc content here was never load-bearing for production.
 
-Moved:
+The dated status/progress/cleanup/compliance/fixes-applied reports that were originally collected here have since been removed as superseded tracking docs; their content was point-in-time and is no longer load-bearing.
 
-- `COMPLIANCE_AUDIT_REPORT.md`, `SPEECH_COMPLIANCE_REPORT.md`, `se-checklist.md` (academic compliance scaffolding)
-- `PROJECT_PROGRESS_REPORT.md` (superseded by main FIVUCSAS `ROADMAP.md`)
-- `DeepFacePractice1/CLEANUP_SUMMARY.md`, `FIXES_APPLIED.md`, `docs/PROJECT_SUMMARY.md`
-- `TurkishEidNfcReader/LAUNCHER_ICONS_NOTE.md`, `PRACTICAL_IMPROVEMENTS.md`, `UX_ANALYSIS.md`
-- `UniversalNfcReader/COMPLIANCE_REPORT_2025-12-18.md`, `PROJECT_STATUS_2025-12-18.md`, `PROJECT_STATUS.md`
+Retained reference docs in this directory:
+
+- `se-checklist.md` — reusable security & engineering checklist, still referenced by `PASSPORT_NFC_ROADMAP.md` and `TurkishEidNfcReader/README.md`.
+- `UX_ANALYSIS.md` — design/UX analysis of the Turkish eID NFC Reader (P0/P1/P2 matrix).
+- `LAUNCHER_ICONS_NOTE.md` — how-to note for adding Android launcher icons.
