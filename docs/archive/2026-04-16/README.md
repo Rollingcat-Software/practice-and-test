@@ -6,6 +6,6 @@ The dated status/progress/cleanup/compliance/fixes-applied reports that were ori
 
 Retained reference docs in this directory:
 
-- `se-checklist.md` — reusable security & engineering checklist, still referenced by `PASSPORT_NFC_ROADMAP.md` and `TurkishEidNfcReader/README.md`.
+- `se-checklist.md` — reusable security & engineering checklist, still referenced by `docs/PASSPORT_NFC_ROADMAP.md` and `TurkishEidNfcReader/README.md`.
 - `UX_ANALYSIS.md` — design/UX analysis of the Turkish eID NFC Reader (P0/P1/P2 matrix).
 - `LAUNCHER_ICONS_NOTE.md` — how-to note for adding Android launcher icons.

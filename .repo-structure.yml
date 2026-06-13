@@ -20,7 +20,6 @@ allowed_root_files:
   - ".pre-commit-config.yaml"
   - ".repo-structure.yml"
   - "LICENSE"
-  - "PASSPORT_NFC_ROADMAP.md"
   - "README.md"
   - "SECURITY.md"
 
