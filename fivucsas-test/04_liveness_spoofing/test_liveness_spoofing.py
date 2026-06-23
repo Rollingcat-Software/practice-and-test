@@ -232,7 +232,7 @@ def write_summary(bpcer, all_500, bypass_rows, concerns, baseline_verified):
     else:
         lines.append(f"BPCER: {bpcer:.4f}\n" if bpcer is not None else "BPCER: N/A\n")
         lines.append("APCER: Not measured (requires dedicated spoof dataset e.g. CelebA-Spoof)\n")
-        lines.append("TODO: Download CelebA-Spoof and re-run to measure APCER\n")
+        lines.append("TODO(#17): Download CelebA-Spoof and re-run to measure APCER\n")
     lines.append("\n")
 
     lines.append("=== B. Client-Side Bypass Test ===\n")
